@@ -199,6 +199,10 @@ td.col-A{background:var(--podA)} td.col-B{background:var(--podB)} td.col-C{backg
 .dlg-body{font-size:.88rem;color:var(--muted);line-height:1.55;white-space:pre-line}
 .dlg input{width:100%;margin-top:.9rem;font-size:.95rem;padding:.55rem .7rem}
 .dlg-btns{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.2rem}
+.combolist{max-height:190px;overflow:auto;border:1px solid var(--line,#e2e4e8);border-radius:10px;margin-top:.5rem}
+.comboopt{padding:.55rem .8rem;cursor:pointer;font-size:.9rem;border-bottom:1px solid var(--line,#eef0f3)}
+.comboopt:last-child{border-bottom:none}
+.comboopt:hover,.comboopt.active{background:var(--accent-bg,#eef2ff)}
 button.btn.danger{background:var(--red);color:#fff}
 #modal h3{margin:0 0 .9rem;font-size:1.05rem;font-weight:700;letter-spacing:-.01em}
 .frow{display:flex;gap:.8rem;margin-bottom:.7rem;flex-wrap:wrap}
@@ -636,14 +640,21 @@ function uiDialog(o){
     if (o.input) {
       input = el("input", { type: "text", placeholder: o.placeholder || "" });
       input.value = o.value || "";
-      if (o.options && o.options.length) {
-        const dlid = "dl" + uid();
-        const dl = el("datalist", { id: dlid });
-        for (const opt of o.options) dl.append(el("option", { value: opt }));
-        input.setAttribute("list", dlid);
-        box.append(dl);
-      }
       box.append(input);
+      if (o.options && o.options.length) {
+        // A visible, always-working picker (native <datalist> often shows nothing) — filters as you type.
+        const list = el("div", { class: "combolist" });
+        const renderList = () => {
+          const q = input.value.trim().toLowerCase();
+          list.innerHTML = "";
+          const matches = o.options.filter(opt => opt.toLowerCase().includes(q)).slice(0, 80);
+          for (const opt of matches) list.append(el("div", { class: "comboopt", onclick: () => { input.value = opt; renderList(); input.focus(); } }, opt));
+          list.style.display = matches.length ? "block" : "none";
+        };
+        input.addEventListener("input", renderList);
+        box.append(list);
+        renderList();
+      }
       if (o.placeholder2 != null) { input2 = el("input", { type: "text", placeholder: o.placeholder2 }); box.append(input2); }
     }
     const done = v => { bg.remove(); window.removeEventListener("keydown", esc); res(v); };
@@ -711,8 +722,10 @@ async function enterEdit(){
   }
   if (!fileHandle && !relayUrl()) { uiAlert("Editing isn't available here — open the file from the shared Teams folder.", { title: "View only on this device" }); return; }
   await syncLatest();
-  const lock = data.editLock;
-  if (lock && lock.at && (Date.now() - Date.parse(lock.at)) < LOCK_MS) {
+  // Fresh read so a lock someone set seconds ago is caught even if syncLatest skipped the reload.
+  let lock = data.editLock;
+  try { const fresh = await readMaster(); if (fresh && fresh.editLock) lock = fresh.editLock; } catch(e){}
+  if (lock && lock.at && (Date.now() - Date.parse(lock.at)) < LOCK_MS && lock.by !== editorName()) {
     const mins = Math.max(1, Math.round((Date.now() - Date.parse(lock.at)) / 60000));
     await uiAlert((lock.by || "Someone") + " is editing right now (started " + mins + " min ago). Only one person can edit at a time — it frees up automatically within a few minutes of them finishing.", { title: "Someone else is editing" });
     return;
@@ -730,6 +743,7 @@ async function enterEdit(){
   renderAll();
   resetIdle();
   startLockHeartbeat();
+  saveFile(true); // push the lock to the shared copy now so others are warned quickly
   toast("Editing as " + n.trim() + " — changes save automatically");
 }
 /* ---- shared saving via Power Automate relay ---- */
@@ -778,6 +792,8 @@ async function readMaster(){
 async function staleBlocked(cur, silent){
   if (!(cur && cur.savedAt && loadedSavedAt && cur.savedAt !== loadedSavedAt)) return false;
   if (Date.parse(cur.savedAt) <= Date.parse(loadedSavedAt)) return false; // propagation lag, not a conflict
+  // Our own save (e.g. a background autosave that landed a moment ago) is never a conflict — adopt it.
+  if (cur.savedBy && cur.savedBy === editorName()) { loadedSavedAt = cur.savedAt; return false; }
   updateSaveState("failed");
   const who = cur.savedBy ? " by " + cur.savedBy : "";
   if (silent) {
@@ -828,8 +844,13 @@ async function relaySave(silent){
     if (!silent) uiAlert("The save couldn't be sent from here. If you're inside the Teams preview, open the file in a browser tab to edit; saving works there.", { title: "Save couldn't be sent" });
     return;
   }
+  // Claim this version straight away so a manual Save pressed during the (slow) verify below
+  // doesn't mistake our own just-saved copy for someone else's newer one.
+  loadedSavedAt = data.savedAt;
+  dirty = false;
+  updateSaveState("saved");
   // If we can read our own file back (same origin — true in Teams/SharePoint and on a web host),
-  // confirm the new copy actually landed before declaring success.
+  // confirm the new copy actually landed, just for the toast wording.
   let verified = false;
   if (SELF_FETCHABLE) {
     for (let i = 0; i < 6 && !verified; i++) {
@@ -838,9 +859,6 @@ async function relaySave(silent){
       if (now && now.savedAt === data.savedAt) verified = true;
     }
   }
-  loadedSavedAt = data.savedAt;
-  dirty = false;
-  updateSaveState("saved");
   if (!silent) toast(verified ? "Saved to the shared rota" : "Save sent — updating for everyone shortly");
 }
 async function syncLatest(){
@@ -1002,9 +1020,18 @@ async function useHandle(h){
   try { await idb.set("handle", h); } catch(e){}
   toast("Opened " + h.name);
 }
+let saveInFlight = null;
 async function saveFile(silent){
   if (!data) return;
   if (silent && !fileHandle && !relayUrl()) return;
+  // Serialise saves: never let a manual Save and a background autosave run at the same time,
+  // which is what made the app think its own copy was "an older version".
+  if (saveInFlight) { try { await saveInFlight; } catch(e){} }
+  saveInFlight = (async () => { await saveFileInner(silent); })();
+  try { await saveInFlight; } finally { saveInFlight = null; }
+}
+async function saveFileInner(silent){
+  if (!data) return;
   pruneOldWeeks();
   dropEmptyWeeks();
   if (!fileHandle && relayUrl() && !LOCAL_FILE) { await relaySave(silent); return; }
@@ -1666,6 +1693,15 @@ function shiftFromPool(pool, id){
   const p = pool[id];
   return (p && p.code && p.code.toUpperCase().startsWith("LD")) ? "LD" : "SD";
 }
+// If this person is already placed in a pod today, return the shift they were given there so
+// moving them between pods keeps it. Otherwise fall back to the roster default.
+function currentAssignShift(day, id){
+  for (const p of PODS){
+    const a = (day.pods[p].assign || []).find(x => x.id === id);
+    if (a && a.shift) return a.shift;
+  }
+  return null;
+}
 function poolState(p){ return p.kind === "night" ? "N" : (p.code && p.code.toUpperCase().startsWith("LD") ? "LD" : "SD"); }
 // bench ordering: LD first, then SD, each by seniority (edit the ranking here if the pecking order changes)
 const GRADE_RANK = { CON: -1, ICM: 0, ST: 1, SCF: 2, Anaes: 3, ACCP: 4, ACCS: 5, CT: 6, IMT: 7, RCF: 8, JCF: 9, ED: 10, Neurology: 11, FY2: 12, FY1: 13, Other: 14 };
@@ -1773,7 +1809,7 @@ function renderDayRow(day, di, dateISO, issues){
   for (const p of PODS) {
     const pod = day.pods[p];
     const col = el("td", { class: "col-" + p });
-    makeZone(col, di, id => { removeAssign(day, id); pod.assign.push({ id, shift: shiftFromPool(pool, id) }); logEntry(staffById(id).name + " → Pod " + p + " (" + dayShort(di) + ")"); }, oid => { const o = (day.obs || []).find(x => x.oid === oid); if (o) { o.pod = p; logEntry("Observer " + o.name + " → Pod " + p + " (" + dayShort(di) + ")"); } });
+    makeZone(col, di, id => { const keepShift = currentAssignShift(day, id); removeAssign(day, id); pod.assign.push({ id, shift: keepShift != null ? keepShift : shiftFromPool(pool, id) }); logEntry(staffById(id).name + " → Pod " + p + " (" + dayShort(di) + ")"); }, oid => { const o = (day.obs || []).find(x => x.oid === oid); if (o) { o.pod = p; logEntry("Observer " + o.name + " → Pod " + p + " (" + dayShort(di) + ")"); } });
     const consAll = data.staff.filter(s => s.grade === "CON" && isActiveOn(s, dateISO));
     if (consAll.length || pod.cons) {
       if (pod.cons && !staffById(pod.cons)) { const rid = matchConsInitials(pod.cons); if (rid) pod.cons = rid; }
