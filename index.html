@@ -755,8 +755,21 @@ async function enterEdit(){
 // The two flow keys are supplied by the opening link's #hash (kept inside NHS Teams), so the
 // hosted page itself ships with NO keys. Fall back to baked placeholders for a local build.
 const _cfg = new URLSearchParams((location.hash || "").replace(/^#/, ""));
-const READ_URL = _cfg.get("r") || "__READ_URL__";
-const SAVE_URL = _cfg.get("s") || "__SAVE_URL__";
+let _rk = _cfg.get("r"), _sk = _cfg.get("s");
+// Keep the flow keys out of the address bar, history, bookmarks and referrer headers: read them
+// once from the opening link, keep them only for this tab, then strip them from the visible URL.
+try {
+  if (_rk && _sk) {
+    sessionStorage.setItem("podR", _rk);
+    sessionStorage.setItem("podS", _sk);
+    history.replaceState(null, "", location.pathname + location.search);
+  } else {
+    _rk = _rk || sessionStorage.getItem("podR");
+    _sk = _sk || sessionStorage.getItem("podS");
+  }
+} catch(e){}
+const READ_URL = _rk || "__READ_URL__";
+const SAVE_URL = _sk || "__SAVE_URL__";
 const HOSTED = /^https:\/\//.test(READ_URL) && /^https:\/\//.test(SAVE_URL);
 const relayUrl = () => HOSTED ? SAVE_URL : ((data && data.relayUrl) || "");
 const SELF_FETCHABLE = /^https?:$/.test(location.protocol);
@@ -926,23 +939,36 @@ function logEntry(msg){
 }
 
 /* ================= DIRTY / UNDO / AUTOSAVE ================= */
+let suppressDirty = false;
+// The rota content only, ignoring metadata (savedAt, editLock heartbeat, log) so Undo compares
+// what a user actually sees, not housekeeping fields.
+function rotaSig(d){ try { const c = JSON.parse(JSON.stringify(d)); delete c.savedAt; delete c.savedBy; delete c.editLock; delete c.log; return JSON.stringify(c); } catch(e){ return "sig" + Math.random(); } }
 function markDirty(){
-  if (!EDIT_MODE) return;
-  if (lastState !== null) { undoStack.push(lastState); if (undoStack.length > 60) undoStack.shift(); }
-  lastState = JSON.stringify(data);
+  if (!EDIT_MODE || suppressDirty) return;
+  const snap = JSON.stringify(data);
+  // Only add an undo point when the snapshot actually changed — stops lock heartbeats and repeat
+  // calls piling up identical snapshots (which made one Undo click look like it did nothing).
+  if (lastState !== null && lastState !== snap) { undoStack.push(lastState); if (undoStack.length > 80) undoStack.shift(); }
+  lastState = snap;
   dirty = true;
   updateSaveState("unsaved");
   scheduleAutosave();
 }
 function undo(){
-  if (!undoStack.length) { toast("Nothing to undo"); return; }
-  const s = undoStack.pop();
-  data = JSON.parse(s);
-  lastState = s;
-  dirty = true;
-  updateSaveState("unsaved");
+  // Skip snapshots whose rota content matches the current one, so every Undo click visibly changes something.
+  const cur = rotaSig(data);
+  let snap = null;
+  while (undoStack.length) { const s = undoStack.pop(); if (rotaSig(JSON.parse(s)) !== cur) { snap = s; break; } }
+  if (snap === null) { toast("Nothing to undo"); return; }
+  suppressDirty = true;
+  try {
+    data = JSON.parse(snap);
+    lastState = snap;
+    dirty = true;
+    updateSaveState("unsaved");
+    renderAll();
+  } finally { suppressDirty = false; }
   scheduleAutosave();
-  renderAll();
   toast("Undone");
 }
 function updateSaveState(state){
