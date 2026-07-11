@@ -1237,7 +1237,8 @@ function renderStaff(){
   if (!data) return;
   const showInactive = $("#showInactive").checked;
   const today = todayISO();
-  const list = [...data.staff].sort((a,b) => seniority(a) - seniority(b) || a.name.localeCompare(b.name));
+  // Consultants only feed the cover dropdowns — keep them off the staff list to cut clutter.
+  const list = [...data.staff].filter(s => s.grade !== "CON").sort((a,b) => seniority(a) - seniority(b) || a.name.localeCompare(b.name));
   for (const s of list) {
     const active = isActiveOn(s, today);
     if (!active && !showInactive) continue;
@@ -1636,6 +1637,17 @@ function obsChip(day, o, di){
   c.addEventListener("dragend", () => { c.classList.remove("dragging"); document.body.classList.remove("person-dragging"); dragEndedAt = Date.now(); });
   return c;
 }
+// The daytime referral-phone holder always works a long day, so force their shift to LD wherever
+// they sit (in a pod, or via a bench override if they're not placed yet).
+function forceHolderLD(day, id){
+  let inPod = false;
+  for (const p of PODS){ const a = day.pods[p].assign.find(x => x.id === id); if (a){ a.shift = "LD"; inPod = true; } }
+  if (!inPod){
+    day.extras = day.extras || [];
+    const e = day.extras.find(x => x.id === id);
+    if (e){ e.kind = "day"; e.code = "LD"; } else day.extras.push({ id, kind: "day", code: "LD" });
+  }
+}
 async function assignPhoneTo(day, type, s){
   if (type === "shadow") {
     if (s.id === day.phone) { uiAlert("They already hold the phone — a shadow is someone else learning from them.", { title: "Already the holder" }); tapPhone = null; renderWeek(); return; }
@@ -1645,6 +1657,7 @@ async function assignPhoneTo(day, type, s){
     if (!s.phoneFull && !s.phoneSup && !(await uiConfirm(s.name + " isn't marked as phone-qualified on the staff list.", { title: "Give them the phone anyway?", okLabel: "Give phone", danger: true }))) { tapPhone = null; renderWeek(); return; }
     day.phone = s.id;
     day.shadow = (day.shadow || []).filter(x => x !== s.id);
+    forceHolderLD(day, s.id);
   } else {
     if (!s.phoneFull && !(await uiConfirm(s.name + " isn't a full phone-holder, which nights require.", { title: "Give them the night phone anyway?", okLabel: "Give phone", danger: true }))) { tapPhone = null; renderWeek(); return; }
     day.night.phone = s.id;
@@ -1731,6 +1744,15 @@ function currentAssignShift(day, id){
 function poolState(p){ return p.kind === "night" ? "N" : (p.code && p.code.toUpperCase().startsWith("LD") ? "LD" : "SD"); }
 // bench ordering: LD first, then SD, each by seniority (edit the ranking here if the pecking order changes)
 const GRADE_RANK = { CON: -1, ICM: 0, ST: 1, SCF: 2, Anaes: 3, ACCP: 4, ACCS: 5, CT: 6, IMT: 7, RCF: 8, JCF: 9, ED: 10, Neurology: 11, FY2: 12, FY1: 13, Other: 14 };
+// Skills auto-ticked for a grade on import. Anything not listed defaults to no skills (safer to
+// under-grant and let someone tick a box than to over-grant airway/phone). Edit freely.
+const GRADE_DEFAULT_SKILLS = {
+  ST:   ["airway", "transfer"],   // anaesthesia trainees
+  SCF:  ["phoneFull"],
+  ACCP: ["transfer"],
+  ACCS: [],
+};
+function applyGradeSkills(s){ for (const k of (GRADE_DEFAULT_SKILLS[s.grade] || [])) s[k] = true; }
 const seniority = s => (s.grade in GRADE_RANK ? GRADE_RANK[s.grade] : 15);
 function benchSort(pool){
   return (a, b) => {
@@ -1944,6 +1966,12 @@ function checkDay(day, dateISO, di, wk){
       if (!fullPresent) H(ph.name + " holds the phone under supervision — but no full phone-holder is on the day shift to support them.");
     }
     if (ph && !isActiveOn(ph, dateISO)) H(ph.name + " is outside their start/end dates on this day.");
+    if (ph) {
+      let holderShift = null;
+      for (const p of PODS){ const a = day.pods[p].assign.find(x => x.id === ph.id); if (a){ holderShift = a.shift; break; } }
+      if (holderShift == null) { const pl = poolFor(day, dateISO); holderShift = pl[ph.id] ? poolState(pl[ph.id]) : null; }
+      if (holderShift && holderShift !== "LD") S(ph.name + " holds the phone but isn't on a long day — the phone holder should be LD.");
+    }
   }
   if (day.night.phone) {
     const nph = staffById(day.night.phone);
@@ -2448,6 +2476,7 @@ function showImportPreview(parsed, box){
       if (!u.choice) { if (!data.ignoredNames.includes(key)) data.ignoredNames.push(key); continue; }
       if (u.choice === "__new__") {
         const s = { id: uid(), name: u.p.forenames.split(" ")[0] + " " + u.p.surname, grade: gradeFromText(u.p.gradeText), airway: /(-|–) ?A/i.test(Object.values(u.p.duties).join(" ")) || Object.values(u.p.duties).some(c => /airway/i.test(c)), phoneFull: false, phoneSup: false, nights: false, fgh: false, transfer: false, supernum: false, start: null, end: null, active: true, aliases: [key] };
+        applyGradeSkills(s); // default skills for their grade (e.g. ST → airway+transfer, ACCP → transfer)
         data.staff.push(s); put(s.id, u.p); added++;
       } else {
         const s = staffById(u.choice);
@@ -2675,7 +2704,7 @@ function autoFillDay(wk, di){
     const prevPhone = di > 0 ? wk.days[di-1].phone : null;
     const cands = dayIds.map(staffById).filter(s => s && s.phoneFull)
       .sort((a,b) => ((a.id === prevPhone) - (b.id === prevPhone)) || ((phoneHist[a.id] || 0) - (phoneHist[b.id] || 0)) || a.name.localeCompare(b.name));
-    if (cands.length) { day.phone = cands[0].id; day.phoneSup = null; }
+    if (cands.length) { day.phone = cands[0].id; day.phoneSup = null; forceHolderLD(day, cands[0].id); }
   }
   // --- pods ---
   const unplaced = dayIds.filter(id => !assigned.has(id));
