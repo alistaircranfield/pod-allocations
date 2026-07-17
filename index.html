@@ -694,7 +694,13 @@ function startLockHeartbeat(){
     markDirty();
   }, 2 * 60 * 1000);
 }
+let enteringEdit = false;
 async function enterEdit(){
+  if (enteringEdit || EDIT_MODE) return; // ignore rapid double-clicks and re-entry
+  enteringEdit = true;
+  try { await enterEditInner(); } finally { enteringEdit = false; }
+}
+async function enterEditInner(){
   // On a local (OneDrive-synced) file we always save to the file itself, so get a handle
   // even though a relay link is baked in. In hosted/Teams contexts the relay link is enough.
   if (!fileHandle && (LOCAL_FILE || !relayUrl())) {
@@ -721,18 +727,19 @@ async function enterEdit(){
     }
   }
   if (!fileHandle && !relayUrl()) { uiAlert("Editing isn't available here — open the file from the shared Teams folder.", { title: "View only on this device" }); return; }
-  await syncLatest();
-  // Fresh read so a lock someone set seconds ago is caught even if syncLatest skipped the reload.
-  let lock = data.editLock;
-  try { const fresh = await readMaster(); if (fresh && fresh.editLock) lock = fresh.editLock; } catch(e){}
-  if (lock && lock.at && (Date.now() - Date.parse(lock.at)) < LOCK_MS && lock.by !== editorName()) {
+  // Pull the latest in the background so the "Who's editing?" dialog opens instantly instead of
+  // waiting on a network read first.
+  const syncP = Promise.resolve(syncLatest()).catch(() => {});
+  const prev = store.get("rotaEditorName");
+  const n = await uiPrompt("Start typing and pick your name — changes are logged under it.", { title: "Who's editing?", okLabel: "Start editing", placeholder: prev ? "Last editor on this computer: " + prev : "Start typing…", options: editorNameOptions() });
+  if (!n || !n.trim()) return;
+  await syncP; // by now the latest copy (including anyone else's lock) has loaded
+  const lock = data.editLock;
+  if (lock && lock.at && (Date.now() - Date.parse(lock.at)) < LOCK_MS && lock.by !== n.trim()) {
     const mins = Math.max(1, Math.round((Date.now() - Date.parse(lock.at)) / 60000));
     await uiAlert((lock.by || "Someone") + " is editing right now (started " + mins + " min ago). Only one person can edit at a time — it frees up automatically within a few minutes of them finishing.", { title: "Someone else is editing" });
     return;
   }
-  const prev = store.get("rotaEditorName");
-  const n = await uiPrompt("Start typing and pick your name — changes are logged under it.", { title: "Who's editing?", okLabel: "Start editing", placeholder: prev ? "Last editor on this computer: " + prev : "Start typing…", options: editorNameOptions() });
-  if (!n || !n.trim()) return;
   store.set("rotaEditorName", n.trim());
   EDIT_MODE = true;
   document.body.classList.remove("viewmode");
