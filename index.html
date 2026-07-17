@@ -767,12 +767,14 @@ let _rk = _cfg.get("r"), _sk = _cfg.get("s");
 // once from the opening link, keep them only for this tab, then strip them from the visible URL.
 try {
   if (_rk && _sk) {
-    sessionStorage.setItem("podR", _rk);
-    sessionStorage.setItem("podS", _sk);
+    // Remember the keys on this device (localStorage, not just this tab) so reloads, new tabs and
+    // bookmarks of the plain URL keep working — then strip the keys from the visible URL/history.
+    localStorage.setItem("podR", _rk);
+    localStorage.setItem("podS", _sk);
     history.replaceState(null, "", location.pathname + location.search);
   } else {
-    _rk = _rk || sessionStorage.getItem("podR");
-    _sk = _sk || sessionStorage.getItem("podS");
+    _rk = _rk || localStorage.getItem("podR");
+    _sk = _sk || localStorage.getItem("podS");
   }
 } catch(e){}
 const READ_URL = _rk || "__READ_URL__";
@@ -1189,6 +1191,14 @@ async function startUp(){
       if (w) w.style.display = "flex";
       toast("Couldn't reach the shared rota — check your connection, then reload");
     }
+    return;
+  }
+  // Deployed page opened without its keys (the bare web address, or a bookmark of the stripped
+  // link on a device that's never used the Teams link) — guide them rather than showing the
+  // local-file "brand-new empty file" screen, which isn't relevant to the hosted version.
+  if (!HOSTED && !LOCAL_FILE && SELF_FETCHABLE && READ_URL === "__READ_URL__" && !window.ROTA_DATA) {
+    document.body.classList.add("viewmode");
+    await uiAlert("This page needs to be opened from the “Pod Allocations” link in your Teams General folder (Files → General). That link carries the secure connection to the live rota — the plain web address on its own can't load it.", { title: "Open it from Teams" });
     return;
   }
   const hasEmbedded = window.ROTA_DATA && typeof window.ROTA_DATA === "object" && Array.isArray(window.ROTA_DATA.staff);
