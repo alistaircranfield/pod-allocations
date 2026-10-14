@@ -701,6 +701,26 @@ details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer;
 .side:not(.plancol) .mt.f { color: #138a73; } .side:not(.plancol) .mt.s { color: #2f6bc4; }
 .side:not(.plancol) { --pb1: #2b3242; --pb2: #6b7488; --pb3: #8fa2cf; --pb4: #3aa58a; --pb5: #c9ced8; }
 .side:not(.plancol) .ctile b, .side:not(.plancol) .lrow .lm { color: inherit; }
+
+.rng1 { font-size: 12px; color: var(--text-2); display: inline-flex; gap: 4px; align-items: center; }
+.rgl { display: grid; gap: 8px; }
+.rgr { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 138px; gap: 12px; align-items: center; padding: 4px 6px; border-radius: 10px; }
+.rgr.on { background: var(--acc-wash); }
+.rgn { font-size: 12.5px; line-height: 1.25; }
+.rgw { position: relative; height: 20px; }
+.rgw .z { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--text-3); }
+.rgw .bd { position: absolute; top: 5px; height: 10px; border-radius: 5px; }
+.rgw .md { position: absolute; top: 1px; width: 3px; height: 18px; border-radius: 2px; background: var(--text); }
+.bd.save, .rgk i.save { background: #9fd3b4; } .bd.cost, .rgk i.cost { background: #eab0aa; } .bd.either, .rgk i.either { background: #cfd5df; }
+.rgv { display: grid; justify-items: end; gap: 0; } .rgv b { font-size: 13px; } .rgv span { font-size: 11px; color: var(--text-3); }
+.rgk { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11.5px; color: var(--text-2); align-items: center; }
+.rgk span { display: inline-flex; gap: 6px; align-items: center; } .rgk i { width: 14px; height: 8px; border-radius: 4px; } .rgk .rga { margin-left: auto; color: var(--text-3); }
+@media (max-width: 760px) { .rgr { grid-template-columns: minmax(0, 1fr) auto; } .rgw { grid-column: 1 / -1; grid-row: 2; } .rgk .rga { margin-left: 0; } }
+.buyt { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.bt { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: grid; gap: 3px; align-content: start; }
+.bt .lab { text-transform: none; letter-spacing: 0; font-size: 11.5px; font-weight: 500; color: var(--text-2); display: inline-flex; gap: 4px; align-items: flex-start; }
+.bt b { font-size: 20px; font-weight: 700; } .bt .dd { font-size: 11.5px; color: var(--text-3); }
+.hlt .bys { font-size: 13px; font-weight: 500; letter-spacing: 0; color: var(--text-2); margin-left: 6px; }
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -771,7 +791,7 @@ details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer;
       <div class="ttl"><span class="lab stepl"><i class="stepn">3</i>Outputs</span><h1 id="outName">Now</h1></div>
     </div>
     <div class="hl" id="hl"></div>
-    <div class="pair"><div class="ccard" id="costCard"></div><div class="ccard" id="coverCard"></div><div class="ccard" id="dayCard"></div><div class="ccard" id="postCard"></div></div>
+    <div class="pair"><div class="ccard" id="costCard"></div><div class="ccard" id="rangeCard"></div><div class="ccard" id="coverCard"></div><div class="ccard" id="buyCard"></div><div class="ccard" id="dayCard"></div><div class="ccard" id="postCard"></div></div>
     <button class="deep" id="deepbtn"><svg class="i"><use href="#grid"/></svg>Compare plans in detail<span class="lab">Every measure, every plan</span></button>
     <button class="deep" id="wkbtn"><svg class="i"><use href="#step"/></svg>Show the workings<span class="lab">Every step, with the numbers</span></button>
     <div class="sheet" id="csheet" hidden><div class="sheetin"><div class="sheethd"><button class="bk2" id="csheetclose" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="pt" id="ctitle">Cost breakdown</span></div><div class="wk" id="cbody"></div></div></div>
@@ -2248,11 +2268,11 @@ const ownShare = r => Math.min(1, r.shiftsOwn.mid / r.shifts.mid);
 const deltaPill = (v, base, fmt, lowerBetter) => { const d = v - base; if (Math.abs(d) < 1e-6 || (fmt === 'pts' && Math.abs(d) < 0.0005)) return `<span class="dl same">Same as Now</span>`; const good = lowerBetter ? d < 0 : d > 0; const txt = fmt === 'pts' ? (d > 0 ? '+' : '−') + (Math.round(Math.abs(d) * 1000) / 10) + ' points' : (d > 0 ? '+' : '−') + gbp(Math.abs(d)); return `<span class="dl num ${good ? 'up' : ''}">${txt}</span>`; };
 function renderHeadline() {
   const r = lastRes, n = nowRes, B = (x, k) => x['bt_' + k].mid;
-  const col = (ic, lab, color, v, d, tip) => `<div class="sm3"><span class="lab" style="color:${color}">${ico(ic, 'sm')}${lab}${iI(tip)}</span><b class="num">${v}</b>${d}</div>`;
+  const col = (ic, lab, color, v, d, tip, suf) => `<div class="sm3"><span class="lab" style="color:${color}">${ico(ic, 'sm')}${lab}${iI(tip)}</span><b class="num">${v}${suf ? `<span class="bys">${suf}</span>` : ''}</b>${d}</div>`;
   document.getElementById('hl').innerHTML = `<div class="hlt sum3">
-    ${col('moon', 'Fairfield nights and weekends', 'var(--f)', pc1(B(r, 'fOOH')), deltaPill(B(r, 'fOOH'), B(n, 'fOOH'), 'pts'), 'Share of Fairfield nights and weekend long days filled by our own rota. Locums fill the rest.')}
-    ${col('hosp', 'Salford', 'var(--s)', pc1(r.coverS.mid), deltaPill(r.coverS.mid, n.coverS.mid, 'pts'), 'Share of Salford minimum shifts filled by our own rota. Locums fill the rest.')}
-    ${col('pound', 'Cost a year', 'var(--text-2)', gbp(r.total.mid), deltaPill(r.total.mid, n.total.mid, 'gbp', true), 'Likely cost: the middle of 40 simulated years, staff and locums together.')}</div>`;
+    ${col('moon', 'Fairfield nights and weekends', 'var(--f)', pc1(B(r, 'fOOH')), deltaPill(B(r, 'fOOH'), B(n, 'fOOH'), 'pts'), 'Share of Fairfield nights and weekend long days filled by our own rota. Locums fill every other shift, so none are left empty.', 'by our staff')}
+    ${col('hosp', 'Salford', 'var(--s)', pc1(r.coverS.mid), deltaPill(r.coverS.mid, n.coverS.mid, 'pts'), 'Share of Salford minimum shifts filled by our own rota. Locums fill every other shift, so none are left empty.', 'by our staff')}
+    ${col('pound', 'Cost a year', 'var(--text-2)', gbp(r.total.mid), deltaPill(r.total.mid, n.total.mid, 'gbp', true) + '<span class="rng1" id="hlRange"></span>', 'Likely cost: the middle of 40 simulated years, staff and locums together.')}</div>`;
 }
 const PARTS = {
   total: r => [['Cost', r.total.mid, 'var(--acc)']],
@@ -2352,6 +2372,7 @@ function renderMap() {
     const kids = keys.filter(k => TODAY.includes(k) && k !== 'now'), opts = keys.filter(k => !TODAY.includes(k));
     h = `<div class="pgh">Today</div>${card('now')}<div class="kids">${kids.map(k => card(k).replace(esc(planName(k)), esc(planName(k).replace(/^Now \((.*)\)$/, (m, x) => x.charAt(0).toUpperCase() + x.slice(1))))).join('')}</div><div class="pgh">Options</div>${opts.map(card).join('')}`;
   }
+  ensureRanges();
   el.innerHTML = `<div class="plans">${head}<div class="grp6" id="planlist">${h}</div>
     ${planEdit ? `<div class="key">${db && canSave ? 'Changes are shared with everyone' : 'Changes are kept in this browser'}</div>` : `<div class="key" style="flex-wrap:wrap"><span>Ring and FGH: Fairfield nights and weekends we cover · SRH: Salford we cover</span></div>`}</div>`;
   renderHeads();
@@ -2587,8 +2608,11 @@ function renderCmp() {
     ['g', 'Money'],
     ['pound', 'Cost a year', d => d.r.total.mid, gbp, 'min'],
     ['pound', 'Change from Now', d => d.r.total.mid - presetRes.now.r.total.mid, v => Math.abs(v) < 1 ? '£0' : (v > 0 ? '+' : '−') + gbp(Math.abs(v)), 'min'],
-    ['v-range', 'Usual range', d => d.r.total.hi - d.r.total.lo, (v, d) => gbp(Math.round(d.r.total.lo / 1000) * 1000) + ' to ' + gbp(Math.round(d.r.total.hi / 1000) * 1000), null, null, 'Covers 8 years in 10'],
+    ['v-range', 'Likely range, our assumptions', d => 0, (v, d) => urText(keyOfD(d), d.r) || '…', null, null, UR_TIP],
+    ['v-range', 'Range, year to year', d => d.r.total.hi - d.r.total.lo, (v, d) => gbp(Math.round(d.r.total.lo / 1000) * 1000) + ' to ' + gbp(Math.round(d.r.total.hi / 1000) * 1000), null, null, 'Covers 8 years in 10'],
     ['userplus', 'Locum shifts a year', d => d.r.locShifts.mid, v => num(v), 'min'],
+    ['g', 'What the money buys'],
+    ...BUYS.filter(b => b.id !== 'l').map(b => [b.ic, b.n, d => b.f(d.s, d.r), b.fmt, b.best, null, b.tip]),
     ['g', 'Staff, WTE by grade'],
     ['users', 'All grades', d => wteAll(d.s), v => num(v, 1), null],
     ...ALLW.map(([k, n, ic]) => [ic, ind(n), d => wteK(d.s, k), v => v > 0.04 ? num(v, 1) : '·', null]),
@@ -2614,13 +2638,97 @@ document.getElementById('cmp').addEventListener('click', e => {
   if (t.dataset.rmcol) { extraCols = extraCols.filter(x => x !== t.dataset.rmcol); renderCmp(); }
 });
 
+
+/* ---------- how sure we are: rerun each plan with the inputs we are least sure of set low and high ---------- */
+const lumpOf = x => x.core.lumpy == null ? 0.175 : x.core.lumpy;
+const scaleLr = (x, f) => { ['lr', 'lrA'].forEach(o => { if (x.cost[o]) Object.keys(x.cost[o]).forEach(k => x.cost[o][k] *= f); }); };
+const n2dBy = (x, d) => ['scf', 'sd'].forEach(k => { const g = x.groups[k]; if (g && g.n2d) g.n2d = Math.max(0, g.n2d + d); });
+const UNC = [
+  { n: 'Locum rates 10% lower to 25% higher', lo: x => scaleLr(x, 0.9), hi: x => scaleLr(x, 1.25) },
+  { n: 'Agency share 5% to 20% of locum shifts', lo: x => { x.cost.agencyShare = (x.cost.agencyShare || 0) * 5 / 12; }, hi: x => { x.cost.agencyShare = Math.min(1, (x.cost.agencyShare || 0) * 20 / 12); } },
+  { n: 'Lumpiness 10% to 25%', lo: x => { if (lumpOf(x)) x.core.lumpy = Math.max(0.001, lumpOf(x) - 0.075); }, hi: x => { if (lumpOf(x)) x.core.lumpy = lumpOf(x) + 0.075; } },
+  { n: 'Sickness 2% to 5%', lo: x => { x.absence.sick *= 2 / 3; }, hi: x => { x.absence.sick *= 5 / 3; } },
+  { n: 'Bank on-costs 0% to 10% on top', hi: x => { x.cost.bankOn = (x.cost.bankOn || 0) + 0.1; } },
+  { n: 'Weekday nights moved to days 10% to 20%', lo: x => n2dBy(x, -0.045), hi: x => n2dBy(x, 0.055) }
+];
+const UR_TIP = 'How sure we are. Each plan is worked out again with the inputs we are least sure of set low and then high: ' + UNC.map(u => u.n.charAt(0).toLowerCase() + u.n.slice(1)).join('; ') + '. The swings are added up on the basis that they will not all go the same way at once (square root of the sum of squares). Both ends are paired with Now worked out the same way.';
+const UR = {}; let urQ = [], urBusy = false;
+const prepS = x => { M2.syncAccp(x); syncT(x); return x; };
+function urNeed(key, s) {
+  const id = MODE + '|' + key;
+  if (key !== 'live' && UR[id]) return;
+  const rec = { base: null, d: UNC.map(() => [0, 0]), done: false, s: clone(s) }; UR[id] = rec;
+  const tasks = [() => { rec.base = M2.workings(prepS(clone(rec.s))).total; }];
+  UNC.forEach((u, i) => ['lo', 'hi'].forEach((side, j) => { if (u[side]) tasks.push(() => { const x = clone(rec.s); u[side](x); rec.d[i][j] = M2.workings(prepS(x)).total - rec.base; }); }));
+  tasks.push(() => { rec.done = true; renderRanges(); renderCmp(); });
+  const jobs = tasks.map(f => ({ f, id, rec }));
+  if (key === 'live') { urQ = urQ.filter(j => j.id !== id); urQ.unshift(...jobs); } else urQ.push(...jobs);
+  if (!urBusy) { urBusy = true; setTimeout(urStep, 0); }
+}
+function urStep() {
+  const j = urQ.shift(); if (!j) { urBusy = false; return; }
+  if (UR[j.id] === j.rec) { try { j.f(); } catch (e) { } }
+  setTimeout(urStep, 0);
+}
+function ensureRanges() {
+  planKeys().forEach(k => { const s = stateOf(k); if (s && !UR[MODE + '|' + k]) urNeed(k, s); });
+}
+const rss = xs => Math.sqrt(xs.reduce((a, x) => a + x * x, 0));
+// swings for a plan's cost, or for its difference from Now when paired
+function urSwing(key, paired) {
+  const a = UR[MODE + '|' + key], n = UR[MODE + '|now']; if (!a || !a.done || (paired && (!n || !n.done))) return null;
+  const ds = a.d.map((p, i) => paired ? [p[0] - n.d[i][0], p[1] - n.d[i][1]] : p);
+  return { lo: -rss(ds.map(p => Math.min(0, p[0], p[1]))), hi: rss(ds.map(p => Math.max(0, p[0], p[1]))) };
+}
+const k1 = x => Math.round(x / 1000) * 1000;
+const sgn = x => (x > 0 ? '+' : x < 0 ? '−' : '') + gbp(Math.abs(x));
+function curKey() { return active.endsWith('*') ? 'live' : active; }
+function keyOfD(d) { if (d.s === S) return curKey(); const p = Object.keys(presetRes).find(k => presetRes[k] === d); if (p) return p; const v = Object.keys(savedRes).find(k => savedRes[k] === d); return v ? 'saved:' + v : null; }
+function urText(key, r) { if (!key || !r) return ''; const w = urSwing(key); return w ? gbp(k1(r.total.mid + w.lo)) + ' to ' + gbp(k1(r.total.mid + w.hi)) : ''; }
+function renderRanges() {
+  const hl = document.getElementById('hlRange'); if (hl && lastRes) { const t = urText(curKey(), lastRes); hl.innerHTML = t ? `likely ${t}${iI(UR_TIP)}` : ''; }
+  const el = document.getElementById('rangeCard'); if (!el || !nowRes) return;
+  const short = n => n.replace(/^Now \((.*)\)$/, (m, x) => x.charAt(0).toUpperCase() + x.slice(1));
+  const rows = planKeys().filter(k => k !== 'now').map(k => ({ k, n: short(planName(k)), r: resOf(k), on: active === k }));
+  if (active.endsWith('*') && lastRes) rows.unshift({ k: 'live', n: short(baseName()) + ', edited', r: lastRes, on: true });
+  const ready = rows.map(x => { const w = x.r && urSwing(x.k, true); if (!w) return null; const c = x.r.total.mid - nowRes.total.mid; return Object.assign(x, { c, lo: c + w.lo, hi: c + w.hi }); }).filter(Boolean);
+  if (!ready.length) { el.innerHTML = `<div class="hd"><span class="lab">Difference from Now, and how sure we are</span>${iI(UR_TIP)}</div><span class="lab" style="text-transform:none;letter-spacing:0">Working it out…</span>`; return; }
+  const mn = Math.min(0, ...ready.map(x => x.lo)), mx = Math.max(0, ...ready.map(x => x.hi)), pad = (mx - mn) * 0.04 || 1000, A = mn - pad, Z = mx + pad, X = v => (v - A) / (Z - A) * 100;
+  const tagOf = x => x.lo < 0 && x.hi > 0 ? ['either', 'Could go either way'] : x.hi <= 0 ? ['save', 'Saves money'] : ['cost', 'Costs more'];
+  el.innerHTML = `<div class="hd"><span class="lab">Difference from Now, and how sure we are</span>${iI(UR_TIP)}</div>
+    <div class="rgl">${ready.map(x => { const [c, t] = tagOf(x); return `<div class="rgr${x.on ? ' on' : ''}"><span class="rgn">${esc(x.n)}</span>
+      <div class="rgw" title="${esc(t)}: ${sgn(k1(x.lo))} to ${sgn(k1(x.hi))}"><span class="z" style="left:${X(0)}%"></span><span class="bd ${c}" style="left:${X(x.lo)}%;width:${Math.max(0.8, X(x.hi) - X(x.lo))}%"></span><span class="md" style="left:calc(${X(x.c)}% - 1.5px)"></span></div>
+      <span class="rgv"><b class="num">${sgn(x.c)}</b><span class="num">${sgn(k1(x.lo))} to ${sgn(k1(x.hi))}</span></span></div>`; }).join('')}</div>
+    <div class="rgk"><span><i class="save"></i>Saves money</span><span><i class="either"></i>Could go either way</span><span><i class="cost"></i>Costs more</span><span class="rga">← cheaper than Now · dearer →</span></div>`;
+}
+
+/* ---------- what the money buys: facts beside the cost ---------- */
+const DEAN = ['icm3', 'icm2', 'icm1', 'anaes', 'accs', 'imt', 'fy2', 'other'];
+const nightsOf = (s, k) => perPersonYear(s, k, 'Nwd') + perPersonYear(s, k, 'Nwe');
+const postsOf = s => ['scf', 'sd', 'jcf'].reduce((a, k) => a + (s.groups[k] ? s.groups[k].posts + (s.groups[k].newPosts || 0) : 0), 0);
+const BUYS = [
+  { id: 'n', ic: 'moon', n: 'Nights a year, each full-time SCF or specialty doctor', short: 'Nights each, SCF or specialty doctor', f: s => nightsOf(s, postKey(s)), fmt: v => num(v), tip: 'Night shifts a year for one full-time SCF (or specialty doctor, if the plan has them), after leave and absence.' },
+  { id: 'w', ic: 'cal', n: 'Weekend shifts a year, each full-time SCF or specialty doctor', short: 'Weekend shifts each, SCF or specialty doctor', f: s => { const k = postKey(s); return ['Nwe', 'Lwe', 'Swe'].reduce((a, t) => a + perPersonYear(s, k, t), 0); }, fmt: v => num(v), tip: 'Weekend nights, long days and days a year for one full-time SCF or specialty doctor.' },
+  { id: 't', ic: 'school', n: 'Nights a year, each full-time ICM trainee', short: 'Nights each, ICM trainee', f: s => nightsOf(s, 'icm2'), fmt: v => num(v), tip: 'Night shifts a year for one full-time ICM trainee on their work schedule.' },
+  { id: 'p', ic: 'userplus', n: 'Posts to fill beyond Now', short: 'Posts to fill beyond Now', f: s => postsOf(s) - postsOf(NOW), fmt: v => Math.abs(v) < 0.5 ? 'None' : (v > 0 ? '+' : '−') + num(Math.abs(v)), best: null, tip: 'SCF, specialty doctor and JCF posts compared with Now. Deanery posts are set by the deanery, so they are not counted.' },
+  { id: 'tr', ic: 'school', n: 'Training posts, WTE', short: 'Training posts, WTE', f: s => DEAN.concat('scf').reduce((a, k) => a + wteK(s, k), 0), fmt: v => num(v, 1), best: 'max', tip: 'Deanery trainees and SCFs on the rota, as whole-time equivalents after gaps and part-time working.' },
+  { id: 'l', ic: 'userplus', n: 'Shifts filled by locums a year', short: 'Locum shifts a year', f: (s, r) => r.locShifts.mid, fmt: v => num(v), best: 'min', tip: 'Every shift our own rota cannot fill goes to a locum. Fewer means more shifts worked by people who know the unit.' }
+];
+function renderBuy() {
+  const el = document.getElementById('buyCard'); if (!el || !lastRes || !nowRes) return;
+  const ns = presetRes.now ? presetRes.now.s : NOW;
+  el.innerHTML = `<div class="hd"><span class="lab">What the money buys</span>${iI('Facts beside the cost, for you to weigh. No scores: what each is worth is a judgement for us.')}</div>
+    <div class="buyt">${BUYS.map(b => { const v = b.f(S, lastRes), n0 = b.f(ns, nowRes), same = Math.abs(v - n0) < (b.id === 'tr' ? 0.05 : 0.5); return `<div class="bt"><span class="lab">${esc(b.short)}${iI(b.tip)}</span><b class="num">${b.fmt(v)}</b><span class="dd">${b.id === 'p' ? 'SCF, specialty doctor and JCF' : same ? 'Same as Now' : 'Now ' + b.fmt(n0)}</span></div>`; }).join('')}</div>`;
+}
+
 /* ---------- compute ---------- */
 let timer = null;
 function schedule() { document.querySelector('.pair').classList.add('busy'); clearTimeout(timer); timer = setTimeout(recompute, 160); }
 function recompute() {
   lastRes = M2.simulate(clone(S), 40, 5);
   document.querySelector('.pair').classList.remove('busy');
-  renderHeadline(); renderCost(); renderCover(); renderDays(); renderPost(); renderMap(); renderCmp();
+  if (active.endsWith('*')) urNeed('live', S); else delete UR[MODE + '|live'];
+  renderHeadline(); renderCost(); renderCover(); renderDays(); renderPost(); renderMap(); renderCmp(); renderBuy(); renderRanges();
   document.getElementById('app').classList.toggle('isedit', active.endsWith('*'));
 }
 function statPresets() {
@@ -2661,6 +2769,8 @@ document.getElementById('savebar').addEventListener('click', async e => {
     { sel: '.plans .pcw', q: 'What does a plan card show?', a: 'The ring fills with how much of Fairfield’s nights and weekends our own doctors cover.', k: 'FGH: Fairfield nights and weekends we cover. SRH: Salford shifts we cover. £: cost a year, or the difference from Now.' },
     { sel: '.plans .pcost', q: 'What does the £ button do?', a: 'It opens what the plan’s cost is made of: each staff group, then the locums.' },
     { sel: '#hl', q: 'What are the three big numbers?', a: 'Fairfield nights and weekends we cover, Salford shifts we cover, and the cost a year. Every other shift is filled by a locum.' },
+    { sel: '#rangeCard', q: 'How sure are we of the money?', a: 'Each plan against Now, with a likely range from the inputs we are least sure of, like locum rates and sickness. Grey means it could go either way.' },
+    { sel: '#buyCard', q: 'What does the money buy?', a: 'Facts beside the cost: nights and weekends each, posts to fill, training posts and locum shifts. What they are worth is for us to judge.' },
     { sel: '#coverCard', q: 'Why is Fairfield so low?', a: 'Only SCFs can work Fairfield nights and weekends, and Salford needs most of their nights first. Bank shifts by our own staff count as locums.', k: 'This matches last year in Allocate.' },
     { sel: '#panel', q: 'What can I change?', a: 'Anything under Inputs. Start with Staff: posts for each group, how many are filled, and who works part-time.', do: () => go('staff') },
     { sel: '#panel', q: 'What can I change for SCFs?', a: 'Posts, pay, work schedule, how long people stay, and how long before they can work at Fairfield.', do: () => go('core') },
