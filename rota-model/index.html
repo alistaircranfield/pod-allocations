@@ -721,6 +721,19 @@ details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer;
 .bt .lab { text-transform: none; letter-spacing: 0; font-size: 11.5px; font-weight: 500; color: var(--text-2); display: inline-flex; gap: 4px; align-items: flex-start; }
 .bt b { font-size: 20px; font-weight: 700; } .bt .dd { font-size: 11.5px; color: var(--text-3); }
 .hlt .bys { font-size: 13px; font-weight: 500; letter-spacing: 0; color: var(--text-2); margin-left: 6px; }
+
+#hl { display: none; }
+.cvh2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.cvh { display: grid; gap: 4px; align-content: start; } .cvh .lab { display: inline-flex; gap: 6px; align-items: center; }
+.cvh b, .cth b { font-size: 26px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.cth { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between; }
+.lk { font: inherit; font-size: 12.5px; font-weight: 600; color: var(--s); background: none; border: 0; padding: 0; cursor: pointer; justify-self: start; text-align: left; }
+.btl { font: inherit; text-align: left; background: var(--surface); cursor: pointer; color: inherit; }
+.btl:hover, .lk:hover { filter: brightness(.9); }
+.sheetin.narrow { width: min(680px, 100%); }
+.cvh > .dl, .cth > .dl { justify-self: start; width: auto; }
+.ctl2 { display: flex; gap: 6px 18px; flex-wrap: wrap; }
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -791,9 +804,12 @@ details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer;
       <div class="ttl"><span class="lab stepl"><i class="stepn">3</i>Outputs</span><h1 id="outName">Now</h1></div>
     </div>
     <div class="hl" id="hl"></div>
-    <div class="pair"><div class="ccard" id="costCard"></div><div class="ccard" id="rangeCard"></div><div class="ccard" id="coverCard"></div><div class="ccard" id="buyCard"></div><div class="ccard" id="dayCard"></div><div class="ccard" id="postCard"></div></div>
+    <div class="pair"><div class="ccard" id="coverCard"></div><div class="ccard" id="costCard"></div><div class="ccard" id="buyCard"></div></div>
     <button class="deep" id="deepbtn"><svg class="i"><use href="#grid"/></svg>Compare plans in detail<span class="lab">Every measure, every plan</span></button>
     <button class="deep" id="wkbtn"><svg class="i"><use href="#step"/></svg>Show the workings<span class="lab">Every step, with the numbers</span></button>
+    <div class="sheet" id="rsheet" hidden><div class="sheetin narrow"><div class="sheethd"><button class="bk2" data-closesheet="rsheet" aria-label="Back to results"><svg class="i"><use href="#back"/></svg></button><span class="pt">How sure are we</span></div><div class="ccard" id="rangeCard"></div></div></div>
+    <div class="sheet" id="dsheet" hidden><div class="sheetin narrow"><div class="sheethd"><button class="bk2" data-closesheet="dsheet" aria-label="Back to results"><svg class="i"><use href="#back"/></svg></button><span class="pt">Salford spare days</span></div><div class="ccard" id="dayCard"></div></div></div>
+    <div class="sheet" id="psheet" hidden><div class="sheetin narrow"><div class="sheethd"><button class="bk2" data-closesheet="psheet" aria-label="Back to results"><svg class="i"><use href="#back"/></svg></button><span class="pt">One more post</span></div><div class="ccard" id="postCard"></div></div></div>
     <div class="sheet" id="csheet" hidden><div class="sheetin"><div class="sheethd"><button class="bk2" id="csheetclose" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="pt" id="ctitle">Cost breakdown</span></div><div class="wk" id="cbody"></div></div></div>
     <div class="sheet" id="wsheet" hidden><div class="sheetin"><div class="sheethd"><button class="bk2" id="wsheetclose" aria-label="Back to outputs"><svg class="i"><use href="#back"/></svg></button><span class="pt">The workings</span></div><div class="wk" id="wk"></div></div></div>
     <div class="sheet" id="sheet" hidden><div class="sheetin"><div class="sheethd"><button class="bk2" id="sheetclose" aria-label="Back to outputs"><svg class="i"><use href="#back"/></svg></button><span class="pt">Compare plans</span></div><div class="cmpwrap" id="cmp"></div></div></div>
@@ -2283,27 +2299,29 @@ const PARTS = {
 const segBtns = (name, cur, opts) => `<div class="seg4" role="group">${opts.map(([v, i, t]) => `<button class="${v === cur ? 'on' : ''}" data-${name}="${v}" title="${t}" aria-label="${t}" aria-pressed="${v === cur}">${ico(i, 'sm')}</button>`).join('')}</div>`;
 function renderCost() {
   const r = lastRes, n = nowRes, split = costSplit === 'total' ? 'loc' : costSplit, parts = PARTS[split](r), np = PARTS[split](n);
-  const mx = Math.max(r.total.mid, n.total.mid);
-  const bar = (ps, tot, lab) => `<div class="cb"><span class="cbl">${lab}</span><div class="hb" style="width:${tot / mx * 100}%">${ps.map(p => `<span style="width:${p[1] / tot * 100}%;background:${p[2]}"></span>`).join('')}</div><b class="num">${gbp(tot)}</b></div>`;
-  document.getElementById('costCard').innerHTML = `<div class="hd"><span class="lab">Cost a year</span>${iI('This plan against Now. Pick how to split it on the right.')}${segBtns('cs', split, [['loc', 'userplus', 'Our staff and locums'], ['wage', 'bank', 'Wages, on-costs and locums'], ['site', 'split', 'By budget']])}</div>
-    ${bar(parts, r.total.mid, 'This plan')}${bar(np, n.total.mid, 'Now')}
-    <div class="kl2">${parts.map((p, i) => `<i style="background:${p[2]}"></i><span>${p[0]}</span><b class="num">${gbp(p[1])}</b><span class="dd num">${Math.abs(p[1] - np[i][1]) < 1 ? 'same as Now' : ((p[1] - np[i][1]) > 0 ? '+' : '−') + gbp(Math.abs(p[1] - np[i][1])) + ' on Now'}</span>`).join('')}</div>`;
+  document.getElementById('costCard').innerHTML = `<div class="hd"><span class="lab">Cost a year</span>${iI('Likely cost: the middle of 40 simulated years, staff and locums together, against Now. Pick how to split it on the right.')}${segBtns('cs', split, [['loc', 'userplus', 'Our staff and locums'], ['wage', 'bank', 'Wages, on-costs and locums'], ['site', 'split', 'By budget']])}</div>
+    <div class="cth"><b class="num">${gbp(r.total.mid)}</b>${deltaPill(r.total.mid, n.total.mid, 'gbp', true)}</div>
+    <div class="hb" style="height:12px">${parts.map(p => `<span style="width:${p[1] / r.total.mid * 100}%;background:${p[2]}"></span>`).join('')}</div>
+    <div class="kl2">${parts.map((p, i) => `<i style="background:${p[2]}"></i><span>${p[0]}</span><b class="num">${gbp(p[1])}</b><span class="dd num">${Math.abs(p[1] - np[i][1]) < 1 ? 'same as Now' : ((p[1] - np[i][1]) > 0 ? '+' : '−') + gbp(Math.abs(p[1] - np[i][1])) + ' on Now'}</span>`).join('')}</div>
+    <span class="rng1" id="costRange"></span>
+    <div class="ctl2"><button class="lk" data-opensheet="rsheet">How sure: every plan against Now ›</button><button class="lk" data-costbreak="1">Cost of each staff group ›</button></div>`;
+  if (typeof renderRanges === 'function') renderRanges();
 }
 function renderCover() {
   const r = lastRes, n = nowRes, B = (x, k) => x['bt_' + k] ? x['bt_' + k].mid : 0;
   const row = (lab, v, nv, col, lt, sub) => `<div class="cvr${sub ? ' sub' : ''}"><span class="cvl">${lab}</span><div class="cvb"><div class="hb"><span style="width:${v * 100}%;background:${col}"></span><span style="width:${Math.max(0, 1 - v) * 100}%;background:${lt}"></span></div><span class="nowm" title="Now" style="left:calc(${nv * 100}% - 1px)"></span></div><b class="num">${pc1(v)}</b></div>`;
+  const big = (ic, lab, color, v, nv, tip) => `<div class="cvh"><span class="lab" style="color:${color}">${ico(ic, 'sm')}${lab}${iI(tip)}</span><b class="num">${pc1(v)}</b>${deltaPill(v, nv, 'pts')}</div>`;
   document.getElementById('coverCard').innerHTML = `<div class="hd"><span class="lab">Covered by our staff</span>${iI('Every minimum shift is filled. The coloured part is our own rota, the pale part is locums. The black tick is Now.')}</div>
-    ${row('Fairfield nights and weekends', B(r, 'fOOH'), B(n, 'fOOH'), 'var(--f)', 'var(--f-lt)')}
-    ${row('Weekday nights', B(r, 'fN_wd'), B(n, 'fN_wd'), 'var(--f)', 'var(--f-lt)', 1)}${row('Weekend nights', B(r, 'fN_we'), B(n, 'fN_we'), 'var(--f)', 'var(--f-lt)', 1)}${row('Weekend days', B(r, 'fL_we'), B(n, 'fL_we'), 'var(--f)', 'var(--f-lt)', 1)}
-    ${row('Salford, all shifts', r.coverS.mid, n.coverS.mid, 'var(--s)', 'var(--s-lt)')}
+    <div class="cvh2">${big('moon', 'Fairfield nights and weekends', 'var(--f)', B(r, 'fOOH'), B(n, 'fOOH'), 'Share of Fairfield nights and weekend long days filled by our own rota. Locums fill every other shift, so none are left empty.')}${big('hosp', 'Salford', 'var(--s)', r.coverS.mid, n.coverS.mid, 'Share of Salford minimum shifts filled by our own rota. Locums fill every other shift, so none are left empty.')}</div>
+    ${row('Fairfield weekday nights', B(r, 'fN_wd'), B(n, 'fN_wd'), 'var(--f)', 'var(--f-lt)', 1)}${row('Fairfield weekend nights', B(r, 'fN_we'), B(n, 'fN_we'), 'var(--f)', 'var(--f-lt)', 1)}${row('Fairfield weekend days', B(r, 'fL_we'), B(n, 'fL_we'), 'var(--f)', 'var(--f-lt)', 1)}
     <div class="cvfoot"><span><i style="background:var(--f)"></i>Our staff</span><span><i style="background:var(--f-lt)"></i>Locums</span><span><i style="background:var(--text);width:2px"></i>Now</span><b class="num">${num(r.locShifts.mid)} locum shifts a year</b></div>`;
 }
 // what one more SCF or specialty doctor post buys: rerun the plan with one more post and compare
-let postTimer = null;
+let postTimer = null, lastOne = null;
 function renderPost() {
   const el = document.getElementById('postCard'); el.innerHTML = `<div class="hd"><span class="lab">What one more post buys</span></div><span class="lab" style="text-transform:none;letter-spacing:0">Working it out…</span>`;
   clearTimeout(postTimer); postTimer = setTimeout(() => {
-    const O = oneMore(S), k = O.k, onc = ONC.reduce((a, t) => a + O.by[t].sup, 0), days = O.sup - onc, oncSpare = Math.max(0, onc - O.closed);
+    const O = oneMore(S); lastOne = O; renderBuy(); const k = O.k, onc = ONC.reduce((a, t) => a + O.by[t].sup, 0), days = O.sup - onc, oncSpare = Math.max(0, onc - O.closed);
     const seg = (v, c, l) => v > 0.5 ? `<span style="width:${v / O.sup * 100}%;background:${c}" title="${l}: ${num(v)}"></span>` : '';
     el.innerHTML = `<div class="hd"><span class="lab">What one more ${k === 'sd' ? 'specialty doctor' : 'SCF'} in post buys</span>${iI('The same average year worked again with one more person in post. Between people a post costs nothing and saves nothing. A post is paid for every shift it works, plus leave, study and on-costs. A locum is paid only for a shift that would otherwise be short. So a post saves money only on its shifts that land on a short shift. Show the workings has every step.')}</div>
       <div class="pb3"><div><span class="lab">Costs</span><b class="num">${gbp(O.cost)}</b></div><div><span class="lab">Saves in locums</span><b class="num">${gbp(O.save)}</b></div><div><span class="lab">Net a year</span><b class="num" style="color:${O.net > 0 ? 'var(--err)' : 'var(--ok)'}">${O.net > 0 ? '+' : '−'}${gbp(Math.abs(O.net))}</b></div></div>
@@ -2588,6 +2606,11 @@ function renderCostSheet(key) {
 }
 document.getElementById('map').addEventListener('click', e => { const b = e.target.closest('[data-costof]'); if (!b) return; e.stopPropagation(); renderCostSheet(b.dataset.costof); }, true);
 document.getElementById('csheetclose').addEventListener('click', () => { document.getElementById('csheet').hidden = true; });
+document.addEventListener('click', e => {
+  const o = e.target.closest('[data-opensheet]'); if (o && !e.target.closest('.ii')) { document.getElementById(o.dataset.opensheet).hidden = false; if (o.dataset.opensheet === 'rsheet') renderRanges(); return; }
+  const c = e.target.closest('[data-closesheet]'); if (c) { document.getElementById(c.dataset.closesheet).hidden = true; return; }
+  if (e.target.closest('[data-costbreak]')) renderCostSheet(active.replace('*', ''));
+});
 
 /* ---------- comparison table ---------- */
 function renderCmp() {
@@ -2686,7 +2709,7 @@ function curKey() { return active.endsWith('*') ? 'live' : active; }
 function keyOfD(d) { if (d.s === S) return curKey(); const p = Object.keys(presetRes).find(k => presetRes[k] === d); if (p) return p; const v = Object.keys(savedRes).find(k => savedRes[k] === d); return v ? 'saved:' + v : null; }
 function urText(key, r) { if (!key || !r) return ''; const w = urSwing(key); return w ? gbp(k1(r.total.mid + w.lo)) + ' to ' + gbp(k1(r.total.mid + w.hi)) : ''; }
 function renderRanges() {
-  const hl = document.getElementById('hlRange'); if (hl && lastRes) { const t = urText(curKey(), lastRes); hl.innerHTML = t ? `likely ${t}${iI(UR_TIP)}` : ''; }
+  const hl = document.getElementById('costRange'); if (hl && lastRes) { const t = urText(curKey(), lastRes); hl.innerHTML = t ? `Likely ${t}${iI(UR_TIP)}` : ''; }
   const el = document.getElementById('rangeCard'); if (!el || !nowRes) return;
   const short = n => n.replace(/^Now \((.*)\)$/, (m, x) => x.charAt(0).toUpperCase() + x.slice(1));
   const rows = planKeys().filter(k => k !== 'now').map(k => ({ k, n: short(planName(k)), r: resOf(k), on: active === k }));
@@ -2717,8 +2740,12 @@ const BUYS = [
 function renderBuy() {
   const el = document.getElementById('buyCard'); if (!el || !lastRes || !nowRes) return;
   const ns = presetRes.now ? presetRes.now.s : NOW;
+  const minD = S.demand.air.Lwd + S.demand.na.Lwd + S.demand.air.Swd + S.demand.na.Swd, sp = lastRes.dayRes ? Math.max(0, lastRes.dayRes.mid - minD) : 0, spN = nowRes.dayRes ? Math.max(0, nowRes.dayRes.mid - minD) : 0;
+  const O = lastOne, who = O && O.k === 'sd' ? 'specialty doctor' : 'SCF';
   el.innerHTML = `<div class="hd"><span class="lab">What the money buys</span>${iI('Facts beside the cost, for you to weigh. No scores: what each is worth is a judgement for us.')}</div>
-    <div class="buyt">${BUYS.map(b => { const v = b.f(S, lastRes), n0 = b.f(ns, nowRes), same = Math.abs(v - n0) < (b.id === 'tr' ? 0.05 : 0.5); return `<div class="bt"><span class="lab">${esc(b.short)}${iI(b.tip)}</span><b class="num">${b.fmt(v)}</b><span class="dd">${b.id === 'p' ? 'SCF, specialty doctor and JCF' : same ? 'Same as Now' : 'Now ' + b.fmt(n0)}</span></div>`; }).join('')}</div>`;
+    <div class="buyt">${BUYS.filter(b => b.id !== 'l').map(b => { const v = b.f(S, lastRes), n0 = b.f(ns, nowRes), same = Math.abs(v - n0) < (b.id === 'tr' ? 0.05 : 0.5); return `<div class="bt"><span class="lab">${esc(b.short)}${iI(b.tip)}</span><b class="num">${b.fmt(v)}</b><span class="dd">${b.id === 'p' ? 'SCF, specialty doctor and JCF' : same ? 'Same as Now' : 'Now ' + b.fmt(n0)}</span></div>`; }).join('')}
+      <button class="bt btl" data-opensheet="dsheet"><span class="lab">Salford spare people on weekday days${iI('Everyone on days at Salford above the minimum of ' + minD + '. They go to teaching, training and other learning. Tap for the chart.')}</span><b class="num">${num(sp, 1)} a day</b><span class="dd">${Math.abs(sp - spN) < 0.05 ? 'Same as Now' : 'Now ' + num(spN, 1) + ' a day'} ›</span></button></div>
+    <div class="ctl" id="oneLine">${O ? `<span class="rng1">One more ${who} in post costs ${gbp(O.cost)} and saves ${gbp(O.save)} in locums</span>` : '<span class="rng1">Working out one more post…</span>'}<button class="lk" data-opensheet="psheet">Why ›</button></div>`;
 }
 
 /* ---------- compute ---------- */
@@ -2768,16 +2795,15 @@ document.getElementById('savebar').addEventListener('click', async e => {
     { sel: '.plancol', q: 'Where do I start?', a: 'Pick a plan from the list. Today’s staffing is at the top. Other ideas are below.' },
     { sel: '.plans .pcw', q: 'What does a plan card show?', a: 'The ring fills with how much of Fairfield’s nights and weekends our own doctors cover.', k: 'FGH: Fairfield nights and weekends we cover. SRH: Salford shifts we cover. £: cost a year, or the difference from Now.' },
     { sel: '.plans .pcost', q: 'What does the £ button do?', a: 'It opens what the plan’s cost is made of: each staff group, then the locums.' },
-    { sel: '#hl', q: 'What are the three big numbers?', a: 'Fairfield nights and weekends we cover, Salford shifts we cover, and the cost a year. Every other shift is filled by a locum.' },
-    { sel: '#rangeCard', q: 'How sure are we of the money?', a: 'Each plan against Now, with a likely range from the inputs we are least sure of, like locum rates and sickness. Grey means it could go either way.' },
-    { sel: '#buyCard', q: 'What does the money buy?', a: 'Facts beside the cost: nights and weekends each, posts to fill, training posts and locum shifts. What they are worth is for us to judge.' },
-    { sel: '#coverCard', q: 'Why is Fairfield so low?', a: 'Only SCFs can work Fairfield nights and weekends, and Salford needs most of their nights first. Bank shifts by our own staff count as locums.', k: 'This matches last year in Allocate.' },
+    { sel: '#coverCard', q: 'How much do our own doctors cover?', a: 'Fairfield nights and weekends, and Salford, filled by our own rota. Every shift we can’t cover goes to a locum, so none are left empty. Only SCFs can work Fairfield nights and weekends, and Salford needs most of their nights first.', k: 'This matches last year in Allocate.' },
+    { sel: '#costCard', q: 'What does it cost?', a: 'Staff and locums for a year, against Now, with a likely range. How sure shows every plan against Now; the breakdown shows each staff group.' },
+    { sel: '#buyCard', q: 'What does the money buy?', a: 'Facts beside the cost: nights and weekends each, training posts, spare people on Salford days and posts to fill. What they are worth is for us to judge.' },
     { sel: '#panel', q: 'What can I change?', a: 'Anything under Inputs. Start with Staff: posts for each group, how many are filled, and who works part-time.', do: () => go('staff') },
     { sel: '#panel', q: 'What can I change for SCFs?', a: 'Posts, pay, work schedule, how long people stay, and how long before they can work at Fairfield.', do: () => go('core') },
     { sel: '#panel', q: 'What rota do people work?', a: 'The trust’s 9-week template, or its part-time versions. Everyone gets 3 weekend nights every 9 weeks, so weekend nights are always the pinch.', do: () => go('lines') },
     { sel: '#panel', q: 'How is Fairfield staffed?', a: 'Salford first. SCFs not needed at Salford go to Fairfield, up to 40% of their on-calls.', do: () => go('fgh') },
     { sel: '#panel', q: 'What do locums cost?', a: 'NHSP bank rates, with a share going to agency. Tap any (i) to see the sum.', do: () => go('loc') },
-    { sel: '#postCard', q: 'Why don’t more SCFs save money?', a: 'An SCF is paid for every shift. Only their nights and weekend long days fill gaps. Their day shifts are spare.', do: () => go('home') },
+    { sel: '#buyCard', q: 'Why don’t more SCFs save money?', a: 'An SCF is paid for every shift. Only their nights and weekend long days fill gaps; their day shifts are spare. Tap Why for the sums.', do: () => go('home') },
     { sel: '#wkbtn', q: 'How do I check the sums?', a: 'Show the workings sets out every step, with the numbers.' },
     { sel: '#deepbtn', q: 'How do I compare or keep a plan?', a: 'Compare plans puts every plan side by side. To keep a plan, name it and save it.' }
   ];
