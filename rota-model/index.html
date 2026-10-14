@@ -2657,12 +2657,12 @@ document.getElementById('savebar').addEventListener('click', async e => {
   const pick = id => choose({ dataset: { preset: id } });
   const STEPS = [
     { sel: '#app', q: 'What is this?', a: 'A model of the resident rota at Salford and Fairfield. Pick a plan, change anything, and see what it costs and how many shifts our own doctors cover.', do: () => { pick('now'); go('home'); } },
-    { sel: '.plancol', q: 'Where do I start?', a: 'Pick a plan on the left. Today’s staffing is at the top. Other ideas are below.' },
+    { sel: '.plancol', q: 'Where do I start?', a: 'Pick a plan from the list. Today’s staffing is at the top. Other ideas are below.' },
     { sel: '.plans .pcw', q: 'What does a plan card show?', a: 'The ring fills with how much of Fairfield’s nights and weekends our own doctors cover.', k: 'FGH: Fairfield nights and weekends we cover. SRH: Salford shifts we cover. £: cost a year, or the difference from Now.' },
     { sel: '.plans .pcost', q: 'What does the £ button do?', a: 'It opens what the plan’s cost is made of: each staff group, then the locums.' },
     { sel: '#hl', q: 'What are the three big numbers?', a: 'Fairfield nights and weekends we cover, Salford shifts we cover, and the cost a year. Every other shift is filled by a locum.' },
     { sel: '#coverCard', q: 'Why is Fairfield so low?', a: 'Only SCFs can work Fairfield nights and weekends, and Salford needs most of their nights first. Bank shifts by our own staff count as locums.', k: 'This matches last year in Allocate.' },
-    { sel: '#panel', q: 'What can I change?', a: 'Anything in the middle column. Start with Staff: posts for each group, how many are filled, and who works part-time.', do: () => go('staff') },
+    { sel: '#panel', q: 'What can I change?', a: 'Anything under Inputs. Start with Staff: posts for each group, how many are filled, and who works part-time.', do: () => go('staff') },
     { sel: '#panel', q: 'What can I change for SCFs?', a: 'Posts, pay, work schedule, how long people stay, and how long before they can work at Fairfield.', do: () => go('core') },
     { sel: '#panel', q: 'What rota do people work?', a: 'The trust’s 9-week template, or its part-time versions. Everyone gets 3 weekend nights every 9 weeks, so weekend nights are always the pinch.', do: () => go('lines') },
     { sel: '#panel', q: 'How is Fairfield staffed?', a: 'Salford first. SCFs not needed at Salford go to Fairfield, up to 40% of their on-calls.', do: () => go('fgh') },
@@ -2676,13 +2676,17 @@ document.getElementById('savebar').addEventListener('click', async e => {
   function place() {
     const st = STEPS[i]; let target = document.querySelector(st.sel); if (!target && st.alt) target = document.querySelector(st.alt);
     if (!target) target = document.getElementById('app');
-    target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const mob = window.mIsMobile && window.mIsMobile();
+    if (mob && st.sel !== '#app') window.mTab(target.closest('.plancol') ? 'plans' : target.closest('.outs') ? 'outs' : 'inputs');
+    if (mob) { target.scrollIntoView({ block: 'start', behavior: 'instant' }); window.scrollBy(0, -12); } else target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     setTimeout(() => {
-      const r = target.getBoundingClientRect(), pad = 8, full = st.sel === '#app';
+      const r0 = target.getBoundingClientRect(), pad = 8, full = st.sel === '#app';
+      const r = mob ? { left: r0.left, right: r0.right, width: r0.width, top: Math.max(r0.top, 8), bottom: Math.min(r0.bottom, window.innerHeight - 80), height: Math.min(r0.bottom, window.innerHeight - 80) - Math.max(r0.top, 8) } : r0;
       Object.assign(spot.style, full ? { left: '0px', top: '0px', width: '0px', height: '0px' } : { left: (r.left - pad) + 'px', top: (r.top - pad) + 'px', width: (r.width + pad * 2) + 'px', height: (r.height + pad * 2) + 'px' });
       spot.classList.toggle('full', full);
       const cw = Math.min(380, window.innerWidth - 32), ch = card.offsetHeight || 220; let x, y;
       if (full) { x = (window.innerWidth - cw) / 2; y = Math.max(16, (window.innerHeight - ch) / 2); }
+      else if (mob) { x = 16; y = r.top > ch + 40 ? 16 : window.innerHeight - ch - 84; }
       else if (r.right + cw + 24 < window.innerWidth) { x = r.right + 16; y = Math.min(Math.max(16, r.top), window.innerHeight - ch - 16); }
       else if (r.left - cw - 24 > 0) { x = r.left - cw - 16; y = Math.min(Math.max(16, r.top), window.innerHeight - ch - 16); }
       else { x = Math.max(16, Math.min(r.left, window.innerWidth - cw - 16)); y = r.bottom + ch + 24 < window.innerHeight ? r.bottom + 12 : Math.max(16, r.top - ch - 12); }
@@ -2727,5 +2731,69 @@ renderPanel(); recompute(); setTimeout(statPresets, 30);
 })();
 })();
 </script>
+<style>
+/* phone layout: one column at a time, switched by a tab bar */
+.mtabs { display: none; }
+@media (max-width: 760px) {
+  body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+  .app[data-tab="plans"] .side:not(.plancol), .app[data-tab="plans"] .outs > :not(.sheet) { display: none; }
+  .app[data-tab="inputs"] .plancol, .app[data-tab="inputs"] .outs > :not(.sheet) { display: none; }
+  .app[data-tab="outs"] .side { display: none; }
+  .app[data-tab="plans"] .outs, .app[data-tab="inputs"] .outs { padding: 0; min-height: 0; }
+  .side { min-height: calc(100vh - 68px); }
+  .mtabs { display: grid; grid-template-columns: repeat(3, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 15;
+    background: rgba(255,255,255,.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid #e3e3e8;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); gap: 6px; }
+  .mtabs button { font: inherit; border: 0; background: transparent; color: #6e6e73; display: grid; justify-items: center; gap: 2px; padding: 6px 4px; border-radius: 12px; font-size: 11px; font-weight: 600; letter-spacing: .02em; }
+  .mtabs button b { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #ececef; color: #3a3a3c; font-size: 12px; }
+  .mtabs button span { font-size: 12px; }
+  .mtabs button.on { color: #1d1d1f; background: #f0f0f3; }
+  .mtabs button.on b { background: #1d1d1f; color: #fff; }
+  .mtabs .mt-sub { font-size: 10px; font-weight: 500; color: #8a8a8f; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sheetin { padding: 16px; width: 100%; }
+  .sheet { z-index: 30; }
+  .sheetin table { display: block; max-width: 100%; overflow-x: auto; }
+  .tour .tcard { max-height: 46vh; overflow: auto; }
+  .kl2 { grid-template-columns: 10px minmax(0,1fr) auto; row-gap: 2px; }
+  .kl2 .dd { grid-column: 2 / -1; margin-bottom: 6px; }
+}
+</style>
+<nav class="mtabs" id="mtabs" aria-label="Sections">
+  <button data-mt="plans"><b>1</b><span>Plans</span><i class="mt-sub" id="mtPlan"></i></button>
+  <button data-mt="inputs"><b>2</b><span>Inputs</span><i class="mt-sub">Change anything</i></button>
+  <button data-mt="outs"><b>3</b><span>Results</span><i class="mt-sub" id="mtRes"></i></button>
+</nav>
+<script>
+(() => {
+  const app = document.getElementById('app'), bar = document.getElementById('mtabs');
+  const mq = window.matchMedia('(max-width: 760px)');
+  window.mIsMobile = () => mq.matches;
+  window.mTab = (t, top) => {
+    app.dataset.tab = t;
+    bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mt === t));
+    if (top !== false && mq.matches) window.scrollTo(0, 0);
+  };
+  bar.addEventListener('click', e => { const b = e.target.closest('[data-mt]'); if (b) window.mTab(b.dataset.mt); });
+  window.mTab('plans', false);
+  // picking a plan on a phone takes you straight to its results
+  document.getElementById('map').addEventListener('click', e => {
+    if (!mq.matches) return;
+    const t = e.target.closest('button'); if (!t || e.target.closest('[data-costof]')) return;
+    if (document.querySelector('#map input[data-rename]')) return;
+    if (t.dataset.preset || t.dataset.saved) setTimeout(() => window.mTab('outs'), 60);
+  });
+  // keep the tab labels in step with the page
+  const sync = () => {
+    const n = document.getElementById('outName'); document.getElementById('mtPlan').textContent = n ? n.textContent : '';
+    const hl = document.getElementById('hl'); const v = hl && hl.querySelector('.big, .v, b');
+    const cost = hl ? (hl.textContent.match(/£[\d,]+/) || [''])[0] : '';
+    document.getElementById('mtRes').textContent = cost;
+  };
+  new MutationObserver(sync).observe(document.getElementById('hl'), { childList: true, subtree: true, characterData: true });
+  new MutationObserver(sync).observe(document.getElementById('outName'), { childList: true, subtree: true, characterData: true });
+  sync();
+})();
+</script>
+
 
 </body></html>
