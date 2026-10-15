@@ -1547,7 +1547,12 @@ function perPerson(s, k, mo, lineKey) {
   const pc = s.core.practice && ['scf_current', 'scf_actual', 'trainee', 'accp', 'accp10'].includes(g.line) && PRACTICE[PCLASS[k]];
   // nights are balanced: each night needs the same number, so a template's spare weekday nights (it has 6 weekday
   // to 3 weekend nights) are rostered as standard days instead. SCFs and specialty doctors keep theirs for FGH.
-  if (s.core.balance !== false && !CORE.includes(k) && out.Nwd > out.Nwe * 4 / 3) { const x = out.Nwd - out.Nwe * 4 / 3; out.Nwd -= x; out.Swd += x; }
+  // the extra weekday night sets on the extra-nights template are worked as nights, not swapped: only the base template's spare nights are moved
+  if (s.core.balance !== false && !CORE.includes(k) && out.Nwd > out.Nwe * 4 / 3) {
+    let x = out.Nwd - out.Nwe * 4 / 3;
+    if (g.line === 'scf_2n') { const bg = M.gridFor(s, 'scf_current'), bc = M.lineCounts(bg, 0), bn = bc.Nwd / bg.length, be = bc.Nwe / bg.length; x = Math.min(x, Math.max(0, bn - be * 4 / 3) * (out.Nwe / (be || 1))); }
+    out.Nwd -= x; out.Swd += x;
+  }
   // SCFs and specialty doctors: some weekday nights are changed to day shifts at short notice (from Allocate: 249 worked against 291 on the template)
   if (CORE.includes(k) && g.n2d) { const x = out.Nwd * g.n2d; out.Nwd -= x; out.Swd += x; }
   out.Swd = Math.max(0, out.Swd - leaveDays(g, mo, s));
