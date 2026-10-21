@@ -381,6 +381,8 @@ details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer;
 .pcb .pst b { font-size: 12.5px; font-weight: 600; color: #fff; }
 .pcb .pst .pu b { color: #8fe0b3; } .pcb .pst .pdn b { color: #f2a8a3; }
 .pcb .hid { color: #ffd88a; }
+.pcb .cpl { display: inline-block; margin: 0 6px 2px 0; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; background: rgba(255,255,255,.12); color: #fff; }
+.pcb .cpl.cg { background: rgba(52,199,89,.2); color: #9be8bb; } .pcb .cpl.cr { background: rgba(255,69,58,.2); color: #ffb3ad; }
 </style>
 <!--DEFS-->
 <div class="app" id="app">
@@ -966,9 +968,9 @@ function renderMap() {
   } else {
     const n0 = presetRes.now && presetRes.now.r;
     const resLine = (r, key) => { if (!r) return 'Working…'; const f = Math.round(r.bt_fOOH.mid * 100), sR = Math.round((r.bt_sOOH ? r.bt_sOOH.mid : r.coverS.mid) * 100);
-      if (key === 'now' || !n0) return `Fairfield ${f}% · Salford ${sR}% · ${gbp(r.total.mid)}`;
+      if (key === 'now' || !n0) return `<span><span class="cpl">${gbp(r.total.mid)}</span>Fairfield ${f}% · Salford ${sR}%</span>`;
       const d = r.total.mid - n0.total.mid, sameF = Math.abs(r.bt_fOOH.mid - n0.bt_fOOH.mid) < 0.005;
-      return `${sameF ? 'Same cover' : 'Fairfield ' + f + '%'} · ${Math.abs(d) < 5000 ? 'about the same cost' : d < 0 ? gbp(-d) + ' cheaper' : gbp(d) + ' more'}`; };
+      return `<span><span class="cpl ${Math.abs(d) < 5000 ? '' : d < 0 ? 'cg' : 'cr'}">${Math.abs(d) < 5000 ? 'About the same cost' : d < 0 ? gbp(-d) + ' cheaper' : gbp(d) + ' more'}</span>${sameF ? 'Same cover' : 'Fairfield ' + f + '%'}</span>`; };
     const pOf = key => PRESETS.find(x => x.id === key) || {};
     const SG = [['SCF', ['scf']], ['SD', ['sd']], ['Airway', ['icm1', 'icm2', 'icm3', 'anaes']], ['Other', ['jcf', 'accs', 'imt', 'fy2', 'other']], ['ACCP', ['accpA', 'accpF', 'accpT', 'accpO']]];
     const wtes = s => SG.map(([, ks]) => ks.reduce((a, k) => a + (s.groups[k] ? M2.wteOf(s, k) : 0), 0));
