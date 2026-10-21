@@ -383,6 +383,13 @@ details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer;
 .pcb .hid { color: #ffd88a; }
 .pcb .cpl { display: inline-block; margin: 0 6px 2px 0; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; background: rgba(255,255,255,.12); color: #fff; }
 .pcb .cpl.cg { background: rgba(52,199,89,.2); color: #9be8bb; } .pcb .cpl.cr { background: rgba(255,69,58,.2); color: #ffb3ad; }
+.pcb .prs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 3fr); gap: 3px; margin: 0 0 3px; }
+.pcb .prs > span { background: rgba(255,255,255,.06); border-radius: 7px; padding: 3px 6px; display: grid; min-width: 0; }
+.pcb .prs em { font-style: normal; font-size: 9px; font-weight: 600; color: #9aa2b0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pcb .prs b { font-size: 12.5px; font-weight: 600; color: #fff; white-space: nowrap; }
+.pcb .prs .pu b { color: #8fe0b3; } .pcb .prs .pdn b { color: #f2a8a3; }
+.pcb .prs .pc.cg { background: rgba(52,199,89,.2); } .pcb .prs .pc.cg b { color: #9be8bb; }
+.pcb .prs .pc.cr { background: rgba(255,69,58,.2); } .pcb .prs .pc.cr b { color: #ffb3ad; }
 </style>
 <!--DEFS-->
 <div class="app" id="app">
@@ -967,10 +974,14 @@ function renderMap() {
     h = keys.map((key, i) => `<div class="r6 drag" draggable="true" data-key="${esc(key)}"><span class="ib grab" title="Drag">${ico('drag', 'sm')}</span><input class="pname" data-rename="${esc(key)}" value="${esc(draft.names[key] || defName(key))}" aria-label="Plan name" maxlength="60"><span class="mv"><button data-mv="${esc(key)}" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">${ico('chevron-up', 'sm')}</button><button data-mv="${esc(key)}" data-dir="1" ${i === keys.length - 1 ? 'disabled' : ''} aria-label="Move down">${ico('cdown', 'sm')}</button></span></div>`).join('');
   } else {
     const n0 = presetRes.now && presetRes.now.r;
-    const resLine = (r, key) => { if (!r) return 'Working…'; const f = Math.round(r.bt_fOOH.mid * 100), sR = Math.round((r.bt_sOOH ? r.bt_sOOH.mid : r.coverS.mid) * 100);
-      if (key === 'now' || !n0) return `<span><span class="cpl">${gbp(r.total.mid)}</span>Fairfield ${f}% · Salford ${sR}%</span>`;
-      const d = r.total.mid - n0.total.mid, sameF = Math.abs(r.bt_fOOH.mid - n0.bt_fOOH.mid) < 0.005;
-      return `<span><span class="cpl ${Math.abs(d) < 5000 ? '' : d < 0 ? 'cg' : 'cr'}">${Math.abs(d) < 5000 ? 'About the same cost' : d < 0 ? gbp(-d) + ' cheaper' : gbp(d) + ' more'}</span>${sameF ? 'Same cover' : 'Fairfield ' + f + '%'}</span>`; };
+    const resLine = (r, key) => { if (!r) return '<span class="prs"><span><em>Working…</em><b>&nbsp;</b></span></span>';
+      const sv = x => x.bt_sOOH ? x.bt_sOOH.mid : x.coverS.mid, f = Math.round(r.bt_fOOH.mid * 100), sR = Math.round(sv(r) * 100);
+      const cl = (v, v0) => !n0 || key === 'now' || v === v0 ? '' : v > v0 ? 'pu' : 'pdn';
+      const f0 = n0 ? Math.round(n0.bt_fOOH.mid * 100) : f, s0 = n0 ? Math.round(sv(n0) * 100) : sR;
+      let c, cc = '';
+      if (key === 'now' || !n0) c = gbp(r.total.mid);
+      else { const d = r.total.mid - n0.total.mid; c = Math.abs(d) < 5000 ? 'About the same' : d < 0 ? gbp(-d) + ' cheaper' : gbp(d) + ' more'; cc = Math.abs(d) < 5000 ? '' : d < 0 ? 'cg' : 'cr'; }
+      return `<span class="prs"><span class="${cl(f, f0)}"><em>FGH</em><b>${f}%</b></span><span class="${cl(sR, s0)}"><em>SRH</em><b>${sR}%</b></span><span class="pc ${cc}"><em>${key === 'now' || !n0 ? 'Cost a year' : 'Cost against last year'}</em><b>${c}</b></span></span>`; };
     const pOf = key => PRESETS.find(x => x.id === key) || {};
     const SG = [['SCF', ['scf']], ['SD', ['sd']], ['Airway', ['icm1', 'icm2', 'icm3', 'anaes']], ['Other', ['jcf', 'accs', 'imt', 'fy2', 'other']], ['ACCP', ['accpA', 'accpF', 'accpT', 'accpO']]];
     const wtes = s => SG.map(([, ks]) => ks.reduce((a, k) => a + (s.groups[k] ? M2.wteOf(s, k) : 0), 0));
@@ -978,14 +989,14 @@ function renderMap() {
     const strip = s => { if (!s) return ''; const w = wtes(s); return `<span class="pst">${SG.map(([l], i) => { const v = w[i], d = w0 ? v - w0[i] : 0; return `<span class="${d > 0.05 ? 'pu' : d < -0.05 ? 'pdn' : ''}"><em>${l}</em><b>${num(v, v % 1 > 0.05 && v % 1 < 0.95 ? 1 : 0)}</b></span>`; }).join('')}</span>`; };
     const chOf = key => { const p = pOf(key), a = key.startsWith('saved:') ? 'A saved plan' : (p.ch || ''), b = p.hid || ''; return a || b ? `<span class="pcr"><i>Change</i><span>${esc(a)}${a && b ? ' · ' : ''}${b ? `<span class="hid">${esc(b)}</span>` : ''}</span></span>` : ''; };
     const card = key => { const on = base === key, editing = on && ed, r = resOf(key), attr = key.startsWith('saved:') ? `data-saved="${esc(key.slice(6))}"` : `data-preset="${key}"`;
-      return `<div class="pcw"><button class="r6 pcb ${on ? 'on' : ''} ${editing ? 'edit' : ''}" ${attr} aria-pressed="${on}"><span class="pcn">${esc(planName(key))}${editing ? ' <span class="editing"><i></i>Changing</span>' : ''}</span>${strip(editing ? S : stateOf(key))}${chOf(key)}<span class="pcr"><i>Result</i>${resLine(editing && lastRes ? lastRes : r, key)}</span></button><button class="pcost" data-costof="${esc(key)}" aria-label="What makes up the cost of ${esc(planName(key))}" title="Cost breakdown">${ico('pound', 'sm')}</button></div>${editing ? chgBlock(r) : ''}`; };
+      return `<div class="pcw"><button class="r6 pcb ${on ? 'on' : ''} ${editing ? 'edit' : ''}" ${attr} aria-pressed="${on}"><span class="pcn">${esc(planName(key))}${editing ? ' <span class="editing"><i></i>Changing</span>' : ''}</span>${strip(editing ? S : stateOf(key))}${resLine(editing && lastRes ? lastRes : r, key)}${chOf(key)}</button><button class="pcost" data-costof="${esc(key)}" aria-label="What makes up the cost of ${esc(planName(key))}" title="Cost breakdown">${ico('pound', 'sm')}</button></div>${editing ? chgBlock(r) : ''}`; };
     const GRP = [['Last year', ['now']], ['Staffing', ['month', 'fulldean']], ['Change the rota', ['nights2', 'fghline']], ['Change the staff', ['allsd', 'value', 'nogaps']], ['In theory', ['stable']]], keys = planKeys(), placed = GRP.flatMap(g => g[1]);
     h = GRP.map(([g, ks]) => { const kk = keys.filter(k => ks.includes(k)); return kk.length ? `<div class="pgh">${g}</div>${kk.map(card).join('')}` : ''; }).join('');
     const rest = keys.filter(k => !placed.includes(k)); if (rest.length) h += `<div class="pgh">Saved plans</div>${rest.map(card).join('')}`;
   }
   ensureRanges();
   el.innerHTML = `<div class="plans">${head}<div class="grp6" id="planlist">${h}</div>
-    ${planEdit ? `<div class="key">${db && canSave ? 'Changes are shared with everyone' : 'Changes are kept in this browser'}</div>` : `<div class="key" style="flex-wrap:wrap"><span>Staff are WTE in post on average: green more than last year, red fewer. SD: specialty doctors. Airway: ICM and anaesthetic trainees. Other: JCFs, ACCS, IMT, FY2 and other trainees. Cover is nights and weekends covered by our own staff.</span></div>`}</div>`;
+    ${planEdit ? `<div class="key">${db && canSave ? 'Changes are shared with everyone' : 'Changes are kept in this browser'}</div>` : `<div class="key" style="flex-wrap:wrap"><span>Staff are WTE in post on average: green more than last year, red fewer. SD: specialty doctors. Airway: ICM and anaesthetic trainees. Other: JCFs, ACCS, IMT, FY2 and other trainees. FGH and SRH: Fairfield and Salford nights and weekends covered by our own staff.</span></div>`}</div>`;
   renderHeads();
 }
 const MODE_TIP = 'Theoretical: everyone works the 9-week template (or the part-time 80, 70, 60 or 50% templates) exactly as written. Leave comes only out of standard days. In practice: the same hours, spread across nights, weekends and days the way each group actually worked them in Allocate, Sep 2025 to Aug 2026, leaving out bank shifts.';
