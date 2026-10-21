@@ -53,10 +53,10 @@ function rawWte(s, k, cs) {
   if (CORE.includes(k)) return cs ? cs[k].paid * wf(g) : (g.posts + (g.newPosts || 0)) * keep(g) * wf(g);
   return g.posts * fillOf(g, null, k) * wf(g);
 }
-// a theoretical (stable) rota is built from whole lines: part-time people only count once they add up to a whole line
+// the Ideal year rota is built from whole lines (core.wholeLines): part-time people only count once they add up to a whole line
 const ACCPK = ['accpA', 'accpF', 'accpT', 'accpO'];
 function wholeF(s, k) {
-  if (!s.core || !s.core.stable) return 1;
+  if (!s.core || !s.core.wholeLines) return 1;
   const ks = ACCPK.includes(k) ? ACCPK : [k], W = ks.reduce((a, x) => a + (s.groups[x] ? rawWte(s, x) : 0), 0);
   return W > 0 ? Math.floor(W + 1e-6) / W : 0;
 }
@@ -96,7 +96,7 @@ function now() {
       fy2: g({ label: 'FY2', posts: 4, spa: 0, basic: PAY.nd2, changeover: [7, 11, 3] }),
       other: g({ label: 'ED, neuro, renal, RCF', posts: 2, spa: 0, basic: PAY.nd4a, study: 7 })
     },
-    core: { lumpy: 0.175, extPlacement: 1, fghCap: 0.4, fghTeamSal: 0.4, fghTrain: 0.5, weekendFghOthers: false, funding: 'salford', fghPosts: 0, pooledFgh: 0.5, fghAnaes: 0, fghAnaesN: 0, fghLine: '', leaveSeason: true, absSeason: true },
+    core: { lumpy: 0.175, extPlacement: 1, fghCap: 0.4, fghTeamSal: 0.4, fghTrain: 0.5, weekendFghOthers: false, funding: 'salford', fghPosts: 0, pooledFgh: 0.5, fghAnaes: 0, fghAnaesN: 0, oldhamN: 0, fghLine: '', leaveSeason: true, absSeason: true },
     absence: { sick: 0.03, other: 0.02 },
     demand: {
       fgh: { L: 1, N: 1 }, fghT: { L: 1, N: 1 },
@@ -237,6 +237,11 @@ function allocate(s, cs, mo, fills) {
     const amt = {}; TYPES.forEach(t => amt[t] = 0); amt.Nwd = Math.min(4, core.fghAnaesN) * s.demand.fgh.N;
     pools.push({ id: 'anaesX', g: 'anaesX', amt, left: Object.assign({}, amt), used: Object.fromEntries(TYPES.map(t => [t, {}])), el: { fgh: true } });
   }
+  // Oldham doctors cover some Fairfield ICU nights a week, spread over weekday and weekend nights, at no cost to this budget
+  if ((core.oldhamN || 0) > 0) {
+    const amt = {}, n = Math.min(7, core.oldhamN); TYPES.forEach(t => amt[t] = 0); amt.Nwd = n * 4 / 7 * s.demand.fgh.N; amt.Nwe = n * 3 / 7 * s.demand.fgh.N;
+    pools.push({ id: 'oldhamX', g: 'oldhamX', amt, left: Object.assign({}, amt), used: Object.fromEntries(TYPES.map(t => [t, {}])), el: { fgh: true } });
+  }
   const by = Object.fromEntries(pools.map(p => [p.id, p]));
   const ids = f => pools.filter(f).map(p => p.id);
 
@@ -267,7 +272,7 @@ function allocate(s, cs, mo, fills) {
   const hoursOf = l => l.reduce((a, id) => a + (by[id] ? ONCALL.reduce((b, t) => b + by[id].amt[t] * TH[t], 0) : 0), 0);
   const fullF = ['scfFullF', 'sdFullF'].filter(id => by[id]), fullS = ['scfFullS', 'sdFullS'].filter(id => by[id]);
   const bud = { F: { left: (1 - (core.fghTeamSal == null ? 0.4 : core.fghTeamSal)) * hoursOf(fullF) }, S: { left: core.fghCap * hoursOf(fullS) } };
-  const oth = p => !p.el.core && p.id !== 'anaesX';
+  const oth = p => !p.el.core && p.id !== 'anaesX' && p.id !== 'oldhamX';
   const otherFghL = ids(p => oth(p) && p.el.fghL), otherFghWE = ids(p => oth(p) && (p.el.fghWE || (core.weekendFghOthers && p.el.fghL))), otherFghN = ids(p => oth(p) && p.el.fgh);
   const ordFgh = ['Nwe', 'Lwe', 'Nwd', 'Lwd'];
   function fghOthers(lvl) {
@@ -277,6 +282,7 @@ function allocate(s, cs, mo, fills) {
   }
   function fghCore(f, lvl) {
     if (by.anaesX) ['Nwe', 'Nwd'].forEach(t => take(['anaesX'], t, short('fgh', t, lvl), 'fgh'));
+    if (by.oldhamX) ['Nwe', 'Nwd'].forEach(t => take(['oldhamX'], t, short('fgh', t, lvl), 'fgh'));
     const list = (f === 'F' ? fullF : fullS).filter(id => by[id].el.fgh || by[id].el.fghL);
     ordFgh.forEach(t => {
       const w = short('fgh', t, lvl); if (w <= 0) return;
@@ -318,7 +324,7 @@ function allocate(s, cs, mo, fills) {
 
   const gap = {}; SITES.forEach(c => { gap[c] = {}; TYPES.forEach(t => gap[c][t] = Math.max(0, nMin[c][t] - filled[c][t])); });
   let dayRes = 0, trainFgh = 0;
-  pools.forEach(p => { if (p.id === 'anaesX') return; ['Lwd', 'Swd'].forEach(t => { dayRes += (p.used[t].air || 0) + (p.used[t].na || 0) + p.left[t]; }); trainFgh += p.amt.trainFgh || 0; });
+  pools.forEach(p => { if (p.id === 'anaesX' || p.id === 'oldhamX') return; ['Lwd', 'Swd'].forEach(t => { dayRes += (p.used[t].air || 0) + (p.used[t].na || 0) + p.left[t]; }); trainFgh += p.amt.trainFgh || 0; });
   return { pools, by, nMin, nT, filled, gap, dayRes: dayRes / 5, trainFgh };
 }
 
@@ -446,7 +452,7 @@ function workings(s) {
   for (let mo = 0; mo < 12; mo++) {
     const a = month(s, cs, mo, null, pay).a;
     a.pools.forEach(p => {
-      const k = p.g, G = groups[k] || (groups[k] = { k, label: k === 'anaesX' ? 'FGH anaesthetist' : s.groups[k].label, rota: 0, supply: z(), fgh: z(), srh: z(), spare: z() });
+      const k = p.g, G = groups[k] || (groups[k] = { k, label: k === 'anaesX' ? 'FGH anaesthetist' : k === 'oldhamX' ? 'Oldham' : s.groups[k].label, rota: 0, supply: z(), fgh: z(), srh: z(), spare: z() });
       G.rota += (p.heads || 0) / 12;
       TYPES.forEach(t => { G.supply[t] += p.amt[t] * w; G.fgh[t] += (p.used[t].fgh || 0) * w; G.srh[t] += ((p.used[t].air || 0) + (p.used[t].na || 0)) * w; G.spare[t] += p.left[t] * w; });
     });

@@ -370,6 +370,11 @@ details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer;
 .row2.tot { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 2px; }
 .cvh .bys { font-size: 13px; font-weight: 500; letter-spacing: 0; color: var(--text-2); margin-left: 6px; }
 .cva { font-size: 12.5px; color: var(--text-2); display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; } .cva b { color: var(--text); font-size: 13px; }
+.plans .r6.pcb { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; row-gap: 3px; padding: 10px 44px 10px 12px; }
+.pcb .pcn { font-weight: 600; font-size: 13.5px; line-height: 1.25; }
+.pcb .pcr { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 6px; font-size: 12px; color: var(--text-2); line-height: 1.3; }
+.pcb .pcr i { font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); padding-top: 2px; }
+.pcw + .pcw > .r6.pcb::before { left: 12px !important; }
 </style>
 <!--DEFS-->
 <div class="app" id="app">
@@ -417,22 +422,22 @@ const iI = t => `<span class="ii" tabindex="0" data-tip="${esc(t)}">${ico('info'
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } } };
 
 /* ---------- presets ---------- */
-const STABLE = s => { s.core.stable = true; Object.values(s.groups).forEach(g => { if (g.fill != null) g.fill = 1; g.recruit = 0; g.induct = 0; if (g.supernum != null) { g.supernum = 0; g.signoff = 0; } }); s.accp.recruit = 0; s.absence.sick = 0; s.absence.other = 0; s.core.extPlacement = 0; };
+const STABLE = s => { s.core.stable = true; s.core.wholeLines = true; Object.values(s.groups).forEach(g => { if (g.fill != null) g.fill = 1; g.recruit = 0; g.induct = 0; if (g.supernum != null) { g.supernum = 0; g.signoff = 0; } }); s.accp.recruit = 0; s.absence.sick = 0; s.absence.other = 0; s.core.extPlacement = 0; };
 const PRESETS = [
-  { id: 'now', tg: ['10 SCFs'], n: 'Now (average over a year)', d: 'Today’s staff, averaged over a year', ic: 'clock', fn: s => s },
-  { id: 'stable', tg: ['no sickness or turnover', 'any share at Fairfield'], n: '15 specialty doctors, no locums', d: 'No sickness, gaps or turnover, and doctors can work any share of their shifts at either site: the least that could work in theory', ic: 'min', fn: (s, pr) => { STABLE(s); s.core.fghCap = 1; s.groups.scf.posts = 0; s.groups.sd.posts = 15; s.groups.sd.line = 'sd10'; } },
-  { id: 'month', tg: ['11 SCFs', 'October roster'], n: 'Now (October 2026)', d: 'Who is on the Allocate roster this month', ic: 'cal', fn: s => {   // who is on the Allocate roster this month, by group
+  { id: 'now', tg: ['10 SCFs'], n: 'Today, averaged over a year', ch: 'Today’s staff and rota', d: 'Today’s staff, averaged over a year', ic: 'clock', fn: s => s },
+  { id: 'stable', tg: ['no sickness or turnover', 'any share at Fairfield'], n: 'Ideal year, no locums', ch: '+15 specialty doctors, no sickness or gaps', d: 'No sickness, gaps or turnover, and doctors can work any share of their shifts at either site: the least that could work in theory', ic: 'min', fn: (s, pr) => { STABLE(s); s.core.fghCap = 1; s.groups.scf.posts = 0; s.groups.sd.posts = 15; s.groups.sd.line = 'sd10'; } },
+  { id: 'month', tg: ['11 SCFs', 'October roster'], n: 'October’s roster', ch: '+1 SCF, more trainees on the roster', d: 'Who is on the Allocate roster this month', ic: 'cal', fn: s => {   // who is on the Allocate roster this month, by group
     const G = s.groups, fix = (k, o) => Object.assign(G[k], o);
     fix('scf', { posts: 11, recruit: 0, lt: 0 });
     ['icm3', 'icm2', 'icm1', 'anaes'].forEach(k => fix(k, { fill: 14.6 / 13, lt: 0 }));   // 16 airway trainees, 14.6 WTE
     fix('jcf', { posts: 5, lt: 0 }); fix('accs', { posts: 0 }); fix('imt', { posts: 4, fill: 1, lt: 0 }); fix('fy2', { posts: 4, lt: 0 }); fix('other', { posts: 1, lt: 0 });
   } },
-  { id: 'fulldean', tg: ['every post filled'], n: 'Now (full complement)', d: 'Every post filled: 10 SCFs with no gaps between people, and every deanery post', ic: 'school', fn: s => { Object.assign(s.groups.scf, { recruit: 0 }); Object.assign(s.groups.icm3, { posts: 2, fill: 1, lt: 0 }); Object.assign(s.groups.icm2, { posts: 7, fill: 1, lt: 0 }); Object.assign(s.groups.icm1, { posts: 1, fill: 1, lt: 0 }); Object.assign(s.groups.anaes, { posts: 3, fill: 1, lt: 0 }); } },
-  { id: 'allsd', tg: ['10 specialty doctors', '10 PA'], n: 'SCFs become specialty doctors', d: 'The 10 SCF posts become specialty doctors on 10 PA', ic: 'swap', fn: s => { s.groups.scf.posts = 0; s.groups.sd.posts = 10; s.groups.sd.line = 'sd10'; } },
-  { id: 'value', tg: ['14 specialty doctors'], n: 'More cover at locum cost', d: '14 specialty doctors: more Fairfield cover for about what locums cost', ic: 'down', rec: 1, fn: (s, pr) => { s.groups.scf.posts = 0; s.groups.sd.posts = 14; s.groups.sd.line = 'sd10'; } },
-  { id: 'nights2', tg: ['extra weekday nights'], n: 'Now (everyone on extra nights)', d: 'Every doctor on the 9-week template with two extra weekday night sets', ic: 'moon', fn: s => { ['scf', 'sd', 'icm1', 'icm2', 'icm3', 'anaes', 'jcf', 'accs', 'imt', 'fy2', 'other'].forEach(k => { s.groups[k].line = 'scf_2n'; }); } },
-  { id: 'fghline', tg: ['6 of the 10 SCFs', '6-week Fairfield line', 'funded by Fairfield'], n: 'Fairfield line for 6 SCFs', d: 'Six of the ten SCFs form a Fairfield team on a 6-week line with every worked weekend on call', ic: 'hosp', fn: s => { s.core.fghPosts = 6; s.core.funding = 'split'; s.core.fghLine = 'fgh6'; } },
-  { id: 'nogaps', tg: ['24 specialty doctors', 'up to half their on-calls at Fairfield'], n: '95% Fairfield cover', d: 'The fewest specialty doctors that cover at least 95% of Fairfield nights and weekends, with up to half their on-calls at Fairfield', ic: 'shield', rec: 1, fn: (s, pr) => { s.core.fghCap = 0.5; s.groups.scf.posts = 0; s.groups.sd.posts = 24; s.groups.sd.line = 'sd10'; } }
+  { id: 'fulldean', tg: ['every post filled'], n: 'No vacancies', ch: 'Every vacancy filled', d: 'Every post filled: 10 SCFs with no gaps between people, and every deanery post', ic: 'school', fn: s => { Object.assign(s.groups.scf, { recruit: 0 }); Object.assign(s.groups.icm3, { posts: 2, fill: 1, lt: 0 }); Object.assign(s.groups.icm2, { posts: 7, fill: 1, lt: 0 }); Object.assign(s.groups.icm1, { posts: 1, fill: 1, lt: 0 }); Object.assign(s.groups.anaes, { posts: 3, fill: 1, lt: 0 }); } },
+  { id: 'allsd', tg: ['10 specialty doctors', '10 PA'], n: '10 specialty doctors instead of SCFs', ch: '−10 SCFs, +10 specialty doctors', d: 'The 10 SCF posts become specialty doctors on 10 PA', ic: 'swap', fn: s => { s.groups.scf.posts = 0; s.groups.sd.posts = 10; s.groups.sd.line = 'sd10'; } },
+  { id: 'value', tg: ['14 specialty doctors'], n: '14 specialty doctors instead of 10 SCFs', ch: '−10 SCFs, +14 specialty doctors', d: '14 specialty doctors: more Fairfield cover for about what locums cost', ic: 'down', rec: 1, fn: (s, pr) => { s.groups.scf.posts = 0; s.groups.sd.posts = 14; s.groups.sd.line = 'sd10'; } },
+  { id: 'nights2', tg: ['extra weekday nights'], n: 'Everyone on extra weekday nights', ch: 'Rota: 2 extra weekday night sets for everyone', d: 'Every doctor on the 9-week template with two extra weekday night sets', ic: 'moon', fn: s => { ['scf', 'sd', 'icm1', 'icm2', 'icm3', 'anaes', 'jcf', 'accs', 'imt', 'fy2', 'other'].forEach(k => { s.groups[k].line = 'scf_2n'; }); } },
+  { id: 'fghline', tg: ['6 of the 10 SCFs', '6-week Fairfield line', 'funded by Fairfield'], n: '6 SCFs on a Fairfield rota', ch: 'Rota: 6 SCFs on a 6-week Fairfield line', d: 'Six of the ten SCFs form a Fairfield team on a 6-week line with every worked weekend on call', ic: 'hosp', fn: s => { s.core.fghPosts = 6; s.core.funding = 'split'; s.core.fghLine = 'fgh6'; } },
+  { id: 'nogaps', tg: ['24 specialty doctors', 'up to half their on-calls at Fairfield'], n: '24 specialty doctors', ch: '−10 SCFs, +24 specialty doctors', d: 'The fewest specialty doctors that cover at least 95% of Fairfield nights and weekends, with up to half their on-calls at Fairfield', ic: 'shield', rec: 1, fn: (s, pr) => { s.core.fghCap = 0.5; s.groups.scf.posts = 0; s.groups.sd.posts = 24; s.groups.sd.line = 'sd10'; } }
 ];
 /* ---------- a plan in the web address: the link holds every change from its starting plan, nothing is stored ---------- */
 const b64 = t => { let bin = ''; new TextEncoder().encode(t).forEach(c => bin += String.fromCharCode(c)); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
@@ -476,7 +481,7 @@ const sv = (p, v) => `--v:${v}%`;
 const stepC = (p, label, ic, o = {}) => { reg(p, label, o.page); const v = get(S, p); return `<div class="row2"><span class="ri">${ico(ic, 'sm')}</span><span class="rl">${label}${o.info ? iI(o.info) : ''}</span><span class="stp"><button data-p="${p}" data-d="${-(o.step || 1)}" data-min="${o.min ?? 0}" data-max="${o.max ?? 999}" aria-label="Less ${esc(label)}">−</button><b class="num">${o.fmt ? o.fmt(v) : num(v, (o.step || 1) % 1 ? 1 : 0)}</b><button data-p="${p}" data-d="${o.step || 1}" data-min="${o.min ?? 0}" data-max="${o.max ?? 999}" aria-label="More ${esc(label)}">+</button></span></div>`; };
 const slideC = (p, label, ic, o = {}) => { reg(p, label, o.page); const v = get(S, p), mn = o.min ?? 0, mx = o.max ?? 1, f = (v - mn) / (mx - mn) * 100; return `<div class="row2"><span class="ri">${ico(ic, 'sm')}</span><span class="rl">${label}${o.info ? iI(o.info) : ''}</span><b class="num" data-out="${p}">${(o.fmt || pct)(v)}</b><input class="rg" type="range" data-p="${p}" min="${mn}" max="${mx}" step="${o.step || 0.01}" value="${v}" style="${sv(p, f)}" aria-label="${esc(label)}" data-fmt="${o.fmtKey || 'pct'}"></div>`; };
 const togC = (p, label, ic, cls = '', page) => { reg(p, label, page); const v = !!get(S, p); return `<button class="chip ${v ? 'y' : ''} ${cls}" data-t="${p}" aria-pressed="${v}">${ico(ic, 'sm')}${label}</button>`; };
-const choiceC = (p, label, opts, page) => { reg(p, label, page); const v = get(S, p); return `<div class="chips">${opts.map(([val, t, ic]) => `<button class="chip ${String(v) === String(val) ? 'y' : ''}" data-c="${p}" data-v="${esc(val)}">${ic ? ico(ic, 'sm') : ''}${t}</button>`).join('')}</div>`; };
+const choiceC = (p, label, opts, page) => { reg(p, label, page); const v = get(S, p); return `<div class="chips">${opts.map(([val, t, ic]) => `<button class="chip ${String(typeof val === 'boolean' ? !!v : v) === String(val) ? 'y' : ''}" data-c="${p}" data-v="${esc(val)}">${ic ? ico(ic, 'sm') : ''}${t}</button>`).join('')}</div>`; };
 const BLKINFO = {
   'Time': 'How long people stay, how long a post is empty between people, and the months before someone counts fully. A post empty between people costs nothing and covers nothing.',
   'Off the rota': 'Leave, study leave, bank holidays and non-clinical days come off weekday days only, never nights or weekends. Sickness comes off every shift (Absence and seasons page).',
@@ -684,7 +689,7 @@ function pFgh() {
       ${team('s', 'var(--s)', 'Salford team', nS, 'Funded by Salford. Fill Salford first, then Fairfield gaps.', slideC('core.fghCap', 'On-calls at Fairfield, at most', 'hosp', { page: 'fgh', min: 0, max: 0.6, step: 0.05, info: 'Nights and weekend shifts. Weekday days at Fairfield are not limited.' }))}
     </div>`, 'All SCF and specialty doctor posts sit in one of two teams. Each team’s cost goes to the budget that funds it. Move posts between teams with the arrows.')}
     ${blk('users', 'Who can work at Fairfield', whoAcc(true), 'Set on each grade under Can cover')}
-    ${blk('syringe', 'FGH anaesthetist', stepC('core.fghAnaesN', 'Weekday ICU nights a week they cover', 'moon', { page: 'fgh', max: 4 , info: 'The Fairfield anaesthetist covering ICU weekday nights, at no cost to us. Up to 4 a week (Monday to Thursday).' }), 'Monday to Thursday nights the FGH anaesthetist covers ICU, at no cost to us. We need fewer of our own or locums.')}
+    ${blk('syringe', 'Fairfield nights covered from outside our rota', stepC('core.fghAnaesN', 'Weekday nights the FGH anaesthetist covers ICU', 'moon', { page: 'fgh', max: 4, info: 'Monday to Thursday nights, up to 4 a week, at no cost to us.' }) + stepC('core.oldhamN', 'Nights a week covered from Oldham', 'moon', { page: 'fgh', max: 7, info: 'Spread over weekday and weekend nights, at no cost to this budget. 0 in every plan until Oldham’s figures are in.' }), 'Each night covered here needs one fewer of our own doctors or a locum. Oldham is not yet costed.')}
   </div>`;
 }
 // what the trust pays on top of the NHSP hourly rate, each part as a share of the rate so they add up to the total
@@ -723,11 +728,11 @@ function pAbs() {
   const lf = M2.LEAVE_F, af = M2.ABS_F, mx = Math.max(...Object.values(lf), ...Object.values(af));
   const bars = (o, c) => `<div style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;align-items:end;height:48px">${M2.MONTHS.map((m, i) => `<span title="${m}" style="height:${o[i] / mx * 100}%;background:${c};border-radius:3px 3px 0 0"></span>`).join('')}</div><div style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;font-size:10px;color:var(--text-3);text-align:center">${M2.MONTHS.map(m => `<span>${m[0]}</span>`).join('')}</div>`;
   return head('Absence and seasons') + `<div class="body6">
-    ${blk('cycle', 'Stable world', `<div class="chips">${togC('core.stable', 'No sickness swings, trainee gaps or turnover', 'cycle', '', 'abs')}</div>`, 'Switch off the year-to-year swings. Use with sickness and recruit times at 0 to see the minimum.')}
+    ${blk('cycle', 'Year to year swings', choiceC('core.stable', 'Year to year swings', [[false, 'Included'], [true, 'Switched off']], 'abs'), 'Sickness, trainee numbers and vacancies go up and down from year to year, and the result is the typical year. Switched off, every month is the average month.')}
     ${blk('moon', 'Night to night', slideC('core.lumpy', 'Unevenness night to night', 'moon', { page: 'abs', max: 0.4, step: 0.005, fmt: pc1, fmtKey: 'pc1', info: 'How much the number of trainees on each night swings around its average, because of the template, leave and swaps. A spare trainee on a busy night cannot cover a short night, so an SCF fills it instead. 0% means every night lines up exactly. 17.5% is set so the model matches last year.' }), 'Better lined-up trainee nights free more SCF nights for Fairfield.')}
     ${blk('thermo', 'Everyone', slideC('absence.sick', 'Sickness', 'thermo', { page: 'abs', max: 0.1, step: 0.005, fmt: pc1, fmtKey: 'pc1' , info: 'Share of shifts lost to sickness, on any shift type. From Allocate, Sep 2025 to Aug 2026, peaking in December and January.' }) + slideC('absence.other', 'Parental and other', 'bed', { page: 'abs', max: 0.1, step: 0.005, fmt: pc1, fmtKey: 'pc1' , info: 'Parental leave and other time off that isn’t sickness. Allocate’s ’Unavailable’ runs at about 4.8% of weekdays in total; this is the non-sickness part. Falls on any shift.' }))}
-    ${blk('plane', 'Leave by month', (S.core.leaveSeason === false ? '<span class="lab" style="text-transform:none;letter-spacing:0">Off: leave spread evenly through the year</span>' : bars(lf, 'var(--acc)')) + `<div class="chips">${togC('core.leaveSeason', 'Use this pattern', 'cal', '', 'abs')}</div>`, 'From Allocate, Sep 2025 to Aug 2026: peaks in October, March and the summer. Leave only comes out of weekday standard days, so this moves spare day shifts between months but does not change night or weekend cover. Turning it off changes cost by less than £1,000 a year.')}
-    ${blk('cal', 'Absence by month', (S.core.absSeason === false ? '<span class="lab" style="text-transform:none;letter-spacing:0">Off: sickness spread evenly through the year</span>' : bars(af, 'var(--on)')) + `<div class="chips">${togC('core.absSeason', 'Use this pattern', 'cal', '', 'abs')}</div>`, 'From Allocate: peaks in December and January, and April and May. Sickness can fall on any shift, so winter months need more locums. With the pattern on, Now costs about £6,500 a year more, with about 6 more locum shifts, than with sickness spread evenly.')}
+    ${blk('plane', 'Leave by month', (S.core.leaveSeason === false ? '<span class="lab" style="text-transform:none;letter-spacing:0">Off: leave spread evenly through the year</span>' : bars(lf, '#3f4756')) + choiceC('core.leaveSeason', 'Monthly pattern', [[true, 'Use this pattern'], [false, 'Spread evenly']], 'abs'), 'From Allocate, Sep 2025 to Aug 2026: peaks in October, March and the summer. Leave only comes out of weekday standard days, so this moves spare day shifts between months but does not change night or weekend cover. Turning it off changes cost by less than £1,000 a year.')}
+    ${blk('cal', 'Absence by month', (S.core.absSeason === false ? '<span class="lab" style="text-transform:none;letter-spacing:0">Off: sickness spread evenly through the year</span>' : bars(af, '#9aa1ad')) + choiceC('core.absSeason', 'Monthly pattern', [[true, 'Use this pattern'], [false, 'Spread evenly']], 'abs'), 'From Allocate: peaks in December and January, and April and May. Sickness can fall on any shift, so winter months need more locums. With the pattern on, Now costs about £6,500 a year more, with about 6 more locum shifts, than with sickness spread evenly.')}
   </div>`;
 }
 const ltView = {};
@@ -805,7 +810,7 @@ panel.addEventListener('click', e => {
   }
   if (t.dataset.p && t.dataset.d) { const p = t.dataset.p, v = +get(S, p) + +t.dataset.d; set(S, p, Math.round(Math.max(+t.dataset.min, Math.min(+t.dataset.max, v)) * 100) / 100); edited(); return; }
   if (t.dataset.t) { set(S, t.dataset.t, !get(S, t.dataset.t)); edited(); return; }
-  if (t.dataset.c) { const cur = get(S, t.dataset.c), v = typeof cur === 'number' ? +t.dataset.v : t.dataset.v; set(S, t.dataset.c, v); edited(); return; }
+  if (t.dataset.c) { const cur = get(S, t.dataset.c), v = typeof cur === 'number' ? +t.dataset.v : (t.dataset.v === 'true' || t.dataset.v === 'false') ? t.dataset.v === 'true' : t.dataset.v; set(S, t.dataset.c, v); edited(); return; }
   if (t.dataset.mon) { const p = t.dataset.mon + '.changeover', a = (get(S, p) || []).slice(), i = +t.dataset.i, j = a.indexOf(i); if (j >= 0) a.splice(j, 1); else a.push(i); a.sort((x, y) => x - y); set(S, p, a); edited(); return; }
   if (t.dataset.ptmix) { const [b, lt, ltw] = t.dataset.ptmix.split('|'); set(S, b + '.lt', +lt); if (+lt > 0) set(S, b + '.ltw', +ltw); edited(); return; }
   if (t.dataset.pay) { const g = S.groups[t.dataset.pk || 'scf']; if (t.dataset.pay === 'flat') g.payKind = 'flat'; else { g.payKind = 'tcs'; g.basic = +t.dataset.pay; } edited(); return; }
@@ -953,15 +958,21 @@ function renderMap() {
     const keys = draft.order;
     h = keys.map((key, i) => `<div class="r6 drag" draggable="true" data-key="${esc(key)}"><span class="ib grab" title="Drag">${ico('drag', 'sm')}</span><input class="pname" data-rename="${esc(key)}" value="${esc(draft.names[key] || defName(key))}" aria-label="Plan name" maxlength="60"><span class="mv"><button data-mv="${esc(key)}" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">${ico('chevron-up', 'sm')}</button><button data-mv="${esc(key)}" data-dir="1" ${i === keys.length - 1 ? 'disabled' : ''} aria-label="Move down">${ico('cdown', 'sm')}</button></span></div>`).join('');
   } else {
+    const n0 = presetRes.now && presetRes.now.r;
+    const resLine = (r, key) => { if (!r) return 'Working…'; const f = Math.round(r.bt_fOOH.mid * 100), sR = Math.round((r.bt_sOOH ? r.bt_sOOH.mid : r.coverS.mid) * 100);
+      if (key === 'now' || !n0) return `Fairfield ${f}% · Salford ${sR}% · ${gbp(r.total.mid)}`;
+      const d = r.total.mid - n0.total.mid, sameF = Math.abs(r.bt_fOOH.mid - n0.bt_fOOH.mid) < 0.005;
+      return `${sameF ? 'Same cover' : 'Fairfield ' + f + '%'} · ${Math.abs(d) < 5000 ? 'about the same cost' : d < 0 ? gbp(-d) + ' cheaper' : gbp(d) + ' more'}`; };
+    const chOf = key => key.startsWith('saved:') ? 'A saved plan' : ((PRESETS.find(x => x.id === key) || {}).ch || '');
     const card = key => { const on = base === key, editing = on && ed, r = resOf(key), attr = key.startsWith('saved:') ? `data-saved="${esc(key.slice(6))}"` : `data-preset="${key}"`;
-      return `<div class="pcw"><button class="r6 ${on ? 'on' : ''} ${editing ? 'edit' : ''}" ${attr} aria-pressed="${on}"><span class="ib ring">${ringOf(editing && lastRes ? lastRes : r)}</span><span class="l" style="font-weight:${on ? 700 : 500}">${esc(planName(key))}${editing ? ' <span class="editing"><i></i>Changing</span>' : ''}${tagsOf(key)}</span><span class="v">${nums(editing && lastRes ? lastRes : r, key)}</span></button><button class="pcost" data-costof="${esc(key)}" aria-label="What makes up the cost of ${esc(planName(key))}" title="Cost breakdown">${ico('pound', 'sm')}</button></div>${editing ? chgBlock(r) : ''}`; };
-    const TODAY = ['now', 'month', 'fulldean'], keys = planKeys();
-    const kids = keys.filter(k => TODAY.includes(k) && k !== 'now'), opts = keys.filter(k => !TODAY.includes(k));
-    h = `<div class="pgh">Today</div>${card('now')}<div class="kids">${kids.map(k => card(k).replace(esc(planName(k)), esc(planName(k).replace(/^Now \((.*)\)$/, (m, x) => x.charAt(0).toUpperCase() + x.slice(1))))).join('')}</div><div class="pgh">Options</div>${opts.map(card).join('')}`;
+      return `<div class="pcw"><button class="r6 pcb ${on ? 'on' : ''} ${editing ? 'edit' : ''}" ${attr} aria-pressed="${on}"><span class="pcn">${esc(planName(key))}${editing ? ' <span class="editing"><i></i>Changing</span>' : ''}</span><span class="pcr"><i>Change</i>${esc(chOf(key))}</span><span class="pcr"><i>Result</i>${resLine(editing && lastRes ? lastRes : r, key)}</span></button><button class="pcost" data-costof="${esc(key)}" aria-label="What makes up the cost of ${esc(planName(key))}" title="Cost breakdown">${ico('pound', 'sm')}</button></div>${editing ? chgBlock(r) : ''}`; };
+    const GRP = [['Today', ['now', 'month', 'fulldean']], ['Change the rota', ['nights2', 'fghline']], ['Change the staff', ['allsd', 'value', 'nogaps']], ['In theory', ['stable']]], keys = planKeys(), placed = GRP.flatMap(g => g[1]);
+    h = GRP.map(([g, ks]) => { const kk = keys.filter(k => ks.includes(k)); return kk.length ? `<div class="pgh">${g}</div>${kk.map(card).join('')}` : ''; }).join('');
+    const rest = keys.filter(k => !placed.includes(k)); if (rest.length) h += `<div class="pgh">Saved plans</div>${rest.map(card).join('')}`;
   }
   ensureRanges();
   el.innerHTML = `<div class="plans">${head}<div class="grp6" id="planlist">${h}</div>
-    ${planEdit ? `<div class="key">${db && canSave ? 'Changes are shared with everyone' : 'Changes are kept in this browser'}</div>` : `<div class="key" style="flex-wrap:wrap"><span>Ring and FGH: Fairfield nights and weekends covered by our staff · SRH: the same for Salford</span></div>`}</div>`;
+    ${planEdit ? `<div class="key">${db && canSave ? 'Changes are shared with everyone' : 'Changes are kept in this browser'}</div>` : `<div class="key" style="flex-wrap:wrap"><span>Cover is nights and weekends covered by our own staff.</span></div>`}</div>`;
   renderHeads();
 }
 const MODE_TIP = 'Theoretical: everyone works the 9-week template (or the part-time 80, 70, 60 or 50% templates) exactly as written. Leave comes only out of standard days. In practice: the same hours, spread across nights, weekends and days the way each group actually worked them in Allocate, Sep 2025 to Aug 2026, leaving out bank shifts.';
@@ -1059,7 +1070,7 @@ function shiftCost(s, t) {
   return { bank, ag, avg: bank * (1 - sh) + ag * sh, sh, howB: how(c.lr) + ` + ${num(M2.bankAdd(c) * 100, 1)}% add-ons`, howA: c.lrA ? how(c.lrA) : '' };
 }
 // groups in a fixed order, ACCPs as one group, with the section each belongs to
-const GSECT = [['SCFs and specialty doctors', ['scf', 'sd']], ['Deanery, airway', ['icm3', 'icm2', 'icm1', 'anaes']], ['ACCPs', ['accp']], ['Other residents', ['jcf', 'accs', 'imt', 'fy2', 'other']], ['Fairfield', ['anaesX']]];
+const GSECT = [['SCFs and specialty doctors', ['scf', 'sd']], ['Deanery, airway', ['icm3', 'icm2', 'icm1', 'anaes']], ['ACCPs', ['accp']], ['Other residents', ['jcf', 'accs', 'imt', 'fy2', 'other']], ['Fairfield', ['anaesX', 'oldhamX']]];
 function orderedGroups(W) {
   const G = Object.assign({}, W.groups), acc = ['accpA', 'accpF', 'accpT', 'accpO'].map(k => G[k]).filter(Boolean);
   if (acc.length) {
@@ -1075,7 +1086,7 @@ function orderedGroups(W) {
 function renderWork() {
   const box = document.getElementById('wk'); if (!box || document.getElementById('wsheet').hidden) return;
   const W = M2.workings(clone(S)), G = S.groups, D = S.demand;
-  const OG = orderedGroups(W), gl = OG.filter(g => g.k !== 'anaesX' && ((g.paidWte || 0) > 0.005 || g.rota > 0.005));
+  const OG = orderedGroups(W), gl = OG.filter(g => !['anaesX', 'oldhamX'].includes(g.k) && ((g.paidWte || 0) > 0.005 || g.rota > 0.005));
   const ga = OG.filter(g => g.rota > 0.005);
   if (!gl.find(g => g.k === wkGroup)) wkGroup = gl[0] ? gl[0].k : 'scf';
   const th = (first, cols) => `<thead><tr><th>${first}</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>`;
@@ -1162,7 +1173,7 @@ function stateOf(key) { if (key === '*') return S; if (key.startsWith('saved:'))
 function renderCostSheet(key) {
   const live = active.endsWith('*') && active.replace('*', '') === key, s = live ? S : stateOf(key); if (!s) return;
   const W = M2.workings(clone(s)), r = live ? lastRes : resOf(key);
-  const gl = orderedGroups(W).filter(g => g.k !== 'anaesX' && (g.paidWte || 0) > 0.005);
+  const gl = orderedGroups(W).filter(g => !['anaesX', 'oldhamX'].includes(g.k) && (g.paidWte || 0) > 0.005);
   const locN = WT.reduce((a, t) => a + W.loc[t].shifts, 0);
   const pct = v => num(v / W.total * 100, 1) + '%';
   const bar = `<div class="cbar">${gl.map((g, i) => `<i style="width:${g.cost / W.total * 100}%;background:hsl(220 18% ${30 + i * 4}%)" title="${esc(g.label)}: ${gbp(g.cost)}"></i>`).join('')}<i style="width:${W.locum / W.total * 100}%;background:#e0a24a" title="Locums: ${gbp(W.locum)}"></i></div>`;
@@ -1403,7 +1414,7 @@ document.getElementById('savebar').addEventListener('click', async e => {
   const STEPS = [
     { sel: '#app', q: 'What is this?', a: 'A model of the resident rota at Salford and Fairfield. Pick a plan, change anything, and see what it costs and how many shifts our own doctors cover.', do: () => { pick('now'); go('home'); } },
     { sel: '.plancol', q: 'Where do I start?', a: 'Pick a plan from the list. Today’s staffing is at the top. Other ideas are below.' },
-    { sel: '.plans .pcw', q: 'What does a plan card show?', a: 'The ring fills with how much of Fairfield’s nights and weekends our own doctors cover.', k: 'FGH: Fairfield nights and weekends covered by our staff. SRH: the same for Salford. £: cost a year, or the difference from Now.' },
+    { sel: '.plans .pcw', q: 'What does a plan card show?', a: 'What changes from today, and what that does to cover and cost. Cover is nights and weekends covered by our own staff.', k: 'The £ button shows what makes up the cost.' },
     { sel: '.plans .pcost', q: 'What does the £ button do?', a: 'It opens what the plan’s cost is made of: each staff group, then the locums.' },
     { sel: '#coverCard', q: 'How much do our own doctors cover?', a: 'Fairfield nights and weekends, and Salford, filled by our own rota. Every shift we can’t cover goes to a locum, so none are left empty. Only SCFs can work Fairfield nights and weekends, and Salford needs most of their nights first.', k: 'This matches last year in Allocate.' },
     { sel: '#costCard', q: 'What does it cost?', a: 'Staff and locums for a year, against Now, with a likely range. How sure shows every plan against Now; the breakdown shows each staff group.' },
