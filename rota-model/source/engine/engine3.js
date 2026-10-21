@@ -297,7 +297,7 @@ function allocate(s, cs, mo, fills) {
   // so on average they cover E[min(X, minimum)], not min(average, minimum). SCFs fill what is left.
   const lumpy = (list, t, cat, lvl) => {
     const D = PER_WEEK[t], m = (lvl === 'min' ? nMin : nT)[cat][t] / D, mu = list.reduce((a, id) => a + (by[id] ? by[id].left[t] : 0), 0) / D + filled[cat][t] / D;
-    if (s.core.stable || !s.core.lumpy && s.core.lumpy !== undefined || !(m > 0) || !(mu > 0)) return Infinity;
+    if (!s.core.lumpy && s.core.lumpy !== undefined || !(m > 0) || !(mu > 0)) return Infinity;
     return Math.max(0, expMin(mu, m, s.core.lumpy == null ? 0.175 : s.core.lumpy) * D - filled[cat][t]);
   };
   function srh(cat, lvl, coreIds) {

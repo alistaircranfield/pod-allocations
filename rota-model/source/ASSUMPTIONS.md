@@ -36,7 +36,7 @@ Items marked **Check** are not yet confirmed.
     - Today every post is in the Salford team.
 13. The FGH anaesthetist can cover up to 4 weekday ICU nights a week, at no cost. Today they cover none.
     Oldham could cover up to 7 Fairfield ICU nights a week, spread over weekday and weekend nights, at no cost to this budget. 0 in every plan until Oldham's figures are in.
-    Year to year swings (sickness, trainee numbers, vacancies) are included by default. Switched off, every month is the average month. Only the Ideal year plan also rounds each grade down to whole rota lines.
+    Year to year swings: each month the model draws SCF posts filled, deanery trainee numbers and sickness, then takes the typical year. Switched off, every month gets the average. Night to night unevenness is a separate setting. Only the Ideal year plan rounds each grade down to whole rota lines and sets unevenness to 0.
 14. Shifts our own staff do on bank are paid as locums, so they don't count as rota cover.
 15. Each plan runs 40 simulated years. The page shows the middle one, and the range covers 8 years in 10.
 
