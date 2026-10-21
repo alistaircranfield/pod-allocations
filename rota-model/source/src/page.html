@@ -1,0 +1,1441 @@
+<title>FGH and SRH Rota Model</title>
+<style>
+/*CSS*/
+/* ---------- the live page: layout on top of the design system above ---------- */
+html, body { background: var(--bg); }
+.app { display: grid; grid-template-columns: 300px minmax(0, 1fr) minmax(0, 1.2fr); align-items: start; min-height: 100vh; }
+@media (max-width: 1180px) { .app { grid-template-columns: 260px minmax(0, 1fr) minmax(0, 1fr); } }
+@media (max-width: 1000px) { .app { grid-template-columns: minmax(0, 1fr); } .plancol { order: 0; } .outs { order: 1; } .side:not(.plancol) { order: 2; } }
+.apphead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.apphead .ttl { display: grid; gap: 2px; }
+.apphead h1 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin: 0; }
+.apphead .save { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.apphead .save input { font: inherit; border: 1px solid var(--border); border-radius: 10px; padding: 7px 10px; background: var(--surface); min-width: 0; width: 200px; }
+.btnp { font: inherit; font-weight: 600; border: 0; border-radius: 10px; padding: 8px 14px; background: var(--acc); color: #fff; cursor: pointer; }
+.app { --acc: #3f4756; --acc-ink: #fff; --acc-wash: #eceef1; --s: #2563a8; --s-lt: #b7cde8; --f: #138d74; --f-lt: #aedbd1; --loc: #b8bec8; --on: #8b93a1; }
+.mapcard { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); padding: 12px 16px 10px; }
+.mapcard .sc { overflow-x: auto; }
+.mapcard .sc > svg { display: block; width: 100%; min-width: 520px; height: auto; max-height: 340px; }
+.mapcard .axes { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+.mapcard .axes span { display: inline-flex; align-items: center; gap: 6px; }
+.pdot { cursor: pointer; outline: none; }
+.pdot:hover circle.r, .pdot:focus-visible circle.r { stroke-width: 2.5; }
+.hl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.hlf { grid-column: 1 / -1; grid-template-columns: auto 1fr; column-gap: 24px; }
+.hlf > .lab { grid-column: 1 / -1; }
+.hlf .parts { grid-column: 2; grid-row: 2 / span 2; align-self: center; justify-content: flex-end; }
+.hlf .parts { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); }
+.hlf .parts b { font-size: 18px !important; }
+.hlt { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.hlt .lab { display: inline-flex; gap: 6px; align-items: center; }
+.hlt b { font-size: 26px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.up { background: var(--ok-wash) !important; color: var(--ok) !important; }
+.same { background: var(--track) !important; color: var(--text-2) !important; }
+@media (max-width: 620px) { .hl { grid-template-columns: minmax(0, 1fr); } .hlf { grid-template-columns: minmax(0, 1fr); } .hlf .parts { grid-column: 1; grid-row: auto; justify-content: flex-start; } }
+.outs { display: grid; gap: 16px; min-width: 0; grid-template-columns: minmax(0, 1fr); padding: 24px 24px 48px; background: #f5f5f7; min-height: 100vh; align-content: start; }
+@media (max-width: 600px) { .outs { padding: 16px 16px 40px; } }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 460px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+.side .body6 { overflow: visible; }
+.seg4 button, .stp button, .chip, .r6, .lpick, .gcard, .rv, .nav, .segbtn { font: inherit; }
+.seg4 button { width: 30px; height: 26px; display: grid; place-items: center; border-radius: 7px; color: var(--text-2); border: 0; background: none; cursor: pointer; }
+.seg4 button.on { background: var(--surface); color: var(--acc); box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+.stp button { width: 26px; height: 26px; border: 0; background: none; color: var(--text-2); font-size: 15px; cursor: pointer; border-radius: 7px; }
+.stp button:hover { background: var(--track); }
+button.chip { cursor: pointer; background: var(--surface); }
+button.chip.y { background: var(--acc); }
+button.chip.f.y { background: var(--f); } button.chip.s.y { background: var(--s); }
+button.r6 { width: 100%; border: 0; background: none; text-align: left; cursor: pointer; color: inherit; }
+button.r6:hover { background: #fafafc; }
+button.nav { border: 0; background: none; cursor: pointer; padding-bottom: 4px; }
+button.lpick { cursor: pointer; background: var(--surface); text-align: left; color: inherit; }
+button.rv { border: 0; cursor: pointer; }
+.srch input { border: 0; background: none; font: inherit; color: var(--text); width: 100%; outline: none; }
+input.rg { -webkit-appearance: none; appearance: none; grid-column: 2 / -1; width: 100%; height: 4px; border-radius: 2px; margin: 6px 0 4px; background: linear-gradient(90deg, var(--acc) 0 var(--v, 50%), var(--track) var(--v, 50%) 100%); outline: none; cursor: pointer; }
+input.rg::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 1px 4px rgba(0,0,0,.25); }
+input.rg::-moz-range-thumb { width: 20px; height: 20px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 1px 4px rgba(0,0,0,.25); }
+input.rg:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--acc-wash), 0 1px 4px rgba(0,0,0,.25); }
+.row2 .rl { display: inline-flex; align-items: center; gap: 4px; }
+.mon { display: flex; gap: 4px; flex-wrap: wrap; }
+.mon button { font: inherit; font-size: 11px; font-weight: 700; width: 26px; height: 24px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-3); cursor: pointer; }
+.mon button.y { background: var(--acc); border-color: var(--acc); color: #fff; }
+.edgrid { display: grid; grid-template-columns: 22px repeat(7, minmax(0, 1fr)); gap: 3px; }
+.edgrid span { font-size: 10px; font-weight: 600; color: var(--text-3); text-align: center; align-self: center; }
+.edgrid button { height: 28px; border-radius: 6px; border: 0; background: var(--track); cursor: pointer; display: grid; place-items: center; color: var(--text); }
+.edgrid button.N { background: #3f4756; color: #fff; } .edgrid button.L { background: #8b93a1; color: #fff; } .edgrid button.S { background: #d0d4db; }
+.ratein { width: 100%; font: inherit; font-weight: 600; text-align: center; border: 1px solid var(--border); border-radius: 8px; padding: 4px; background: var(--surface); color: var(--text); }
+.ratein.z { color: var(--text-3); border-style: dashed; }
+.tipbox { position: fixed; z-index: 50; background: #1d1d1f; color: #fff; font-size: 12px; line-height: 1.35; padding: 8px 10px; border-radius: 10px; max-width: 240px; box-shadow: 0 12px 32px rgba(0,0,0,.18); pointer-events: none; }
+.ii { cursor: help; }
+.ndt .ii, .tile .ii { margin-left: 5px; vertical-align: -2px; }
+.pv { display: inline-grid; justify-items: end; line-height: 1.1; min-width: 34px; }
+.pv small { font-size: 9.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+.csel { font: inherit; color: inherit; text-align: left; cursor: pointer; display: grid; gap: 8px; width: 100%; }
+.side .csel { border: 1.5px solid var(--border); }
+.side .csel.on { border-color: #fff; box-shadow: 0 0 0 1px #fff; }
+.side .csel:not(.on) { opacity: .75; }
+.modebar { display: flex; align-items: center; gap: 8px; padding: 0 4px 12px; }
+.modebar .mode button { color: var(--text-2); padding: 0 12px; width: auto; height: 28px; font-size: 12.5px; font-weight: 600; }
+.modebar .mode button.on { background: rgba(255,255,255,.16); color: #fff; }
+.ph2 { display: flex; align-items: center; gap: 10px; padding: 2px 4px 10px; }
+.ph2 .bk { width: 30px; height: 30px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; background: rgba(255,255,255,.1); color: #fff; flex: none; }
+.ph2 .bk:hover { background: rgba(255,255,255,.18); }
+.ph2 .pt { font-size: 20px; font-weight: 700; letter-spacing: -.01em; min-width: 0; }
+.ph2 .ps { margin-left: auto; font-size: 12.5px; color: var(--text-2); font-weight: 600; }
+.gh3 { display: grid; grid-template-columns: minmax(0,1fr) 44px 44px 24px; align-items: end; }
+.gh3 span:nth-child(2), .gh3 span:nth-child(3) { text-align: right; }
+.pc2 { width: 44px; text-align: right; display: inline-block; }
+.sum3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; grid-column: 1 / -1; }
+.sum3 .sm3 { display: grid; gap: 4px; align-content: start; }
+.sum3 .sm3 + .sm3 { border-left: 1px solid var(--border); padding-left: 16px; }
+.sum3 .lab { display: inline-flex; gap: 6px; align-items: center; }
+.cb { display: grid; grid-template-columns: 72px minmax(0, 1fr) 96px; gap: 10px; align-items: center; }
+.cb .hb { min-width: 4px; } .cb b { text-align: right; } .cbl { font-size: 12.5px; color: var(--text-2); }
+.kl .dd { color: var(--text-3); font-size: 11.5px; margin-left: 6px; }
+.cvr { display: grid; grid-template-columns: 190px minmax(0, 1fr) 56px; gap: 10px; align-items: center; }
+.cvr.sub .cvl { padding-left: 14px; color: var(--text-2); font-size: 12.5px; } .cvr.sub .hb { height: 8px; }
+.cvr b { text-align: right; } .cvb { position: relative; } .nowm { position: absolute; top: -4px; width: 2px; height: calc(100% + 8px); background: var(--text); border-radius: 1px; }
+.deep { display: flex; gap: 10px; align-items: center; width: 100%; font: inherit; font-weight: 600; text-align: left; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; box-shadow: var(--shadow); color: var(--text); }
+.deep .lab { margin-left: auto; text-transform: none; letter-spacing: 0; }
+.sheet { position: fixed; inset: 0; background: rgba(20,22,28,.35); z-index: 20; display: flex; justify-content: flex-end; }
+.sheetin { background: var(--bg, #f5f5f7); width: min(1100px, 100%); height: 100%; overflow: auto; padding: 20px; display: grid; gap: 12px; align-content: start; }
+.sheethd { display: flex; gap: 10px; align-items: center; } .sheethd .pt { font-size: 20px; font-weight: 700; }
+.bk2 { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); display: grid; place-items: center; cursor: pointer; }
+@media (max-width: 700px) { .sum3 { grid-template-columns: minmax(0,1fr); } .sum3 .sm3 + .sm3 { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: 10px; } .cvr { grid-template-columns: 120px minmax(0,1fr) 48px; } }
+.pchg { margin: -2px 6px 6px 40px; padding: 4px 8px 8px; border-left: 2px solid #f5c451; display: grid; gap: 2px; }
+.pct { font: inherit; font-size: 12.5px; font-weight: 600; color: #f5c451; background: none; border: 0; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 0; text-align: left; }
+.pct .ch { width: 12px; height: 12px; transition: transform .15s; } .pct .ch.open { transform: rotate(90deg); }
+.pct .was { margin-left: auto; color: var(--text-3); font-weight: 500; }
+.pcr { display: grid; grid-template-columns: minmax(0,1fr) auto auto auto; gap: 6px; align-items: center; font-size: 12px; padding: 3px 0; }
+.pcr .old { color: var(--text-3); text-decoration: line-through; } .pcr .new { font-weight: 700; color: var(--text); }
+.pcr .rv { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; }
+.pfoot { display: flex; justify-content: flex-end; } .lnk { font: inherit; font-size: 12px; font-weight: 600; color: #f5c451; background: none; border: 0; cursor: pointer; padding: 2px 0; }
+.lcards { display: grid; gap: 8px; }
+.lcard { border: 1px solid var(--border); border-radius: 12px; padding: 10px; }
+.lc1 { display: grid; grid-template-columns: 120px minmax(0,1fr); gap: 12px; align-items: center; }
+.lc2 { display: grid; gap: 4px; } .lc2 .ln { font-weight: 600; }
+.ptc { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.ptc button { font: inherit; font-size: 11.5px; font-weight: 600; border: 1px solid var(--border); background: none; color: var(--text-2); border-radius: 99px; padding: 2px 9px; cursor: pointer; }
+.ptc button.on { background: #fff; color: #1f2430; border-color: #fff; }
+.kl2 { display: grid; grid-template-columns: 10px auto auto minmax(0,1fr); gap: 6px 10px; align-items: center; font-size: 12.5px; }
+.kl2 i { width: 10px; height: 10px; border-radius: 3px; } .kl2 .dd { color: var(--text-3); font-size: 11.5px; }
+.cvfoot { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--text-2); }
+.cvfoot i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; } .cvfoot b { margin-left: auto; color: var(--text); }
+.ekey { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); margin-top: 8px; } .ekey span { display: inline-flex; gap: 5px; align-items: center; } .ekey i { width: 14px; height: 14px; border-radius: 4px; background: rgba(255,255,255,.08); display: inline-block; }
+.teams { display: grid; grid-template-columns: minmax(0,1fr) 36px minmax(0,1fr); gap: 8px; align-items: start; }
+.team { border-width: 1.5px !important; } .tmv { display: grid; gap: 8px; justify-items: center; padding-top: 30px; }
+.tmv .btnp { width: 32px; height: 32px; padding: 0; border-radius: 50%; display: grid; place-items: center; }
+@media (max-width: 600px) { .teams { grid-template-columns: minmax(0,1fr); } .tmv { grid-auto-flow: column; padding-top: 0; justify-content: center; } }
+.dyr { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.pb3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; } .pb3 div { display: grid; gap: 2px; } .pb3 b { font-size: 20px; font-weight: 700; }
+.pd { display: block; font-size: 11.5px; font-weight: 400; color: var(--text-3); margin-top: 2px; line-height: 1.35; }
+.mt { display: inline-flex; gap: 4px; align-items: baseline; font-weight: 700; font-size: 13px; } .mt em { font-style: normal; font-size: 9.5px; letter-spacing: .06em; font-weight: 700; opacity: .75; }
+.mt.f { color: #6fd0bd; } .mt.s { color: #8db4ea; }
+.pgh { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); padding: 10px 10px 4px; }
+.lsub { font-size: 11.5px; opacity: .7; font-weight: 400; }
+.ctiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ctile { font: inherit; color: inherit; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: rgba(255,255,255,.04); font-weight: 600; text-align: left; }
+.ctile b { font-size: 22px; } .ctile:not(.on) { opacity: .7; } .ctile.on { border-color: #fff; }
+.g2s { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+.g2s .row2 { grid-template-columns: minmax(0, 1fr); gap: 5px; } .g2s .row2 .ri { display: none; } .g2s .row2 .rl { font-size: 12px; opacity: .75; }
+.g2s .stp { justify-content: space-between; } .g2s .stp b { flex: 1; text-align: center; }
+.gh3 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; opacity: .6; margin-top: 6px; display: flex; gap: 6px; align-items: center; }
+.lrows { display: grid; gap: 6px; }
+.lrow { font: inherit; color: inherit; cursor: pointer; display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--border); background: rgba(255,255,255,.04); text-align: left; }
+.lrow .thumb { gap: 1.5px; } .lrow .thumb div { gap: 1.5px; } .lrow .thumb i { height: 3px; }
+.lrow .ln { font-weight: 600; display: inline-flex; gap: 6px; align-items: center; } .lrow .lm { font-size: 12px; opacity: .6; }
+.lrow.on { border-color: #fff; } .lrow.ed { border-style: dashed; } .lrow.ed.on { border-style: solid; }
+.stepl { display: inline-flex; align-items: center; gap: 8px; } .stepn { font-style: normal; width: 20px; height: 20px; border-radius: 50%; background: #f5c451; color: #1f2430; display: inline-grid; place-items: center; font-size: 11px; font-weight: 800; letter-spacing: 0; }
+.ppts { display: flex; flex-wrap: wrap; gap: 6px; }
+.ppt { font: inherit; color: inherit; cursor: pointer; flex: 1 1 70px; display: grid; gap: 1px; text-align: center; padding: 7px 4px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; }
+.ppt b { font-size: 13px; } .ppt em { font-style: normal; font-size: 11px; opacity: .7; } .ppt.on { background: #fff; color: #1f2430; border-color: #fff; } .ppt.on em { opacity: .8; }
+.pbar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; } .pbar i { display: block; height: 100%; }
+.pleg { display: grid; gap: 5px; font-size: 13px; } .pleg div { display: grid; grid-template-columns: 12px minmax(0,1fr) auto; gap: 8px; align-items: center; } .pleg i { width: 10px; height: 10px; border-radius: 3px; } .pleg span { opacity: .8; }
+:root { --pb1: #e8e9ee; --pb2: #aab0c0; --pb3: #7f8fb8; --pb4: #6fd0bd; --pb5: #4f5563; }
+.plans .r6 .ib.ring { background: none !important; width: 26px; height: 26px; padding: 0; }
+.kids .r6 { grid-template-columns: 26px minmax(0, 1fr) !important; } .kids .r6 .ib { display: grid !important; } .kids .r6 .v { grid-column: 2 !important; }
+.ptags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; } .ptags i { font-style: normal; font-size: 11px; font-weight: 500; padding: 1px 7px; border-radius: 99px; border: 1px solid rgba(255,255,255,.18); opacity: .85; }
+.plans .r6 .ib { grid-column: 1; grid-row: 1 / span 2; align-self: start; } .plans .r6 .l { grid-column: 2; grid-row: 1; justify-self: stretch; text-align: left; padding-right: 32px; } .plans .r6 .v { grid-column: 2 !important; grid-row: 2; flex-wrap: nowrap; }
+.plans .r6 .v { gap: 6px; min-width: 0; } .kids .r6 .v { gap: 5px; } .kids .r6 .v .mt { font-size: 12px; } .kids .r6 .v span.c { font-size: 11.5px; } .kids .r6 { padding-left: 8px; padding-right: 8px; }
+.pcw { position: relative; } .pcw + .pcw > .r6::before { content: ""; position: absolute; top: 0; left: 48px; right: 0; height: 1px; background: var(--border); } .pcost { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 8px; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.06); color: inherit; display: grid; place-items: center; cursor: pointer; margin-top: -0px; }
+.cbig { display: flex; align-items: end; gap: 14px; flex-wrap: wrap; } .cbig div { display: grid; gap: 2px; } .cbig b { font-size: 22px; } .cbig .op { font-size: 20px; opacity: .5; padding-bottom: 2px; }
+.cbar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px; } .cbar i { display: block; height: 100%; }
+.wkstep h3 { font-size: 15px; }
+.funnel { display: grid; grid-template-columns: 1fr 16px 1fr 16px 1fr; align-items: center; text-align: center; gap: 2px; }
+.fbox { background: rgba(20,30,50,.05); border-radius: 10px; padding: 8px 4px; display: grid; gap: 1px; } .fbox b { font-size: 18px; } .fbox span { font-size: 11px; opacity: .7; }
+.fbox.key { background: #1d2230; color: #fff; } .fbox.key span { opacity: .8; } .funnel em { font-style: normal; opacity: .4; }
+details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer; font-size: 13px; opacity: .85; display: flex; gap: 6px; align-items: center; } details.ptx[open] > summary { margin-bottom: 8px; } details.ptx .chips { margin-bottom: 8px; }
+.kids { margin-left: 22px; border-left: 1px solid rgba(255,255,255,.14); }
+ .kids .r6 .l { font-size: 13.5px; }
+.tourbtn { margin-left: auto; font: inherit; font-size: 12px; font-weight: 700; border-radius: 99px; padding: 4px 11px; background: #f5c451; color: #1f2430; border: 0; cursor: pointer; }
+.tour { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+.tspot { position: fixed; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(12,15,22,.62); transition: all .35s cubic-bezier(.2,.7,.2,1); outline: 2px solid #f5c451; }
+.tspot.full { box-shadow: 0 0 0 9999px rgba(12,15,22,.45); outline: 0; }
+.tcard { position: fixed; pointer-events: auto; background: #fff; color: #1d1d1f; border-radius: 16px; padding: 16px 18px 12px; box-shadow: 0 18px 50px rgba(0,0,0,.35); display: grid; gap: 8px; transition: left .35s, top .35s; }
+.tcard.in { animation: tin .35s cubic-bezier(.2,.7,.2,1); } @keyframes tin { from { opacity: 0; transform: translateY(6px); } }
+.tq { font-weight: 700; font-size: 17px; line-height: 1.3; letter-spacing: -.01em; }
+.ta { font-size: 14px; line-height: 1.5; color: #3a3a3c; }
+.tk { font-size: 13px; line-height: 1.45; color: #1d1d1f; background: #fff6df; border-radius: 10px; padding: 8px 10px; }
+.tnav { display: flex; gap: 6px; align-items: center; margin-top: 4px; } .tnav span { font-size: 12px; color: #6e6e73; margin-right: auto; font-variant-numeric: tabular-nums; }
+.tnav button { font: inherit; font-size: 13px; font-weight: 600; border: 1px solid #e0e0e5; background: #fff; border-radius: 9px; padding: 5px 10px; cursor: pointer; color: #1d1d1f; }
+.tnav button.go { background: #1d1d1f; color: #fff; border-color: #1d1d1f; } .tnav button[disabled] { opacity: .4; }
+.tprog { height: 3px; background: #ececf0; border-radius: 2px; overflow: hidden; } .tprog span { display: block; height: 100%; width: 0; background: #f5c451; transition: width 1s linear; }
+@media (prefers-reduced-motion: reduce) { .tspot, .tcard { transition: none; } .tcard.in { animation: none; } }
+.st6 { font-size: 22px !important; font-weight: 700 !important; letter-spacing: -.02em; }
+.side .tile { background: var(--surface); border-color: var(--border); }
+.side .tile .ic { background: rgba(255,255,255,.12); color: #fff; }
+.side .tile .lab { display: inline-flex; gap: 4px; align-items: center; }
+.who { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; display: grid; gap: 2px; }
+.gh2 { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); display: inline-flex; gap: 6px; align-items: center; padding: 0 0 4px; }
+.who details { border-radius: 10px; }
+.who summary { list-style: none; display: grid; grid-template-columns: auto minmax(0,1fr) auto auto; gap: 10px; align-items: center; padding: 8px 4px; cursor: pointer; }
+.who summary::-webkit-details-marker { display: none; }
+.who summary .ri { color: var(--text-2); display: inline-grid; }
+.who summary .wv { color: var(--text-2); font-size: 12px; }
+.who summary .ch { width: 14px; height: 14px; color: var(--text-3); transition: transform .15s; }
+.who details[open] summary .ch { transform: rotate(90deg); }
+.who .wr { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; padding: 6px 4px 6px 34px; font-size: 13px; }
+.who .wr small { display: block; font-size: 11px; color: var(--text-3); margin-top: 1px; }
+.who .wr b { font-weight: 600; color: var(--text-2); }
+.wk { display: grid; gap: 12px; }
+.wkstep { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.wkstep h3 { margin: 0; font-size: 16px; display: flex; gap: 10px; align-items: center; text-wrap: balance; }
+.wkn { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--acc); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+.wkstep p, .wkol { margin: 0; color: var(--text-2); font-size: 13px; line-height: 1.55; max-width: 80ch; }
+.wkol { padding-left: 20px; display: grid; gap: 4px; }
+.wkh4 { margin: 6px 0 0; font-size: 13px; }
+.wkt { overflow-x: auto; } .wkt table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 600px; }
+.wkt th, .wkt td { padding: 7px 9px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wkt th:first-child, .wkt td:first-child { text-align: left; white-space: normal; min-width: 160px; }
+.wkt thead th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-2); font-weight: 700; vertical-align: bottom; line-height: 1.3; }
+.wkt tr.tot td { font-weight: 700; border-top: 1px solid var(--text-3); }
+.wkt .z { color: var(--text-3); } .wkt tr.sec td { font-weight: 700; background: var(--acc-wash); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; } .wkt td.ind { padding-left: 20px; } .wkt td.gap { color: var(--err); font-weight: 700; }
+.wkcalc { font-size: 13px; line-height: 1.5; background: var(--acc-wash); border-radius: 10px; padding: 8px 12px; font-variant-numeric: tabular-nums; }
+.wkbig { font-size: 15px; }
+.wksel { font-size: 13px; display: flex; gap: 8px; align-items: center; } .wksel select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.wkch svg { width: 100%; height: auto; color: var(--text-2); display: block; }
+.cmpwrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; display: grid; gap: 12px; }
+.cmp thead .mh button { border: 0; background: none; padding: 0; cursor: pointer; color: var(--text-3); }
+.cmp td.chg { color: var(--acc); font-weight: 600; }
+.addmenu { position: relative; }
+.addmenu .menu { position: absolute; right: 0; top: 48px; z-index: 5; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.12); min-width: 200px; padding: 6px; display: grid; }
+.addmenu .menu button { font: inherit; text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.addmenu .menu button:hover { background: var(--track); }
+.busy { opacity: .55; transition: opacity .2s; }
+.ccard svg.ch3 { max-width: 620px; justify-self: center; }
+.app .dots i.lt { background: linear-gradient(90deg, var(--acc) 50%, transparent 50%); box-shadow: inset 0 0 0 1.5px var(--acc); }
+.app .mini6 i.h { background: linear-gradient(90deg, var(--acc) 50%, transparent 50%); box-shadow: inset 0 0 0 1.2px var(--acc); }
+.empty6 { color: var(--text-3); font-size: 13px; padding: 4px 6px; }
+
+/* ---------- inputs half: the CritCare Ultrasound graphite skin ---------- */
+.side { --bg: #1f2430; --surface: rgba(255,255,255,.06); --text: #f3f5fa; --text-2: #b3bacb; --text-3: #98a0b3; --border: rgba(255,255,255,.14); --track: rgba(255,255,255,.14);
+  --acc: #ffffff; --acc-ink: #1f2430; --acc-wash: rgba(255,255,255,.10); --ok: #6fd19b; --shadow: none;
+  background: var(--bg); color: var(--text); position: sticky; top: 0; height: 100vh; overflow-y: auto; border-right: 1px solid #141821; color-scheme: dark; }
+@media (max-width: 1000px) { .side { position: static; height: auto; } }
+.sidein { padding: 20px 18px 40px; display: grid; gap: 14px; }
+.colhead { padding: 0 6px; display: flex; align-items: center; min-height: 20px; }
+.colhead .lab { font-size: 12px; letter-spacing: .1em; color: var(--text-2); }
+.plancol { background: #161a22; border-right: 1px solid #0f1218; }
+.plancol .save { display: grid; gap: 8px; }
+.plancol .save input { font: inherit; border: 1px solid var(--border); border-radius: 10px; padding: 9px 10px; background: rgba(255,255,255,.06); color: var(--text); width: 100%; }
+.plancol .save .btnp { width: 100%; display: flex; gap: 6px; justify-content: center; align-items: center; }
+.sidehead { display: flex; justify-content: space-between; align-items: center; }
+.side .lt { padding: 4px 4px 6px; }
+.side .nav { padding: 0 4px 2px; color: var(--text-2); }
+.side .body6 { padding: 0; }
+.side .grp6, .side .blk { background: var(--surface); border-color: var(--border); }
+.side .r6 + .r6::before { background: var(--border); }
+.side .r6 .ib { background: rgba(255,255,255,.12); color: #fff; }
+.side .r6 .ib.lt2 { background: rgba(255,255,255,.06); color: var(--text-2); }
+.side button.r6:hover { background: rgba(255,255,255,.05); }
+.side .r6 .v { color: var(--text-2); }
+.side .chip { color: var(--text-2); border-color: var(--border); background: transparent; }
+.side button.chip.y { background: #fff; color: var(--acc-ink); border-color: #fff; }
+.side button.chip.f.y { background: var(--f); color: #fff; border-color: var(--f); }
+.side button.chip.s.y { background: var(--s); color: #fff; border-color: var(--s); }
+.side .stp { border-color: var(--border); }
+.side .stp button { color: var(--text); }
+.side .stp button:hover { background: rgba(255,255,255,.1); }
+.side .srch { background: rgba(255,255,255,.08); color: var(--text-3); }
+.side .lpick { background: rgba(255,255,255,.04); border-color: var(--border); }
+.side .lpick.on { border-color: #fff; box-shadow: 0 0 0 1px #fff; }
+.side .thumb i { background: rgba(255,255,255,.08); }
+.side .thumb i.N { background: #ffffff; } .side .thumb i.L { background: #aab2c3; } .side .thumb i.S { background: #5d6577; }
+.side .edgrid button { background: rgba(255,255,255,.08); color: var(--text); }
+.side .edgrid button.N { background: #fff; color: #1f2430; } .side .edgrid button.L { background: #aab2c3; color: #1f2430; } .side .edgrid button.S { background: #5d6577; color: #fff; }
+.side .mon button { background: transparent; border-color: var(--border); color: var(--text-3); }
+.side .mon button.y { background: #fff; color: #1f2430; border-color: #fff; }
+.side .btnp { background: #fff; color: #1f2430; }
+.side .ok2 { color: var(--ok); }
+.side .dl { background: rgba(255,255,255,.1); }
+.side .dotc { background: #f5c451; }
+.side .chg .r6 .v .new { color: var(--text); }
+.side .rv { background: rgba(255,255,255,.1); color: #fff; }
+.side .ndt .c, .side .rgrid .c { border-color: var(--border); }
+.side .dots i.vac { box-shadow: inset 0 0 0 1.5px var(--text-3); }
+.side .mini6 i.o { box-shadow: inset 0 0 0 1.2px var(--text-3); }
+.side input.rg::-webkit-slider-thumb { background: #fff; }
+/* plans list */
+.plans .r6 { grid-template-columns: 26px minmax(0, 1fr); row-gap: 4px; align-items: start; }
+.plans .r6 .l { white-space: normal; line-height: 1.25; padding-top: 3px; display: block !important; }
+.plans .r6 .l .editing { margin-left: 6px; vertical-align: 1px; }
+.plans .r6 .v { grid-column: 2; justify-content: flex-start; gap: 7px; font-size: 12px; }
+.plans .r6 .v span.c { min-width: 0; text-align: left; margin-left: auto; }
+.plans .r6.on { background: rgba(255,255,255,.14); }
+.plans .r6.on .ib { background: #fff; color: #1f2430; }
+.plans .r6 .v span.f { color: #6fd0bd; font-weight: 600; } .plans .r6 .v span.s { color: #8db4ea; font-weight: 600; }
+.plans .r6 .v span.c { color: var(--text); min-width: 0; text-align: right; white-space: nowrap; }
+.plans .key { display: flex; gap: 14px; padding: 6px 6px 0; font-size: 11px; color: var(--text-3); }
+.plans .key i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+/* outputs half */
+.outs .ccard, .outs .hlt, .outs .cmpwrap { box-shadow: none; }
+
+.editing { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #8a5a00; background: #fff4e0; border-radius: 999px; padding: 2px 8px; vertical-align: middle; margin-left: 6px; }
+.editing i { width: 7px; height: 7px; border-radius: 50%; background: #f5a623; animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.side .editing { color: #1f2430; background: #f5c451; }
+.side .editing i { background: #1f2430; }
+.colhead .editing { margin-left: auto; }
+.plans .r6.edit { background: rgba(245,196,81,.14) !important; box-shadow: inset 3px 0 0 #f5c451; }
+.plans .r6.edit .ib { background: #f5c451 !important; color: #1f2430 !important; }
+.plans .r6 .was { grid-column: 2; font-size: 11px; color: var(--text-3); }
+.app.isedit .outs .hlt, .app.isedit .outs .ccard { box-shadow: inset 0 3px 0 #f5c451; }
+
+.pedit { margin-left: auto; font: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+.plans .r6.drag { grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; cursor: grab; }
+.plans .r6.drag.dragging { opacity: .4; }
+.plans .grab { cursor: grab; }
+.pname { font: inherit; font-weight: 600; color: var(--text); background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; width: 100%; min-width: 0; }
+.mv { display: flex; gap: 2px; }
+.mv button { width: 26px; height: 26px; border: 0; border-radius: 7px; background: rgba(255,255,255,.08); color: var(--text); cursor: pointer; display: grid; place-items: center; }
+.mv button:disabled { opacity: .3; cursor: default; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---------- inputs column: light (plans stay dark) ---------- */
+.side:not(.plancol) .bk { background: #fff; color: #1d2230; border: 1px solid rgba(20,30,50,.14); }
+.plans .r6 .v { flex-wrap: wrap; } .plans .r6 .v span.c { margin-left: auto; }
+.side:not(.plancol) { --bg: #eef0f4; --surface: #ffffff; --text: #1d2230; --text-2: #4f5668; --text-3: #7a8193; --border: rgba(20,30,50,.12); --track: rgba(20,30,50,.12); background: #eef0f4 !important; color: #1d2230; border-color: rgba(20,30,50,.08) !important; }
+.side:not(.plancol) .grp6, .side:not(.plancol) .blk { background: #fff; box-shadow: 0 1px 2px rgba(20,30,50,.05); }
+.side:not(.plancol) .r6 .ib, .side:not(.plancol) .tile .ic { background: rgba(20,30,50,.07); color: #1d2230; } .side:not(.plancol) .r6 .ib.lt2 { background: rgba(20,30,50,.04); } .side:not(.plancol) button.r6:hover { background: rgba(20,30,50,.04); }
+.side:not(.plancol) .srch { background: rgba(20,30,50,.06); }
+.side:not(.plancol) .thumb i { background: rgba(20,30,50,.06); } .side:not(.plancol) .thumb i.N { background: #2b3242; } .side:not(.plancol) .thumb i.L { background: #8b93a5; } .side:not(.plancol) .thumb i.S { background: #ccd1db; }
+.side:not(.plancol) .edgrid button { background: rgba(20,30,50,.06); color: #1d2230; } .side:not(.plancol) .edgrid button.N { background: #2b3242; color: #fff; } .side:not(.plancol) .edgrid button.L { background: #8b93a5; color: #fff; } .side:not(.plancol) .edgrid button.S { background: #ccd1db; color: #1d2230; }
+.side:not(.plancol) button.chip.y, .side:not(.plancol) .mon button.y, .side:not(.plancol) .btnp, .side:not(.plancol) .ppt.on { background: #1d2230; color: #fff; border-color: #1d2230; }
+.side:not(.plancol) .ctile, .side:not(.plancol) .lrow, .side:not(.plancol) .lpick { background: #fff; } .side:not(.plancol) .ctile.on, .side:not(.plancol) .lrow.on, .side:not(.plancol) .csel.on, .side:not(.plancol) .lpick.on { border-color: #1d2230; box-shadow: 0 0 0 1px #1d2230; }
+.side:not(.plancol) .stp button { color: #1d2230; } .side:not(.plancol) .stp button:hover { background: rgba(20,30,50,.06); } .side:not(.plancol) input.rg::-webkit-slider-thumb { background: #1d2230; }
+.side:not(.plancol) .dl, .side:not(.plancol) .rv { background: rgba(20,30,50,.07); color: #1d2230; }
+.side:not(.plancol) .mt.f { color: #138a73; } .side:not(.plancol) .mt.s { color: #2f6bc4; }
+.side:not(.plancol) { --pb1: #2b3242; --pb2: #6b7488; --pb3: #8fa2cf; --pb4: #3aa58a; --pb5: #c9ced8; }
+.side:not(.plancol) .ctile b, .side:not(.plancol) .lrow .lm { color: inherit; }
+
+.rng1 { font-size: 12px; color: var(--text-2); display: inline-flex; gap: 4px; align-items: center; }
+.rgl { display: grid; gap: 8px; }
+.rgr { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 138px; gap: 12px; align-items: center; padding: 4px 6px; border-radius: 10px; }
+.rgr.on { background: var(--acc-wash); }
+.rgn { font-size: 12.5px; line-height: 1.25; }
+.rgw { position: relative; height: 20px; }
+.rgw .z { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--text-3); }
+.rgw .bd { position: absolute; top: 5px; height: 10px; border-radius: 5px; }
+.rgw .md { position: absolute; top: 1px; width: 3px; height: 18px; border-radius: 2px; background: var(--text); }
+.bd.save, .rgk i.save { background: #9fd3b4; } .bd.cost, .rgk i.cost { background: #eab0aa; } .bd.either, .rgk i.either { background: #cfd5df; }
+.rgv { display: grid; justify-items: end; gap: 0; } .rgv b { font-size: 13px; } .rgv span { font-size: 11px; color: var(--text-3); }
+.rgk { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11.5px; color: var(--text-2); align-items: center; }
+.rgk span { display: inline-flex; gap: 6px; align-items: center; } .rgk i { width: 14px; height: 8px; border-radius: 4px; } .rgk .rga { margin-left: auto; color: var(--text-3); }
+@media (max-width: 760px) { .rgr { grid-template-columns: minmax(0, 1fr) auto; } .rgw { grid-column: 1 / -1; grid-row: 2; } .rgk .rga { margin-left: 0; } }
+.buyt { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.bt { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: grid; gap: 3px; align-content: start; }
+.bt .lab { text-transform: none; letter-spacing: 0; font-size: 11.5px; font-weight: 500; color: var(--text-2); display: inline-flex; gap: 4px; align-items: flex-start; }
+.bt b { font-size: 20px; font-weight: 700; } .bt .dd { font-size: 11.5px; color: var(--text-3); }
+.hlt .bys { font-size: 13px; font-weight: 500; letter-spacing: 0; color: var(--text-2); margin-left: 6px; }
+
+#hl { display: none; }
+.cvh2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.cvh { display: grid; gap: 4px; align-content: start; } .cvh .lab { display: inline-flex; gap: 6px; align-items: center; }
+.cvh b, .cth b { font-size: 26px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.cth { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ctl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between; }
+.lk { font: inherit; font-size: 12.5px; font-weight: 600; color: var(--s); background: none; border: 0; padding: 0; cursor: pointer; justify-self: start; text-align: left; }
+.btl { font: inherit; text-align: left; background: var(--surface); cursor: pointer; color: inherit; }
+.btl:hover, .lk:hover { filter: brightness(.9); }
+.sheetin.narrow { width: min(680px, 100%); }
+.cvh > .dl, .cth > .dl { justify-self: start; width: auto; }
+.ctl2 { display: flex; gap: 6px 18px; flex-wrap: wrap; }
+</style>
+<!--DEFS-->
+<div class="app" id="app">
+  <aside class="side plancol" aria-label="Plans"><div class="sidein"><div class="colhead"><span class="lab stepl"><i class="stepn">1</i>Plans</span><button class="tourbtn" id="tourbtn" aria-label="Start the guided tour">Guide</button></div><div id="modebar" hidden></div><div id="map"></div><div class="save" id="savebar"></div></div></aside>
+  <aside class="side" aria-label="Inputs"><div class="sidein"><div class="colhead" id="inHead"><span class="lab stepl"><i class="stepn">2</i>Inputs</span></div><div id="panel"></div></div></aside>
+  <main class="outs">
+    <div class="apphead">
+      <div class="ttl"><span class="lab stepl"><i class="stepn">3</i>Outputs</span><h1 id="outName">Now</h1></div>
+    </div>
+    <div class="hl" id="hl"></div>
+    <div class="pair"><div class="ccard" id="coverCard"></div><div class="ccard" id="costCard"></div><div class="ccard" id="buyCard"></div></div>
+    <button class="deep" id="deepbtn"><svg class="i"><use href="#grid"/></svg>Compare plans in detail<span class="lab">Every measure, every plan</span></button>
+    <button class="deep" id="wkbtn"><svg class="i"><use href="#step"/></svg>Show the workings<span class="lab">Every step, with the numbers</span></button>
+    <div class="sheet" id="rsheet" hidden><div class="sheetin narrow"><div class="sheethd"><button class="bk2" data-closesheet="rsheet" aria-label="Back to results"><svg class="i"><use href="#back"/></svg></button><span class="pt">How sure are we</span></div><div class="ccard" id="rangeCard"></div></div></div>
+    <div class="sheet" id="dsheet" hidden><div class="sheetin narrow"><div class="sheethd"><button class="bk2" data-closesheet="dsheet" aria-label="Back to results"><svg class="i"><use href="#back"/></svg></button><span class="pt">Salford spare days</span></div><div class="ccard" id="dayCard"></div></div></div>
+    <div class="sheet" id="psheet" hidden><div class="sheetin narrow"><div class="sheethd"><button class="bk2" data-closesheet="psheet" aria-label="Back to results"><svg class="i"><use href="#back"/></svg></button><span class="pt">One more post</span></div><div class="ccard" id="postCard"></div></div></div>
+    <div class="sheet" id="csheet" hidden><div class="sheetin"><div class="sheethd"><button class="bk2" id="csheetclose" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="pt" id="ctitle">Cost breakdown</span></div><div class="wk" id="cbody"></div></div></div>
+    <div class="sheet" id="wsheet" hidden><div class="sheetin"><div class="sheethd"><button class="bk2" id="wsheetclose" aria-label="Back to outputs"><svg class="i"><use href="#back"/></svg></button><span class="pt">The workings</span></div><div class="wk" id="wk"></div></div></div>
+    <div class="sheet" id="sheet" hidden><div class="sheetin"><div class="sheethd"><button class="bk2" id="sheetclose" aria-label="Back to outputs"><svg class="i"><use href="#back"/></svg></button><span class="pt">Compare plans</span></div><div class="cmpwrap" id="cmp"></div></div></div>
+  </main>
+</div>
+<div class="tipbox" id="tip" hidden></div>
+<div class="tour" id="tour" hidden><div class="tspot" id="tspot"></div><div class="tcard" id="tcard" role="dialog" aria-live="polite" aria-label="Guided tour"><div class="tq" id="tq"></div><div class="ta" id="ta"></div><div class="tk" id="tk"></div><div class="tnav"><button id="tback">Back</button><span id="tcount"></span><button id="tnext" class="go">Next</button><button id="tclose" aria-label="Close the guide">✕</button></div><div class="tprog"><span id="tprog"></span></div></div></div>
+<script>
+/*ENGINE1*/
+</script>
+<script>
+/*ENGINE3*/
+</script>
+<script>
+(function () {
+'use strict';
+const M = window.Model, M2 = window.Model2;
+const gbp = x => '£' + Math.round(x).toLocaleString('en-GB');
+const num = (x, d) => d ? Number(x).toFixed(d) : Math.round(x).toLocaleString('en-GB');
+const pct = x => Math.round(x * 100) + '%';
+const pc1 = x => (Math.round(x * 1000) / 10).toFixed(1).replace(/\.0$/, '') + '%';
+const clone = o => JSON.parse(JSON.stringify(o));
+const get = (o, p) => p.split('.').reduce((a, k) => a == null ? a : a[k], o);
+const set = (o, p, v) => { const k = p.split('.'), l = k.pop(); k.reduce((a, x) => a[x], o)[l] = v; };
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ico = (id, cls = '') => `<svg class="i ${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
+const iI = t => `<span class="ii" tabindex="0" data-tip="${esc(t)}">${ico('info')}</span>`;
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } } };
+
+/* ---------- presets ---------- */
+const STABLE = s => { s.core.stable = true; Object.values(s.groups).forEach(g => { if (g.fill != null) g.fill = 1; g.recruit = 0; g.induct = 0; if (g.supernum != null) { g.supernum = 0; g.signoff = 0; } }); s.accp.recruit = 0; s.absence.sick = 0; s.absence.other = 0; s.core.extPlacement = 0; };
+const PRESETS = [
+  { id: 'now', tg: ['10 SCFs'], n: 'Now (average over a year)', d: 'Today’s staff, averaged over a year', ic: 'clock', fn: s => s },
+  { id: 'stable', tg: ['15 specialty doctors', 'no sickness or turnover', 'any share at Fairfield'], n: 'Theoretical minimum', d: 'No sickness, gaps or turnover, and doctors can work any share of their shifts at either site: the least that could work in theory', ic: 'min', fn: (s, pr) => { STABLE(s); s.core.fghCap = 1; s.groups.scf.posts = 0; s.groups.sd.posts = 15; s.groups.sd.line = 'sd10'; } },
+  { id: 'month', tg: ['11 SCFs', 'October roster'], n: 'Now (October 2026)', d: 'Who is on the Allocate roster this month', ic: 'cal', fn: s => {   // who is on the Allocate roster this month, by group
+    const G = s.groups, fix = (k, o) => Object.assign(G[k], o);
+    fix('scf', { posts: 11, recruit: 0, lt: 0 });
+    ['icm3', 'icm2', 'icm1', 'anaes'].forEach(k => fix(k, { fill: 14.6 / 13, lt: 0 }));   // 16 airway trainees, 14.6 WTE
+    fix('jcf', { posts: 5, lt: 0 }); fix('accs', { posts: 0 }); fix('imt', { posts: 4, fill: 1, lt: 0 }); fix('fy2', { posts: 4, lt: 0 }); fix('other', { posts: 1, lt: 0 });
+  } },
+  { id: 'fulldean', tg: ['every post filled'], n: 'Now (full complement)', d: 'Every post filled: 10 SCFs with no gaps between people, and every deanery post', ic: 'school', fn: s => { Object.assign(s.groups.scf, { recruit: 0 }); Object.assign(s.groups.icm3, { posts: 2, fill: 1, lt: 0 }); Object.assign(s.groups.icm2, { posts: 7, fill: 1, lt: 0 }); Object.assign(s.groups.icm1, { posts: 1, fill: 1, lt: 0 }); Object.assign(s.groups.anaes, { posts: 3, fill: 1, lt: 0 }); } },
+  { id: 'allsd', tg: ['10 specialty doctors', '10 PA'], n: 'SCFs become specialty doctors', d: 'The 10 SCF posts become specialty doctors on 10 PA', ic: 'swap', fn: s => { s.groups.scf.posts = 0; s.groups.sd.posts = 10; s.groups.sd.line = 'sd10'; } },
+  { id: 'value', tg: ['14 specialty doctors'], n: 'More cover at locum cost', d: '14 specialty doctors: more Fairfield cover for about what locums cost', ic: 'down', rec: 1, fn: (s, pr) => { s.groups.scf.posts = 0; s.groups.sd.posts = 14; s.groups.sd.line = 'sd10'; } },
+  { id: 'nights2', tg: ['extra weekday nights'], n: 'Now (everyone on extra nights)', d: 'Every doctor on the 9-week template with two extra weekday night sets', ic: 'moon', fn: s => { ['scf', 'sd', 'icm1', 'icm2', 'icm3', 'anaes', 'jcf', 'accs', 'imt', 'fy2', 'other'].forEach(k => { s.groups[k].line = 'scf_2n'; }); } },
+  { id: 'fghline', tg: ['6 of the 10 SCFs', '6-week Fairfield line', 'funded by Fairfield'], n: 'Fairfield line for 6 SCFs', d: 'Six of the ten SCFs form a Fairfield team on a 6-week line with every worked weekend on call', ic: 'hosp', fn: s => { s.core.fghPosts = 6; s.core.funding = 'split'; s.core.fghLine = 'fgh6'; } },
+  { id: 'nogaps', tg: ['24 specialty doctors', 'up to half their on-calls at Fairfield'], n: '95% Fairfield cover', d: 'The fewest specialty doctors that cover at least 95% of Fairfield nights and weekends, with up to half their on-calls at Fairfield', ic: 'shield', rec: 1, fn: (s, pr) => { s.core.fghCap = 0.5; s.groups.scf.posts = 0; s.groups.sd.posts = 24; s.groups.sd.line = 'sd10'; } }
+];
+let MODE = 'theory';
+const practice = () => MODE === 'practice';
+const NOW = M2.now(); NOW.core.practice = practice();
+const syncT = s => { const D = s.demand; D.airT = Object.assign({}, D.air); D.naT = Object.assign({}, D.na); D.fghT = Object.assign({}, D.fgh); return s; };
+const make = id => { const p = PRESETS.find(x => x.id === id); const s = M2.now(); s.core.practice = practice(); p.fn(s, practice()); M2.syncAccp(s); syncT(s); s.name = p.n; return s; };
+let S = make('now'), active = 'now', path = ['home'], saved = [], db = null, canSave = false, lastRes = null, nowRes = null, query = '';
+const presetRes = {}, savedRes = {};
+let costView = store.get('rm.costView') || 'bridge', costSplit = store.get('rm.costSplit') || 'total', coverView = store.get('rm.coverView') || 'bars';
+let extraCols = [];
+
+/* ---------- grades ---------- */
+const GRADES = [
+  { k: 'icm3', n: 'ICM stage 3', ic: 'school', grp: 'Deanery', kind: 'dean' },
+  { k: 'icm2', n: 'ICM stage 2', ic: 'school', grp: 'Deanery', kind: 'dean' },
+  { k: 'icm1', n: 'ICM stage 1', ic: 'school', grp: 'Deanery', kind: 'dean' },
+  { k: 'anaes', n: 'Anaesthesia', ic: 'school', grp: 'Deanery', kind: 'dean' },
+  { k: 'jcf', n: 'JCF', ic: 'person', grp: 'Other residents', kind: 'sub' },
+  { k: 'accs', n: 'ACCS', ic: 'person', grp: 'Other residents', kind: 'dean' },
+  { k: 'imt', n: 'IMT', ic: 'person', grp: 'Other residents', kind: 'dean' },
+  { k: 'fy2', n: 'FY2', ic: 'person', grp: 'Other residents', kind: 'dean' },
+  { k: 'other', n: 'ED, neuro, renal, RCF', ic: 'person', grp: 'Other residents', kind: 'dean' }
+];
+const ALLW = [['scf', 'SCF', 'badge'], ['sd', 'Specialty doctor', 'badge'], ['icm3', 'ICM stage 3', 'school'], ['icm2', 'ICM stage 2', 'school'], ['icm1', 'ICM stage 1', 'school'], ['anaes', 'Anaesthesia', 'school'], ['accp', 'ACCPs', 'stethoscope'], ['jcf', 'JCF', 'person'], ['accs', 'ACCS', 'person'], ['imt', 'IMT', 'person'], ['fy2', 'FY2', 'person'], ['other', 'ED, neuro, renal, RCF', 'person']];
+const wteK = (s, k) => k === 'accp' ? ['accpA', 'accpF', 'accpT', 'accpO'].reduce((a, x) => a + M2.wteOf(s, x), 0) : M2.wteOf(s, k);
+const wteAll = s => ALLW.reduce((a, [k]) => a + wteK(s, k), 0);
+const LINES_FOR = { core: ['scf_current', 'scf_2n', 'sd13', 'sd10', 'custom'], dean: ['scf_current', 'scf_2n', 'trainee'], accp: ['scf_current', 'accp'] };
+const lineName = k => k === 'custom' ? 'Edit the 9-week template' : k === 'trainee' ? 'Edit the trainee template' : k === 'accp' ? 'Edit the ACCP template' : (M.LINES[k] ? (n => n.charAt(0).toUpperCase() + n.slice(1))(M.LINES[k].name.replace('Proposed: ', '')) : k);
+const thumb = grid => `<div class="thumb">${grid.map(w => `<div>${[...w].map(c => `<i class="${c === '.' ? '' : c}"></i>`).join('')}</div>`).join('')}</div>`;
+
+/* ---------- control registry: lets search and "changed from Now" find every setting ---------- */
+const REG = {};
+const reg = (p, label, page) => { if (!REG[p]) REG[p] = { label, page }; };
+const fmtV = (v) => typeof v === 'boolean' ? (v ? 'On' : 'Off') : Array.isArray(v) ? (v.length && typeof v[0] === 'number' ? v.map(m => M2.MONTHS[m]).join(' ') : 'Edited') : typeof v === 'number' ? (Math.abs(v) < 1 && v % 1 ? pct(v) : num(v, v % 1 ? 1 : 0)) : String(v);
+
+const sv = (p, v) => `--v:${v}%`;
+const stepC = (p, label, ic, o = {}) => { reg(p, label, o.page); const v = get(S, p); return `<div class="row2"><span class="ri">${ico(ic, 'sm')}</span><span class="rl">${label}${o.info ? iI(o.info) : ''}</span><span class="stp"><button data-p="${p}" data-d="${-(o.step || 1)}" data-min="${o.min ?? 0}" data-max="${o.max ?? 999}" aria-label="Less ${esc(label)}">−</button><b class="num">${o.fmt ? o.fmt(v) : num(v, (o.step || 1) % 1 ? 1 : 0)}</b><button data-p="${p}" data-d="${o.step || 1}" data-min="${o.min ?? 0}" data-max="${o.max ?? 999}" aria-label="More ${esc(label)}">+</button></span></div>`; };
+const slideC = (p, label, ic, o = {}) => { reg(p, label, o.page); const v = get(S, p), mn = o.min ?? 0, mx = o.max ?? 1, f = (v - mn) / (mx - mn) * 100; return `<div class="row2"><span class="ri">${ico(ic, 'sm')}</span><span class="rl">${label}${o.info ? iI(o.info) : ''}</span><b class="num" data-out="${p}">${(o.fmt || pct)(v)}</b><input class="rg" type="range" data-p="${p}" min="${mn}" max="${mx}" step="${o.step || 0.01}" value="${v}" style="${sv(p, f)}" aria-label="${esc(label)}" data-fmt="${o.fmtKey || 'pct'}"></div>`; };
+const togC = (p, label, ic, cls = '', page) => { reg(p, label, page); const v = !!get(S, p); return `<button class="chip ${v ? 'y' : ''} ${cls}" data-t="${p}" aria-pressed="${v}">${ico(ic, 'sm')}${label}</button>`; };
+const choiceC = (p, label, opts, page) => { reg(p, label, page); const v = get(S, p); return `<div class="chips">${opts.map(([val, t, ic]) => `<button class="chip ${String(v) === String(val) ? 'y' : ''}" data-c="${p}" data-v="${esc(val)}">${ic ? ico(ic, 'sm') : ''}${t}</button>`).join('')}</div>`; };
+const BLKINFO = {
+  'Time': 'How long people stay, how long a post is empty between people, and the months before someone counts fully. A post empty between people costs nothing and covers nothing.',
+  'Off the rota': 'Leave, study leave, bank holidays and non-clinical days come off weekday days only, never nights or weekends. Sickness comes off every shift (Absence and seasons page).',
+  'Work schedule': 'Each person works this schedule. Part-time people work the trust’s 80, 70, 60 or 50% versions, which keep the weekend nights and drop weekday shifts.',
+  'Can cover': 'Which shifts this group can fill. Trainees never work Fairfield nights or weekends; only signed-off SCFs and specialty doctors do.',
+  'People': 'Posts, how many are filled on average, and part-time working. Deanery numbers are WTE, so part-time changes the head count, not the cover.',
+  'Library': 'The trust’s 9-week template and versions of it. Every one keeps the same nights and weekends; part-time versions are built from the trust’s own 80, 70, 60 and 50% templates.',
+  'On-costs': 'Employer pension and National Insurance on top of pay. Applied to every group we employ; not to locums.',
+  'Recruitment': 'One-off cost each time a post is filled.',
+  'Skills': 'Transfer-trained ACCPs count as airway on Salford short days only. FGH-trained can do the Fairfield weekday long day. Airway-trained count as full airway on any shift.',
+  'SCF and specialty doctor teams': 'Posts Fairfield funds fill Fairfield first but keep a share of on-calls at Salford for their skills. Posts Salford funds fill Salford first, then Fairfield gaps up to the limit.',
+  'Leave by month': 'From Allocate, Sep 2025 to Aug 2026: leave peaks in October, March and the summer. Switch off to spread it evenly.',
+  'Absence by month': 'From Allocate: sickness peaks in December and January, and April to May. Switch off to spread it evenly.'
+};
+const blk = (ic, t, body, info) => { info = info || BLKINFO[t]; return `<div class="blk"><div class="bh">${ico(ic, 'sm')}<span class="lab">${t}</span>${info ? iI(info) : ''}</div>${body}</div>`; };
+const head = (title, sub) => path.length > 1 ? `<div class="ph2"><button class="bk" data-back="1" aria-label="Back to ${esc(backName())}">${ico('back', 'sm')}</button><span class="pt">${title}</span>${sub ? `<span class="ps num">${sub}</span>` : ''}</div>` : '';
+const NAMES = { home: 'Inputs', staff: 'Staff', core: 'SCF and specialty doctor', accp: 'ACCPs', need: 'Shifts needed', fgh: 'Fairfield', loc: 'Locum rates', pay: 'Pay and on-costs', abs: 'Absence and seasons', lines: 'Work schedules' };
+const backName = () => { const prev = path[path.length - 2]; return NAMES[prev] || (GRADES.find(g => g.k === prev) || {}).n || 'Back'; };
+const fmtMo = v => num(v) + ' mo', fmtD = v => num(v) + ' d', fmtGbp = v => gbp(v);
+const dotsHTML = (posts, fill, lt, color) => { const out = []; const filled = Math.round(posts * fill); for (let i = 0; i < posts; i++) { const vac = i >= filled, half = !vac && i < Math.round(posts * lt); out.push(`<i class="${vac ? 'vac' : half ? 'lt' : ''}" ${color && !vac && !half ? `style="background:${color}"` : ''}></i>`); } return out.join('') || '<span class="lab">None</span>'; };
+
+function lineBlock(owner, kind, page) {
+  const g = owner, key = g.line, grid = M.gridFor(S, key), chk = M.checkLine(grid);
+  const opts = LINES_FOR[kind] || LINES_FOR.dean, slot = kind === 'core' ? 'custom' : kind === 'accp' ? 'accp' : 'trainee';
+  const SHORT = { scf_current: 'Standard', scf_2n: 'Extra nights', sd13: '13 PA', sd10: '10 PA', accp10: 'ACCP 10-week' };
+  const nm2 = k => k === slot ? 'Edit days' : SHORT[k] || lineName(k);
+  return `<div class="lrows">${opts.map(k => { const c = M.checkLine(M.gridFor(S, k)), on = k === key, ed = k === slot;
+      return `<button class="lrow${on ? ' on' : ''}${ed ? ' ed' : ''}" ${ed && on ? `data-go="edit:${slot}:${page}"` : `data-line="${k}" data-owner="${page}"`}>${thumb(M.gridFor(S, k))}<span class="ln">${ed ? ico('pencil', 'sm') : ''}${esc(nm2(k))}</span><span class="lm num">${num(c.hours, 1)} h · ${num(c.pas, 1)} PA</span></button>`; }).join('')}</div>
+    ${chk.ok ? '' : `<span class="ok2" style="color:var(--err)">${ico('x', 'sm')}Breaks the 2016 contract</span>`}`;
+}
+
+/* ---------- pages ---------- */
+function pHome() {
+  return head('Inputs') + `<div class="body6">
+    <label class="srch">${ico('search', 'sm')}<input id="q" placeholder="Find a setting" value="${esc(query)}" autocomplete="off" aria-label="Find a setting"></label>
+    ${query ? searchResults() : `
+    <div class="grp6">${row('users', 'Staff', `<span class="num">${num(wteAll(S), 1)} WTE</span>`, 'staff')}${row('grid', 'Work schedules', 'Library', 'lines')}${row('target', 'Shifts needed', 'Both sites', 'need')}</div>
+    <div class="grp6">${row('hosp', 'Fairfield', (S.core.fghPosts ? S.core.fghPosts + ' in Fairfield team' : 'Salford first'), 'fgh')}${row('userplus', 'Locum rates', 'Bank ' + gbp(S.cost.lr.wdSoc) + ' to ' + gbp(Math.max(S.cost.lr.wdAnti, S.cost.lr.weSoc, S.cost.lr.weAnti)) + ' · ' + Math.round((S.cost.agencyShare || 0) * 100) + '% agency', 'loc')}${row('pound', 'Pay and on-costs', (S.cost.pension ? pct(S.cost.pension) + ' pension' : 'No pension'), 'pay')}${row('thermo', 'Absence and seasons', pc1(S.absence.sick) + ' sick', 'abs')}</div>`}
+  </div>`;
+}
+const pageOf = p => (REG[p] || {}).page || 'home';
+const isChanged = page => active.endsWith('*') && changes(baseState()).some(c => pageOf(c.p) === page || (page === 'staff' && ['core', 'accp', ...GRADES.map(g => g.k)].includes(pageOf(c.p))));
+const row = (i, l, v, go, info) => `<button class="r6" data-go="${go}"><span class="ib">${ico(i, 'sm')}</span><span class="l">${l}${info ? iI(info) : ''}</span><span class="v">${isChanged(go) ? '<span class="dotc" title="Changed from Now"></span>' : ''}${v}<svg class="i ch"><use href="#chev"/></svg></span></button>`;
+const ownerOf = p => { const m = p.match(/^groups\.(\w+)\./); if (m) { const k = m[1]; return k === 'scf' ? 'SCF' : k === 'sd' ? 'Specialty doctor' : (GRADES.find(g => g.k === k) || {}).n || ''; } if (p.startsWith('accp.')) return 'ACCP'; return ''; };
+const fullLabel = p => { const o = ownerOf(p), l = REG[p].label; return o ? o + ', ' + l.charAt(0).toLowerCase() + l.slice(1) : l; };
+function baseState() { const b = active.replace('*', ''); if (b.startsWith('saved:')) { const r = savedRes[b.slice(6)]; return r ? r.s : NOW; } return presetRes[b] ? presetRes[b].s : make(b); }
+function changes(ref) {
+  ref = ref || NOW; const NOWX = ref; const out = [];
+  // the Salford total is stored as airway + non-airway, so show it as the total
+  const tv = (s, p) => p.startsWith('demand.na.') ? s.demand.na[p.split('.')[2]] + s.demand.air[p.split('.')[2]] : get(s, p);
+  Object.keys(REG).forEach(p => { const a = tv(S, p), b = tv(NOWX, p); if (JSON.stringify(a) !== JSON.stringify(b)) out.push({ p, label: fullLabel(p), old: fmtV(b), nw: fmtV(a) }); });
+  return out;
+}
+function searchResults() {
+  const q = query.toLowerCase(), hits = Object.entries(REG).filter(([p, r]) => r.label.toLowerCase().includes(q) || (NAMES[r.page] || '').toLowerCase().includes(q)).slice(0, 30);
+  const pname = pg => NAMES[pg] || (GRADES.find(g => g.k === pg) || {}).n || '';
+  return hits.length ? `<div class="grp6">${hits.map(([p, r]) => `<button class="r6" data-go="${r.page}"><span class="ib lt2">${ico('search', 'sm')}</span><span class="l">${esc(fullLabel(p))}</span><span class="v">${esc(fmtV(get(S, p)))}<svg class="i ch"><use href="#chev"/></svg></span></button>`).join('')}</div>` : '<div class="empty6">No setting matches.</div>';
+}
+function pStaff() {
+  const g = S.groups, a = S.accp;
+  const mini = (posts, fill, lt) => `<span class="mini6">${Array.from({ length: Math.min(posts, 16) }, (_, i) => `<i class="${i >= Math.round(posts * fill) ? 'o' : i < Math.round(posts * lt) ? 'h' : ''}"></i>`).join('')}</span>`;
+  const pv = (posts, w) => `<span class="pc2 num">${posts}</span><span class="pc2 num">${num(w, 1)}</span>`;
+  const gr = k => row(GRADES.find(x => x.k === k).ic, GRADES.find(x => x.k === k).n, pv(g[k].posts, wteK(S, k)), k);
+  const gh = t => `<div class="gh gh3"><span>${t}</span><span>Posts</span><span>WTE</span></div>`;
+  const sp = staffSplit(), tl = (ic, v, l, tip) => `<div class="tile"><span class="ic">${ico(ic, 'sm')}</span><b class="tv num st6">${num(v, 1)}</b><span class="lab">${l}${tip ? iI(tip) : ''}</span></div>`;
+  return head('Staff') + `<div class="body6">
+    <div class="tiles">${tl('users', sp.tot, 'Total WTE', 'Everyone on the rota, in whole-time equivalents. People counts are posts filled; WTE then allows for part-time working and vacancies.')}${tl('air', sp.air, 'Airway', 'Grades set to cover airway: ' + (sp.an.join(', ') || 'none'))}${tl('person', sp.non, 'Non-airway', 'Everyone else on the rota')}</div>
+    <div>${gh('SCFs and specialty doctors')}<div class="grp6">${row('badge', 'SCF and specialty doctor', pv(g.scf.posts + g.scf.newPosts + g.sd.posts + g.sd.newPosts, wteK(S, 'scf') + wteK(S, 'sd')), 'core', 'Posts on both contracts. WTE allows for gaps between leavers and starters, part-time working and deanery fill')}</div></div>
+    <div>${gh('Deanery')}<div class="grp6">${['icm3', 'icm2', 'icm1', 'anaes'].map(gr).join('')}</div></div>
+    <div>${gh('ACCPs')}<div class="grp6">${row('stethoscope', 'ACCPs', pv(a.total, wteK(S, 'accp')), 'accp')}</div></div>
+    <div>${gh('Other residents')}<div class="grp6">${['jcf', 'accs', 'imt', 'fy2', 'other'].map(gr).join('')}</div></div></div>`;
+}
+const POOLS = [['scf', 'SCF'], ['sd', 'Specialty doctor'], ['icm3', 'ICM stage 3'], ['icm2', 'ICM stage 2'], ['icm1', 'ICM stage 1'], ['anaes', 'Anaesthesia'], ['accpA', 'ACCP, airway-trained'], ['accpF', 'ACCP, FGH-trained'], ['accpT', 'ACCP, transfer-trained'], ['accpO', 'ACCP, other'], ['jcf', 'JCF'], ['accs', 'ACCS'], ['imt', 'IMT'], ['fy2', 'FY2'], ['other', 'ED, neuro, renal, RCF']];
+const poolWte = k => S.groups[k] ? M2.wteOf(S, k) : 0;
+const staffSplit = () => { let air = 0, tot = 0; const an = []; POOLS.forEach(([k, n]) => { const w = poolWte(k); tot += w; if (S.groups[k] && S.groups[k].can && S.groups[k].can.air) { air += w; if (w > 0.05) an.push(n); } }); return { tot, air, non: tot - air, an }; };
+/* who may work each FGH shift, read live from each grade's "Can cover" settings */
+function fghWho(t) {
+  const out = [], C = M2.CORE;
+  POOLS.forEach(([k, n]) => {
+    const g = S.groups[k]; if (!g) return; const c = g.can || {}, w = poolWte(k); if (w < 0.05) return;
+    const core = C.includes(k);
+    const ok = t === 'N' ? c.fghN : t === 'Lwd' ? c.fghD : (c.fghWE || (!core && S.core.weekendFghOthers && c.fghD));
+    if (!ok) return;
+    const note = core ? (g.signoff ? 'Once signed off for FGH, at most ' + Math.round(S.core.fghCap * 100) + '% of their on-calls' : 'At most ' + Math.round(S.core.fghCap * 100) + '% of their on-calls') : (g.leadIn ? 'After ' + g.leadIn + ' months in post' : '');
+    out.push({ n, w, note });
+  });
+  if (t === 'N' && S.core.fghAnaes > 0) out.push({ n: 'FGH anaesthetist', w: 0, note: Math.round(S.core.fghAnaes * 100) + '% of nights' });
+  return out;
+}
+const whoTip = t => { const l = fghWho(t); return l.length ? l.map(x => x.n).join(', ') : 'Nobody: every shift goes to a locum'; };
+const OPEN_WHO = new Set();
+const canBlock = (base, page, coreSide) => blk('shield', 'Can cover', `<div class="chips">${togC(base + '.can.air', 'Airway', 'air', '', page)}${coreSide ? '' : togC(base + '.can.airS', 'Airway short days only', 'day', '', page)}${togC(base + '.can.fghD', 'FGH weekday days', 'hosp', 'f', page)}${togC(base + '.can.fghWE', 'FGH weekends', 'hosp', 'f', page)}${togC(base + '.can.fghN', 'FGH nights', 'moon', 'f', page)}</div>` + slideC(base + '.counts', 'Counts towards minimum', 'step', { page, info: 'Less than 100% for people who are supernumerary or still training up' }));
+const PTMIX = [[0, 0.7, 'All full-time'], [1 / 3, 0.7, 'A third at 0.7'], [0.5, 0.6, 'Half at 0.6'], [0.5, 0.8, 'Half at 0.8']];
+const peopleBlock = (base, page, o = {}) => {
+  const g = get(S, base), wp = 1 - g.lt + g.lt * g.ltw, fill = o.fill ? g.fill : 1, dean = !!g.wteBased;
+  const wte = dean ? g.posts * fill : g.posts * fill * wp, ppl = dean ? g.posts * fill / wp : g.posts * fill;
+  const box = (v, l, key) => `<div class="fbox${key ? ' key' : ''}"><b class="num">${v}</b><span>${l}</span></div>`, ar = '<em>→</em>';
+  const flow = o.noPosts ? '' : `<div class="funnel">${dean ? box(num(g.posts, 1), 'funded WTE') + ar + box(pct(fill), 'filled') + ar + box(num(wte, 1), 'WTE on rota', 1)
+    : box(num(g.posts), 'posts') + ar + box(num(ppl, 1), 'people') + ar + box(num(wte, 1), 'WTE on rota', 1)}</div>`;
+  const match = PTMIX.findIndex(([a, b]) => a === 0 ? g.lt < 0.01 : Math.abs(a - g.lt) < 0.01 && Math.abs(b - g.ltw) < 0.01);
+  const chips = `<div class="chips">${PTMIX.map(([a, b, l], i) => `<button class="chip${i === match ? ' y' : ''}" data-ptmix="${base}|${a}|${b}">${l}</button>`).join('')}</div>`;
+  const sliders = slideC(base + '.lt', 'Share of people part-time', 'clock', { page, fmt: v => pct(v), fmtKey: 'pc' }) + slideC(base + '.ltw', 'Their average WTE', 'clock', { page, min: 0.4, max: 0.95, step: 0.05, fmt: v => num(v, 2), fmtKey: 'wte2' });
+  const head3 = (txt, info) => `<div class="gh3" style="margin-top:4px">${txt}${iI(info)}</div>`;
+  return blk('users', 'People', flow
+    + (o.noPosts ? '' : stepC(base + '.posts', dean ? 'Funded posts (WTE)' : 'Funded posts', 'person', { page, max: 40, info: dean ? 'What the deanery funds, in whole-time equivalents. Two trainees at 0.5 fill one funded WTE.' : 'Posts we fund. Each is one person.' }))
+    + (o.fill ? slideC(base + '.fill', 'Filled on average', 'check', { page, min: 0.4, max: 1.2, info: 'Share of funded posts with someone in them, on average. Below 100% it varies month to month, as it does now. 100% or more means a full complement every month.' }) : '')
+    + (dean ? `<details class="ptx"><summary>Head count: about ${num(ppl, 1)} people${iI('The deanery funds WTE, so part-time only changes how many people fill it, not the cover or the cost.')}</summary>${chips}${sliders}</details>`
+      : head3('Part-time mix', 'Part-time people work less, so they lower the WTE on the rota and the cost.') + chips + `<details class="ptx"${match < 0 ? ' open' : ''}><summary>Set exactly</summary>${sliders}</details>`)); };
+const monthsBlock = (base, page) => { reg(base + '.changeover', 'Changeover months', page); const v = get(S, base + '.changeover') || []; return `<div class="row2"><span class="ri">${ico('swap', 'sm')}</span><span class="rl">Changeover months${iI('Months new people start. Each starter loses their induction days (2 by default) in that month.')}</span><span></span></div><div class="mon">${M2.MONTHS.map((m, i) => `<button class="${v.includes(i) ? 'y' : ''}" data-mon="${base}" data-i="${i}">${m[0]}</button>`).join('')}</div>` + stepC(base + '.induct', 'Induction days', 'school', { page, max: 15 , info: 'Days of induction for each new starter, in the month they start. Taken from weekday days.' }); };
+function pGrade(k) {
+  const G = GRADES.find(x => x.k === k), g = S.groups[k], base = 'groups.' + k;
+  const time = (G.kind === 'sub' ? stepC(base + '.rotation', 'Stays', 'door', { page: k, fmt: fmtMo, min: 1, max: 36 , info: 'How long each person stays.' }) + stepC(base + '.leadIn', 'Before FGH', 'hosp', { page: k, fmt: fmtMo, max: 12 , info: 'Months before they can cover the Fairfield weekday long day.' }) : '')
+    + (k === 'accs' ? stepC(base + '.rotation', 'Placement', 'door', { page: k, fmt: fmtMo, min: 1, max: 12 , info: 'How long each placement lasts.' }) + stepC(base + '.leadIn', 'Before FGH', 'hosp', { page: k, fmt: fmtMo, max: 12 , info: 'Months before they can cover the Fairfield weekday long day.' }) : '') + monthsBlock(base, k);
+  return head(G.n, num(wteK(S, k), 1) + ' WTE') + `<div class="body6">
+    ${peopleBlock(base, k, { fill: true })}
+    ${payBlock(k)}
+    ${blk('grid', 'Work schedule', lineBlock(g, 'dean', k) + (k === 'icm3' ? stepC(base + '.actingUp', 'Acting-up nights per 9 weeks', 'moon', { page: k, max: 6, info: 'ST7+ acting-up nights replace their own nights' }) : ''))}
+    ${blk('cal', 'Time', time)}
+    ${blk('plane', 'Off the rota', stepC(base + '.al', 'Annual leave', 'plane', { page: k, fmt: fmtD, max: 40, info: '27 days, or 32 after 6 years (ST3 and above), plus 8 bank holidays' }) + stepC(base + '.study', 'Study leave', 'book', { page: k, fmt: fmtD, max: 40, info: 'Deanery trainees are entitled to 28 days but take less: this starts at the average taken in Allocate, Sep 2025 to Aug 2026. JCFs: 10 days.' }) + stepC(base + '.spa', 'Teaching and non-clinical', 'school', { page: k, fmt: fmtD, max: 80, info: 'Days a year off the rota for teaching and similar. Induction is set separately, by changeover month' }))}
+    ${canBlock(base, k)}
+  </div>`;
+}
+let coreSel = null;
+
+/* ---------- pay: pick the pay point, see what it adds up to ---------- */
+const NODAL = [['FY2', 'nd2'], ['CT1–2', 'nd3'], ['ST3', 'nd4a'], ['ST4–5', 'nd4b'], ['ST6', 'nd5a'], ['ST7–8', 'nd5']];
+const SDPTS = [[63696, '0–2 yrs'], [73383, '3–5 yrs'], [81804, '6–8 yrs'], [90548, '9–11 yrs'], [102689, '12+ yrs']];
+const B8A = [[57528, 'Entry'], [60417, 'Middle'], [64750, 'Top']];
+function payBlock(k) {
+  const key = k === 'accp' ? 'accpT' : k, g = S.groups[key], P = M2.payParts(S, key);
+  const gross = P.basic + P.hours + P.nights + P.weekends + P.unsocial, on = M2.onCost(gross, S.cost), tot = gross + on;
+  const pt = (on1, lab, val, attrs) => `<button class="ppt${on1 ? ' on' : ''}" ${attrs}><b>${lab}</b><em>${gbp(val)}</em></button>`;
+  let pick;
+  if (k === 'sd') pick = SDPTS.map(([v, l]) => pt(S.cost.sdPay === v, l, v, `data-c="cost.sdPay" data-v="${v}"`)).join('');
+  else if (k === 'accp') pick = B8A.map(([v, l]) => pt(S.accp.basic === v, l, v, `data-c="accp.basic" data-v="${v}"`)).join('');
+  else {
+    const flat = k === 'scf' && g.payKind === 'flat';
+    pick = (k === 'scf' ? pt(flat, 'Flat', S.cost.scfPay, 'data-pay="flat"') : '') + NODAL.filter(([, n]) => k !== 'scf' || ['nd4a', 'nd4b', 'nd5a', 'nd5'].includes(n)).map(([l, n]) => pt(!flat && g.basic === M2.PAY[n], l, M2.PAY[n], `data-pay="${M2.PAY[n]}" data-pk="${k}"`)).join('');
+  }
+  const parts = [['Basic', P.basic, 'var(--pb1)'], ['Extra hours', P.hours, 'var(--pb2)'], ['Nights', P.nights, 'var(--pb3)'], ['Weekends', P.weekends, 'var(--pb4)'], ['Unsocial hours', P.unsocial, 'var(--pb4)'], ['On-costs', on, 'var(--pb5)']].filter(x => x[1] > 0.5);
+  return `<div class="blk"><div class="bh">${ico('pound', 'sm')}<span class="lab">Pay a WTE</span>${iI(k === 'sd' ? 'Specialty doctor 2021 contract, 2026/27, by years in grade. Paid for the PAs in the work schedule plus SPA days, then employer on-costs.' : k === 'accp' ? 'Agenda for Change band 8a, 2026/27, plus a share for unsocial hours, then employer on-costs.' : 'Junior doctor 2016 contract, 2026/27 pay points. On top of basic: hours over 40 a week at the basic rate, 37% for night hours (21:00 to the end of the shift), and the weekend allowance (10% for 1 in 3). Then employer pension and NI.')}<b class="num" style="margin-left:auto;font-size:17px">${gbp(tot)}</b></div>
+    <div class="ppts">${pick}</div>
+    <div class="pbar">${parts.map(([n, v, c]) => `<i style="width:${v / tot * 100}%;background:${c}" title="${n}: ${gbp(v)}"></i>`).join('')}</div>
+    <div class="pleg">${parts.map(([n, v, c]) => `<div><i style="background:${c}"></i><span>${n}</span><b class="num">${gbp(v)}</b></div>`).join('')}</div>
+    ${k === 'accp' ? slideC('accp.unsocial', 'Unsocial hours', 'moon', { page: 'accp', max: 0.4 , info: 'Added to band 8a basic pay for nights and weekends. A flat guess, not worked out from their rota.' }) : ''}${k === 'scf' && g.payKind === 'flat' ? stepC('cost.scfPay', 'Flat pay', 'pound', { page: 'core', min: 50000, max: 120000, step: 1000, fmt: fmtGbp , info: 'Used only when SCF pay is set to Flat rather than a 2016 contract pay point.' }) : ''}</div>`;
+}
+function pCore() {
+  const c = S.groups.scf, d = S.groups.sd;
+  if (!coreSel) coreSel = (c.posts + c.newPosts) ? 'scf' : 'sd';
+  const k = coreSel, g = S.groups[k], base = 'groups.' + k, nm = k === 'scf' ? 'SCF' : 'Specialty doctor';
+  const side = (t, kk, gg) => `<button class="ctile${coreSel === kk ? ' on' : ''}" data-coresel="${kk}" aria-pressed="${coreSel === kk}"><span>${t}</span><b class="num">${gg.posts + gg.newPosts}</b></button>`;
+  const own = k === 'sd'
+    ? '<div class="g2s">' + stepC('groups.sd.posts', 'Posts', 'person', { page: 'core', max: 40 , info: 'Funded specialty doctor posts. Each is empty about 12% of the time between people, and we pay nothing while it is.' }) + stepC('groups.sd.newPosts', 'Extra posts', 'plus', { page: 'core', max: 20, info: 'Posts added on top of today’s. Each starts empty, then goes through recruitment, supernumerary time and sign-off like any other post.' }) + stepC('groups.sd.pas', 'PAs', 'step', { page: 'core', step: 0.5, max: 14, fmt: v => v ? num(v, 1) : 'Line', info: '0 uses the line as it is. Extra PAs become weekday short days.' }) + stepC('groups.sd.spa', 'SPA days', 'school', { page: 'core', fmt: fmtD, max: 40 , info: 'Supporting professional activity days a year, taken from weekday days. Each day counts as 2 PAs of pay.' }) + '</div>'
+    : '<div class="g2s">' + stepC('groups.scf.posts', 'Posts', 'person', { page: 'core', max: 40 , info: 'Funded SCF posts. Each is empty about 12% of the time between people, and we pay nothing while it is.' }) + stepC('groups.scf.newPosts', 'Extra posts', 'plus', { page: 'core', max: 20, info: 'Posts added on top of today’s. Each starts empty, then goes through recruitment, supernumerary time and sign-off like any other post.' }) + stepC('groups.scf.spa', 'Development days', 'school', { page: 'core', fmt: fmtD, max: 60 , info: 'Days a year off the rota for SCF development, taken from weekday days only.' }) + '</div>';
+  return head('SCF and specialty doctor') + `<div class="body6">
+    <div class="ctiles">${side('SCF', 'scf', c)}${side('Specialty doctor', 'sd', d)}</div>
+    <div class="blk">${own}</div>
+    ${payBlock(k)}
+    <div class="gh3">Work schedule</div>${lineBlock(g, 'core', 'core.' + k)}
+    ${blk('cal', 'Time', stepC(base + '.recruit', 'Time to recruit', 'hour', { page: 'core', fmt: fmtMo, max: 12, info: 'Months a post is empty between people' }) + stepC(base + '.stay', 'Average stay', 'door', { page: 'core', fmt: fmtMo, min: 6, max: 72 , info: 'How long people stay in post before leaving. With time to recruit, this sets how often a post is empty.' }) + stepC(base + '.supernum', 'Supernumerary at Salford', 'step', { page: 'core', fmt: fmtMo, max: 9, info: 'First months in post. They work the rota at Salford but count only as non-airway.' }) + stepC(base + '.signoff', 'Signed off for FGH nights', 'moon', { page: 'core', fmt: fmtMo, min: 1, max: 12 , info: 'Months in post before they can work Fairfield nights and weekends alone. Until then they work Salford only, with half their weekdays training at Fairfield.' }) + slideC('core.fghTrain', 'Weekdays at FGH while signing off', 'school', { page: 'core', info: 'Share of weekday days spent at FGH training before sign-off' }) + slideC(base + '.fghShare', 'Ever signed off for FGH', 'hosp', { page: 'core', info: 'Share who ever become competent to work at FGH alone. The rest stay Salford-only.' }) + (k === 'scf' ? stepC('core.extPlacement', 'Away on external placement', 'door', { page: 'core', max: 4 , info: 'SCFs on an external placement at any one time. Their place is filled by someone who works Salford only, as they won’t reach Fairfield standard in the time.' }) : ''))}
+    ${peopleBlock(base, 'core', { noPosts: true })}
+    ${blk('plane', 'Off the rota', stepC(base + '.al', 'Annual leave', 'plane', { page: 'core', fmt: fmtD, max: 40 }) + stepC(base + '.study', 'Study leave', 'book', { page: 'core', fmt: fmtD, max: 40, info: '10 days a year' }))}
+    ${canBlock(base, 'core', true)}
+  </div>`;
+}
+function pAccp() {
+  const a = S.accp, base = 'accp', F = Math.min(a.fgh, a.total), T = Math.min(a.transfer, a.total);
+  return head('ACCPs', num(wteK(S, 'accp'), 1) + ' WTE') + `<div class="body6">
+    ${blk('users', 'Skills', `<div class="dots" style="gap:5px">${Array.from({ length: a.total }, (_, i) => `<i style="width:14px;height:14px;background:${i < a.airway ? 'var(--acc)' : i < a.airway + F ? 'var(--f)' : i < a.airway + Math.max(F, T) ? '#6b7383' : '#c7cad1'}"></i>`).join('')}</div>`
+      + stepC('accp.total', 'ACCPs', 'stethoscope', { page: 'accp', max: 40 , info: 'Everyone on the ACCP rota, in posts. Their skills (transfer, FGH, airway) are set below.' }) + stepC('accp.transfer', 'Transfer-trained', 'bed', { page: 'accp', max: 40, info: 'Can go on transfers. Counts as airway support on Salford short days only.' }) + stepC('accp.fgh', 'FGH-trained', 'hosp', { page: 'accp', max: 40, info: 'Can work the FGH weekday long day' }) + stepC('accp.airway', 'Airway-trained', 'air', { page: 'accp', max: 40, info: 'Counts as full airway cover on any shift' }))}
+    ${blk('grid', 'Work schedule', lineBlock(a, 'accp', 'accp'))}
+    ${peopleBlock('accp', 'accp', { noPosts: true })}
+    ${blk('cal', 'Time', stepC('accp.recruit', 'Time to recruit', 'hour', { page: 'accp', fmt: fmtMo, max: 12 , info: 'Months an ACCP post sits empty between people. 0 assumes posts are always filled.' }) + stepC('accp.stay', 'Average stay', 'door', { page: 'accp', fmt: v => v ? fmtMo(v) : 'Stable', max: 120, step: 6 , info: 'How long an ACCP stays in post. Stable means no turnover.' }))}
+    ${blk('plane', 'Off the rota', stepC('accp.al', 'Annual leave', 'plane', { page: 'accp', fmt: fmtD, max: 40 , info: 'Agenda for Change: 27 days plus bank holidays, rising with service. Taken from weekday days only.' }) + stepC('accp.study', 'Study leave', 'book', { page: 'accp', fmt: fmtD, max: 40 , info: 'Days a year of study leave, taken from weekday days only.' }) + stepC('accp.spa', 'Non-clinical days', 'school', { page: 'accp', fmt: fmtD, max: 60 , info: 'Days a year off the rota for teaching, audit and development.' }))}
+    ${payBlock('accp')}
+  </div>`;
+}
+function whoAcc(bare) {
+  const S3 = [['N', 'Nights', 'moon'], ['Lwd', 'Weekday long days', 'sun2'], ['Lwe', 'Weekend long days', 'sun2']];
+  return `<div class="who"${bare ? ' style="margin-top:0;border-top:0;padding-top:0"' : ''}>${bare ? '' : `<div class="gh2">Who can work at Fairfield${iI('Read live from each grade’s Can cover settings. Change them on the grade’s page.')}</div>`}${S3.map(([t, n, ic]) => { const l = fghWho(t), w = l.reduce((a, x) => a + x.w, 0);
+    return `<details data-who="${t}"${OPEN_WHO.has(t) ? ' open' : ''}><summary><span class="ri">${ico(ic, 'sm')}</span><span class="rl">${n}</span><span class="wv num">${l.length} ${l.length === 1 ? 'grade' : 'grades'} · ${num(w, 1)} WTE</span><svg class="i ch"><use href="#chev"/></svg></summary>${l.length ? l.map(x => `<div class="wr"><span>${esc(x.n)}${x.note ? `<small>${esc(x.note)}</small>` : ''}</span><b class="num">${x.w ? num(x.w, 1) : ''}</b></div>`).join('') : '<div class="wr"><span>Nobody. Every shift goes to a locum.</span></div>'}</details>`; }).join('')}</div>`;
+}
+function pNeed() {
+  const D = S.demand, R = [['Night', 'N'], ['Weekday long day', 'Lwd'], ['Weekday short day', 'Swd'], ['Weekend long day', 'Lwe'], ['Weekend short day', 'Swe']];
+  ['air', 'na'].forEach(c => R.forEach(([n, f]) => reg('demand.' + c + '.' + f, 'Salford ' + (c === 'air' ? 'airway' : 'total') + ' ' + n.toLowerCase() + ' minimum', 'need')));
+  const st = (kind, lvl, f, v) => `<span class="stp"><button data-need="${kind}" data-lvl="${lvl}" data-f="${f}" data-d="-1" aria-label="Fewer">−</button><b class="num">${v}</b><button data-need="${kind}" data-lvl="${lvl}" data-f="${f}" data-d="1" aria-label="More">+</button></span>`;
+  const airT = (lvl, f) => D[lvl === 'min' ? 'air' : 'airT'][f], totT = (lvl, f) => D[lvl === 'min' ? 'air' : 'airT'][f] + D[lvl === 'min' ? 'na' : 'naT'][f];
+  const tbl = (kind, get) => `<div class="ndt" style="grid-template-columns:minmax(0,1fr) auto"><span></span><span class="h">Minimum</span>${R.map(([n, f]) => `<span>${n}</span>${st(kind, 'min', f, get('min', f))}`).join('')}</div>`;
+  const fg = (p, page) => { reg(p, 'Fairfield ' + p.split('.').slice(1).join(' '), page); const v = get(S, p); return `<span class="stp"><button data-p="${p}" data-d="-1" data-min="0" data-max="20">−</button><b class="num">${v}</b><button data-p="${p}" data-d="1" data-min="0" data-max="20">+</button></span>`; };
+  return head('Shifts needed') + `<div class="body6">
+    ${blk('users', 'Salford, everyone', tbl('tot', totT), 'All residents on the shift, airway included')}
+    ${blk('air', 'Salford, of whom airway', tbl('air', airT), 'Airway-trained doctors within the total')}
+    ${blk('hosp', 'Fairfield', `<div class="ndt" style="grid-template-columns:minmax(0,1fr) auto"><span></span><span class="h">Minimum</span><span>Night${iI('Nights: ' + whoTip('N'))}</span>${fg('demand.fgh.N', 'need')}<span>Long day${iI('Weekdays: ' + whoTip('Lwd') + '. Weekends: ' + whoTip('Lwe'))}</span>${fg('demand.fgh.L', 'need')}</div>`, 'One resident on each Fairfield shift. Who can work there is on the Fairfield page.')}
+    ${blk('users', 'Surplus', stepC('demand.surplusAt', 'Salford weekday with more than', 'users', { page: 'need', max: 30, info: 'Counts weekdays with more residents than this on days' }))}</div>`;
+}
+function pFgh() {
+  const tot = ['scf', 'sd'].reduce((x, k) => x + S.groups[k].posts + (S.groups[k].newPosts || 0), 0), nF = Math.min(S.core.fghPosts || 0, tot), nS = tot - nF;
+  reg('core.fghPosts', 'Fairfield team posts', 'fgh'); reg('core.fghTeamSal', 'Fairfield team on-calls at Salford, at least', 'fgh');
+  const team = (cls, col, title, n, first, ctl) => `<div class="blk team ${cls}" style="border-color:${col}"><div class="bh" style="color:${col}">${ico('hosp', 'sm')}<span class="lab" style="color:${col}">${title}</span><b class="num" style="margin-left:auto;font-size:20px;color:var(--text)">${n}</b></div>
+    <div class="dots" style="gap:4px;min-height:14px">${Array.from({ length: n }, () => `<i style="background:${col}"></i>`).join('')}</div><span class="lab" style="text-transform:none;letter-spacing:0">${first}</span>${ctl}</div>`;
+  return head('Fairfield') + `<div class="body6">
+    ${blk('users', 'SCF and specialty doctor teams', `<div class="teams">
+      ${team('f', 'var(--f)', 'Fairfield team', nF, 'Funded by Fairfield. Fill Fairfield first, then Salford.', slideC('core.fghTeamSal', 'On-calls at Salford, at least', 'school', { page: 'fgh', min: 0, max: 0.8, step: 0.05, info: 'Keeps specialist competence' }) + '<div class="gh3" style="margin-top:6px">Work schedule' + iI('The 6-week Fairfield line keeps 1 weekend in 3 but makes both worked weekends on call: a Friday to Sunday night set and a weekend of long days. No weekend short days, so 50% more weekend nights and long days per person. Passes the 2016 contract checks; 45.3 hours a week.') + '</div>' + choiceC('core.fghLine', 'Fairfield team work schedule', [['', '9-week template'], ['fgh6', '6-week Fairfield line']], 'fgh'))}
+      <div class="tmv"><button class="btnp" data-team="1" aria-label="Move one post to the Fairfield team">${ico('back', 'sm')}</button><button class="btnp" data-team="-1" aria-label="Move one post to the Salford team">${ico('chev', 'sm')}</button></div>
+      ${team('s', 'var(--s)', 'Salford team', nS, 'Funded by Salford. Fill Salford first, then Fairfield gaps.', slideC('core.fghCap', 'On-calls at Fairfield, at most', 'hosp', { page: 'fgh', min: 0, max: 0.6, step: 0.05, info: 'Nights and weekend shifts. Weekday days at Fairfield are not limited.' }))}
+    </div>`, 'All SCF and specialty doctor posts sit in one of two teams. Each team’s cost goes to the budget that funds it. Move posts between teams with the arrows.')}
+    ${blk('users', 'Who can work at Fairfield', whoAcc(true), 'Set on each grade under Can cover')}
+    ${blk('syringe', 'FGH anaesthetist', stepC('core.fghAnaesN', 'Weekday ICU nights a week they cover', 'moon', { page: 'fgh', max: 4 , info: 'The Fairfield anaesthetist covering ICU weekday nights, at no cost to us. Up to 4 a week (Monday to Thursday).' }), 'Monday to Thursday nights the FGH anaesthetist covers ICU, at no cost to us. We need fewer of our own or locums.')}
+  </div>`;
+}
+function pLoc() {
+  const R = [['wdSoc', 'Weekday, social hours', 'sun2', 'Monday to Friday, 07:00 to 19:00'], ['wdAnti', 'Weekday, unsocial hours', 'moon', 'Monday to Thursday nights, 19:00 to 07:00'], ['weSoc', 'Weekend, social hours', 'sun2', 'Saturday and Sunday, 07:00 to 19:00'], ['weAnti', 'Weekend, unsocial hours', 'moon', 'Friday to Sunday nights, 19:00 to 07:00']];
+  const SH = [['Nwd', 'Weekday night', 'moon'], ['Nwe', 'Weekend night', 'moon'], ['Lwd', 'Weekday long day', 'sun2'], ['Lwe', 'Weekend long day', 'sun2']];
+  const row = ([t, n, ic]) => { const q = shiftCost(S, t); return `<div class="row2"><span class="ri">${ico(ic, 'sm')}</span><span class="rl">${n}${iI(`Bank: ${q.howB} = ${gbp(q.bank)}. Agency: ${q.howA} = ${gbp(q.ag)}. ${num(q.sh * 100)}% go to agency, so on average ${gbp(q.bank)} × ${num((1 - q.sh) * 100)}% + ${gbp(q.ag)} × ${num(q.sh * 100)}% = ${gbp(q.avg)}.`)}</span><b class="num">${gbp(q.avg)}</b></div>`; };
+  return head('Locum rates') + `<div class="body6">
+    ${blk('pound', 'Bank (NHSP), an hour', R.map(([k, n, i, w]) => slideC('cost.lr.' + k, n, i, { page: 'loc', min: 30, max: 200, step: 1, fmt: fmtGbp, fmtKey: 'gbp', info: w + '. NHSP Greater Manchester rate for ST3 to ST5, from 1 May 2025.' })).join('') + slideC('cost.bankOn', 'Fee and on-costs on top', 'bank', { page: 'loc', max: 0.4, step: 0.01, info: 'Anything the trust pays on top of the NHSP hourly rate. Thought to be none; check.' }), 'NHSP Greater Manchester rates for ST3 to ST5, from 1 May 2025. Social hours are 07:00 to 19:00; everything else is unsocial. Weekend runs from Friday night to Sunday night.')}
+    ${blk('userplus', 'Agency, an hour', R.map(([k, n, i, w]) => slideC('cost.lrA.' + k, n, i, { page: 'loc', min: 40, max: 250, step: 1, fmt: fmtGbp, fmtKey: 'gbp', info: w + '. A best guess, about 1.5 times the bank rate, including the agency fee.' })).join('') + slideC('cost.agencyShare', 'Share of locum shifts by agency', 'userplus', { page: 'loc', max: 1, step: 0.01, info: 'From the Fairfield resident rota, Apr 2025 to Oct 2026: every shift was filled, and NHSP or agency covered 85% of Fairfield nights. Agency took 21% of locum shifts over Sep 2025 to Aug 2026, but only 9% since July 2026 as its use has come down. 14% is set between the two.' }), 'A best guess, about 1.5 times the bank rate, including the agency fee. Check against invoices.')}
+    ${blk('moon', 'What a shift costs', SH.map(row).join(''), 'A night, 20:00 to 08:30, is 11 unsocial hours and 1.5 social; a long day, 08:00 to 20:30, the other way round. Tap the (i) on each for the sum.')}
+    ${blk('shield', 'No gaps', `<div class="row2"><span class="ri">${ico('tick', 'sm')}</span><span class="rl">Every shift our rota cannot fill is filled by a paid locum, at either site.</span><span></span></div>`)}
+  </div>`;
+}
+function pPay() {
+  return head('Pay and on-costs') + `<div class="body6">
+    ${blk('bank', 'On-costs', `<div class="row2"><span class="ri">${ico('bank', 'sm')}</span><span class="rl">Employer pension</span><span></span></div>` + choiceC('cost.pension', 'Employer pension', [[0, 'None'], [0.1438, 'Trust-paid 14.38%'], [0.2378, 'Full 23.78%']], 'pay') + slideC('cost.ni', 'Employer NI above £5,000', 'pound', { page: 'pay', min: 0.1, max: 0.17, step: 0.005, fmt: pc1, fmtKey: 'pc1' , info: 'Employer National Insurance: 15% of pay above £5,000 a year, from April 2025.' }))}
+    ${blk('hour', 'Recruitment', stepC('cost.recruit', 'Cost per hire', 'pound', { page: 'pay', step: 500, max: 20000, fmt: fmtGbp , info: 'Advertising, interviews and induction for each new SCF or specialty doctor. £0 leaves it out.' }))}
+  </div>`;
+}
+function pAbs() {
+  const lf = M2.LEAVE_F, af = M2.ABS_F, mx = Math.max(...Object.values(lf), ...Object.values(af));
+  const bars = (o, c) => `<div style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;align-items:end;height:48px">${M2.MONTHS.map((m, i) => `<span title="${m}" style="height:${o[i] / mx * 100}%;background:${c};border-radius:3px 3px 0 0"></span>`).join('')}</div><div style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;font-size:10px;color:var(--text-3);text-align:center">${M2.MONTHS.map(m => `<span>${m[0]}</span>`).join('')}</div>`;
+  return head('Absence and seasons') + `<div class="body6">
+    ${blk('cycle', 'Stable world', `<div class="chips">${togC('core.stable', 'No sickness swings, trainee gaps or turnover', 'cycle', '', 'abs')}</div>`, 'Switch off the year-to-year swings. Use with sickness and recruit times at 0 to see the minimum.')}
+    ${blk('thermo', 'Everyone', slideC('absence.sick', 'Sickness', 'thermo', { page: 'abs', max: 0.1, step: 0.005, fmt: pc1, fmtKey: 'pc1' , info: 'Share of shifts lost to sickness, on any shift type. From Allocate, Sep 2025 to Aug 2026, peaking in December and January.' }) + slideC('absence.other', 'Parental and other', 'bed', { page: 'abs', max: 0.1, step: 0.005, fmt: pc1, fmtKey: 'pc1' , info: 'Parental leave and other time off that isn’t sickness. Allocate’s ’Unavailable’ runs at about 4.8% of weekdays in total; this is the non-sickness part. Falls on any shift.' }))}
+    ${blk('plane', 'Leave by month', (S.core.leaveSeason === false ? '<span class="lab" style="text-transform:none;letter-spacing:0">Off: leave spread evenly through the year</span>' : bars(lf, 'var(--acc)')) + `<div class="chips">${togC('core.leaveSeason', 'Use this pattern', 'cal', '', 'abs')}</div>`, 'From Allocate, Sep 2025 to Aug 2026: peaks in October, March and the summer. Leave only comes out of weekday standard days, so this moves spare day shifts between months but does not change night or weekend cover. Turning it off changes cost by less than £1,000 a year.')}
+    ${blk('cal', 'Absence by month', (S.core.absSeason === false ? '<span class="lab" style="text-transform:none;letter-spacing:0">Off: sickness spread evenly through the year</span>' : bars(af, 'var(--on)')) + `<div class="chips">${togC('core.absSeason', 'Use this pattern', 'cal', '', 'abs')}</div>`, 'From Allocate: peaks in December and January, and April and May. Sickness can fall on any shift, so winter months need more locums. With the pattern on, Now costs about £6,500 a year more, with about 6 more locum shifts, than with sickness spread evenly.')}
+  </div>`;
+}
+const ltView = {};
+function pLines() {
+  const keys = ['scf_current', 'scf_2n', 'sd13', 'sd10'];
+  const card = k => { const pc = ltView[k] || 100, g = pc === 100 ? M.gridFor(S, k) : M.ptGrid(k, pc), c = M.checkLine(g);
+    return `<div class="lcard"><div class="lc1">${thumb(g)}<div class="lc2"><span class="ln">${esc(lineName(k))}${pc < 100 ? ` <span class="lab" style="text-transform:none;letter-spacing:0">part-time ${pc}%</span>` : ''}</span><span class="lab num" style="text-transform:none;letter-spacing:0">${num(c.hours, 1)} h · ${num(c.pas, 1)} PA</span>
+      <div class="ptc">${[100, ...M.PT_PCTS].map(p => `<button class="${p === pc ? 'on' : ''}" data-ltv="${k}:${p}" aria-pressed="${p === pc}">${p}%</button>`).join('')}</div></div></div></div>`; };
+  return head('Work schedules') + `<div class="body6">${blk('grid', 'Library', `<div class="lcards">${keys.map(card).join('')}</div>`, 'The 9-week template and its specialty doctor versions. Each has part-time versions: the trust’s 80, 70, 60 and 50% templates, which keep the Friday to Sunday night set and drop weekday shifts. Part-time people work these automatically.')}
+    ${blk('pencil', 'Your own versions', ['custom', 'trainee', 'accp'].map(k => `<button class="r6" data-go="edit:${k}:lines"><span class="ib lt2">${ico('pencil', 'sm')}</span><span class="l">${esc(lineName(k))}</span><span class="v">${M.checkLine(S.lines[k]).ok ? '<span class="ok2">' + ico('tick', 'sm') + '</span>' : ''}<svg class="i ch"><use href="#chev"/></svg></span></button>`).join(''))}</div>`;
+}
+function pEdit(slot) {
+  reg('lines.' + slot, lineName(slot), 'lines');
+  const g = S.lines[slot], chk = M.checkLine(g), ic = { N: 'moon', L: 'sun2', S: 'day' };
+  return head(lineName(slot)) + `<div class="body6">${blk('pencil', 'Tap a day to change it', `<div class="edgrid"><span></span>${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => `<span>${d}</span>`).join('')}${g.map((w, wi) => `<span>${wi + 1}</span>${[...w].map((c, di) => `<button class="${c === '.' ? '' : c}" data-cell="${slot}:${wi}:${di}" aria-label="Week ${wi + 1} day ${di + 1}: ${c}">${ic[c] ? ico(ic[c], 'sm') : ''}</button>`).join('')}`).join('')}</div>
+    <div class="ekey"><span>${ico('moon', 'sm')}Night</span><span>${ico('sun2', 'sm')}Long day</span><span>${ico('day', 'sm')}Short day</span><span><i></i>Off</span></div>
+    <div class="chips"><button class="chip" data-addweek="${slot}">${ico('plus', 'sm')}Week</button><button class="chip" data-delweek="${slot}">${ico('x', 'sm')}Week</button></div>`, 'Each tap moves the day on: off, short day, long day, night, then off again.')}
+    ${blk('tick', 'Contract check', chk.items.map(it => `<div class="row2"><span class="ri" style="color:${it.ok ? 'var(--ok)' : 'var(--err)'}">${ico(it.ok ? 'tick' : 'x', 'sm')}</span><span class="rl">${esc(it.label)}</span><b class="num">${esc(it.val)}</b></div>`).join(''))}</div>`;
+}
+function renderPanel() {
+  const top = path[path.length - 1], el = document.getElementById('panel'), keepScroll = el.dataset.page === top ? el.scrollTop : 0;
+  let h;
+  if (top === 'home') h = pHome(); else if (top === 'staff') h = pStaff(); else if (top === 'core') h = pCore(); else if (top === 'accp') h = pAccp();
+  else if (top === 'need') h = pNeed(); else if (top === 'fgh') h = pFgh(); else if (top === 'loc') h = pLoc(); else if (top === 'pay') h = pPay(); else if (top === 'abs') h = pAbs(); else if (top === 'lines') h = pLines();
+  else if (top.startsWith('edit:')) h = pEdit(top.split(':')[1]); else if (GRADES.find(g => g.k === top)) h = pGrade(top); else h = pHome();
+  el.innerHTML = h; el.dataset.page = top; el.scrollTop = keepScroll;
+}
+// register every control once, so search and changes work before a page is opened
+function registerAll() { const p0 = path; ['staff', 'core', 'accp', 'need', 'fgh', 'loc', 'pay', 'abs', ...GRADES.map(g => g.k)].forEach(pg => { path = ['home', pg]; ({ staff: pStaff, core: pCore, accp: pAccp, need: pNeed, fgh: pFgh, loc: pLoc, pay: pPay, abs: pAbs })[pg] ? ({ staff: pStaff, core: pCore, accp: pAccp, need: pNeed, fgh: pFgh, loc: pLoc, pay: pPay, abs: pAbs })[pg]() : pGrade(pg); }); path = p0; }
+
+/* ---------- panel events ---------- */
+const panel = document.getElementById('panel');
+function edited(rerender = true) { M2.syncAccp(S); syncT(S); if (!active.endsWith('*')) { active = active + '*'; renderHeads(); document.getElementById('app').classList.add('isedit'); } if (rerender) renderPanel(); schedule(); }
+panel.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.back) { path.pop(); renderPanel(); return; }
+  if (t.dataset.go) { const go = t.dataset.go; if (go.startsWith('edit:')) { const [, slot, owner] = go.split(':'); if (owner && owner !== 'lines') { const cur = ownerGroup(owner); if (cur && cur.line !== slot) S.lines[slot] = M.gridFor(S, cur.line).slice(); setLine(owner, slot); } path.push('edit:' + slot); if (owner && owner !== 'lines') edited(false); } else path.push(go); query = ''; renderPanel(); panel.scrollTop = 0; return; }
+  if (t.dataset.ltv) { const [k, p] = t.dataset.ltv.split(':'); ltView[k] = +p; renderPanel(); return; }
+  if (t.dataset.team) { const tot = ['scf', 'sd'].reduce((x, k) => x + S.groups[k].posts + (S.groups[k].newPosts || 0), 0); S.core.fghPosts = Math.max(0, Math.min(tot, (S.core.fghPosts || 0) + +t.dataset.team)); S.core.funding = S.core.fghPosts ? 'split' : 'salford'; edited(); return; }
+  if (t.dataset.coresel) { coreSel = t.dataset.coresel; renderPanel(); return; }
+  if (t.dataset.need) {
+    const D = S.demand, f = t.dataset.f, a = t.dataset.lvl === 'min' ? 'air' : 'airT', n = t.dataset.lvl === 'min' ? 'na' : 'naT', d = +t.dataset.d;
+    const tot = D[a][f] + D[n][f];
+    if (t.dataset.need === 'tot') { const nt = Math.max(D[a][f], Math.min(40, tot + d)); D[n][f] = nt - D[a][f]; }
+    else { const na2 = Math.max(0, Math.min(tot, D[a][f] + d)); D[a][f] = na2; D[n][f] = Math.max(0, tot - na2); }
+    if (t.dataset.lvl === 'min') { ['air', 'na'].forEach(c => { if (D[c + 'T'][f] < D[c][f]) D[c + 'T'][f] = D[c][f]; }); }
+    edited(); return;
+  }
+  if (t.dataset.p && t.dataset.d) { const p = t.dataset.p, v = +get(S, p) + +t.dataset.d; set(S, p, Math.round(Math.max(+t.dataset.min, Math.min(+t.dataset.max, v)) * 100) / 100); edited(); return; }
+  if (t.dataset.t) { set(S, t.dataset.t, !get(S, t.dataset.t)); edited(); return; }
+  if (t.dataset.c) { const cur = get(S, t.dataset.c), v = typeof cur === 'number' ? +t.dataset.v : t.dataset.v; set(S, t.dataset.c, v); edited(); return; }
+  if (t.dataset.mon) { const p = t.dataset.mon + '.changeover', a = (get(S, p) || []).slice(), i = +t.dataset.i, j = a.indexOf(i); if (j >= 0) a.splice(j, 1); else a.push(i); a.sort((x, y) => x - y); set(S, p, a); edited(); return; }
+  if (t.dataset.ptmix) { const [b, lt, ltw] = t.dataset.ptmix.split('|'); set(S, b + '.lt', +lt); if (+lt > 0) set(S, b + '.ltw', +ltw); edited(); return; }
+  if (t.dataset.pay) { const g = S.groups[t.dataset.pk || 'scf']; if (t.dataset.pay === 'flat') g.payKind = 'flat'; else { g.payKind = 'tcs'; g.basic = +t.dataset.pay; } edited(); return; }
+  if (t.dataset.line) { setLine(t.dataset.owner, t.dataset.line); edited(); return; }
+  if (t.dataset.move) { const from = t.dataset.move === 'sd' ? 'scf' : 'sd', to = t.dataset.move; if (S.groups[from].posts > 0) { S.groups[from].posts--; S.groups[to].posts++; edited(); } return; }
+  if (t.dataset.undo) { set(S, t.dataset.undo, clone(get(NOW, t.dataset.undo))); edited(); return; }
+  if (t.dataset.cell) { const [slot, wi, di] = t.dataset.cell.split(':'), g = S.lines[slot], row = [...g[wi]], order = ['.', 'S', 'L', 'N']; row[di] = order[(order.indexOf(row[di]) + 1) % 4]; g[wi] = row.join(''); edited(); return; }
+  if (t.dataset.addweek) { S.lines[t.dataset.addweek].push('.......'); edited(); return; }
+  if (t.dataset.delweek) { const g = S.lines[t.dataset.delweek]; if (g.length > 1) g.pop(); edited(); return; }
+});
+const ownerGroup = owner => owner === 'accp' ? S.accp : owner === 'core.sd' ? S.groups.sd : owner === 'core.scf' ? S.groups.scf : S.groups[owner];
+function setLine(owner, key) {
+  if (owner === 'accp') S.accp.line = key;
+  else if (owner === 'core.sd') S.groups.sd.line = key;
+  else if (owner === 'core.scf') S.groups.scf.line = key;
+  else if (S.groups[owner]) S.groups[owner].line = key;
+}
+const fmts = { pct, gbp, pc1, pc: pct, ppl: v => pct(v) + ' of people', wte2: v => num(v, 2) };
+panel.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'q') { query = t.value; const pos = t.selectionStart; renderPanel(); const q = document.getElementById('q'); if (q) { q.focus(); q.setSelectionRange(pos, pos); } return; }
+  if (t.classList.contains('rg')) { const v = +t.value; set(S, t.dataset.p, v); t.style.setProperty('--v', ((v - +t.min) / (+t.max - +t.min) * 100) + '%'); const o = panel.querySelector(`[data-out="${CSS.escape(t.dataset.p)}"]`); if (o) o.textContent = fmts[t.dataset.fmt](v); edited(false); }
+});
+panel.addEventListener('change', e => {
+  const t = e.target;
+  if (t.classList.contains('rg')) renderPanel();
+  if (t.dataset.rate) { const v = Math.max(0, Math.min(500, parseInt(String(t.value).replace(/[^\d]/g, ''), 10) || 0)); set(S.cost.rates, t.dataset.rate, v); edited(); }
+});
+
+/* ---------- tooltips for (i) ---------- */
+const tip = document.getElementById('tip');
+function showTip(el) { const r = el.getBoundingClientRect(); tip.textContent = el.dataset.tip; tip.hidden = false; const w = tip.offsetWidth; tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left - 20)) + 'px'; tip.style.top = (r.bottom + 8) + 'px'; }
+document.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.who) { if (d.open) OPEN_WHO.add(d.dataset.who); else OPEN_WHO.delete(d.dataset.who); } }, true);
+document.addEventListener('mouseover', e => { const el = e.target.closest('.ii'); if (el) showTip(el); });
+document.addEventListener('mouseout', e => { if (e.target.closest('.ii')) tip.hidden = true; });
+document.addEventListener('focusin', e => { const el = e.target.closest('.ii'); if (el) showTip(el); });
+document.addEventListener('focusout', e => { if (e.target.closest('.ii')) tip.hidden = true; });
+document.addEventListener('click', e => { const el = e.target.closest('.ii'); if (el) { e.stopPropagation(); if (tip.hidden) showTip(el); else tip.hidden = true; } }, true);
+
+/* ---------- outputs ---------- */
+const ownShare = r => Math.min(1, r.shiftsOwn.mid / r.shifts.mid);
+const deltaPill = (v, base, fmt, lowerBetter) => { const d = v - base; if (Math.abs(d) < 1e-6 || (fmt === 'pts' && Math.abs(d) < 0.0005)) return `<span class="dl same">Same as Now</span>`; const good = lowerBetter ? d < 0 : d > 0; const txt = fmt === 'pts' ? (d > 0 ? '+' : '−') + (Math.round(Math.abs(d) * 1000) / 10) + ' points' : (d > 0 ? '+' : '−') + gbp(Math.abs(d)); return `<span class="dl num ${good ? 'up' : ''}">${txt}</span>`; };
+function renderHeadline() {
+  const r = lastRes, n = nowRes, B = (x, k) => x['bt_' + k].mid;
+  const col = (ic, lab, color, v, d, tip, suf) => `<div class="sm3"><span class="lab" style="color:${color}">${ico(ic, 'sm')}${lab}${iI(tip)}</span><b class="num">${v}${suf ? `<span class="bys">${suf}</span>` : ''}</b>${d}</div>`;
+  document.getElementById('hl').innerHTML = `<div class="hlt sum3">
+    ${col('moon', 'Fairfield nights and weekends', 'var(--f)', pc1(B(r, 'fOOH')), deltaPill(B(r, 'fOOH'), B(n, 'fOOH'), 'pts'), 'Share of Fairfield nights and weekend long days filled by our own rota. Locums fill every other shift, so none are left empty.', 'by our staff')}
+    ${col('hosp', 'Salford', 'var(--s)', pc1(r.coverS.mid), deltaPill(r.coverS.mid, n.coverS.mid, 'pts'), 'Share of Salford minimum shifts filled by our own rota. Locums fill every other shift, so none are left empty.', 'by our staff')}
+    ${col('pound', 'Cost a year', 'var(--text-2)', gbp(r.total.mid), deltaPill(r.total.mid, n.total.mid, 'gbp', true) + '<span class="rng1" id="hlRange"></span>', 'Likely cost: the middle of 40 simulated years, staff and locums together.')}</div>`;
+}
+const PARTS = {
+  total: r => [['Cost', r.total.mid, 'var(--acc)']],
+  loc: r => [['Our staff', r.substantive.mid, 'var(--acc)'], ['Locums', r.locum.mid, 'var(--loc)']],
+  wage: r => [['Wages', r.wages.mid, 'var(--acc)'], ['Pension and NI', r.oncost.mid, 'var(--on)'], ['Locums', r.locum.mid, 'var(--loc)']],
+  site: r => [['Salford', r.salford.mid, 'var(--s)'], ['Fairfield', r.fairfield.mid, 'var(--f)']]
+};
+const segBtns = (name, cur, opts) => `<div class="seg4" role="group">${opts.map(([v, i, t]) => `<button class="${v === cur ? 'on' : ''}" data-${name}="${v}" title="${t}" aria-label="${t}" aria-pressed="${v === cur}">${ico(i, 'sm')}</button>`).join('')}</div>`;
+function renderCost() {
+  const r = lastRes, n = nowRes, split = costSplit === 'total' ? 'loc' : costSplit, parts = PARTS[split](r), np = PARTS[split](n);
+  document.getElementById('costCard').innerHTML = `<div class="hd"><span class="lab">Cost a year</span>${iI('Likely cost: the middle of 40 simulated years, staff and locums together, against Now. Pick how to split it on the right.')}${segBtns('cs', split, [['loc', 'userplus', 'Our staff and locums'], ['wage', 'bank', 'Wages, on-costs and locums'], ['site', 'split', 'By budget']])}</div>
+    <div class="cth"><b class="num">${gbp(r.total.mid)}</b>${deltaPill(r.total.mid, n.total.mid, 'gbp', true)}</div>
+    <div class="hb" style="height:12px">${parts.map(p => `<span style="width:${p[1] / r.total.mid * 100}%;background:${p[2]}"></span>`).join('')}</div>
+    <div class="kl2">${parts.map((p, i) => `<i style="background:${p[2]}"></i><span>${p[0]}</span><b class="num">${gbp(p[1])}</b><span class="dd num">${Math.abs(p[1] - np[i][1]) < 1 ? 'same as Now' : ((p[1] - np[i][1]) > 0 ? '+' : '−') + gbp(Math.abs(p[1] - np[i][1])) + ' on Now'}</span>`).join('')}</div>
+    <span class="rng1" id="costRange"></span>
+    <div class="ctl2"><button class="lk" data-opensheet="rsheet">How sure: every plan against Now ›</button><button class="lk" data-costbreak="1">Cost of each staff group ›</button></div>`;
+  if (typeof renderRanges === 'function') renderRanges();
+}
+function renderCover() {
+  const r = lastRes, n = nowRes, B = (x, k) => x['bt_' + k] ? x['bt_' + k].mid : 0;
+  const row = (lab, v, nv, col, lt, sub) => `<div class="cvr${sub ? ' sub' : ''}"><span class="cvl">${lab}</span><div class="cvb"><div class="hb"><span style="width:${v * 100}%;background:${col}"></span><span style="width:${Math.max(0, 1 - v) * 100}%;background:${lt}"></span></div><span class="nowm" title="Now" style="left:calc(${nv * 100}% - 1px)"></span></div><b class="num">${pc1(v)}</b></div>`;
+  const big = (ic, lab, color, v, nv, tip) => `<div class="cvh"><span class="lab" style="color:${color}">${ico(ic, 'sm')}${lab}${iI(tip)}</span><b class="num">${pc1(v)}</b>${deltaPill(v, nv, 'pts')}</div>`;
+  document.getElementById('coverCard').innerHTML = `<div class="hd"><span class="lab">Covered by our staff</span>${iI('Every minimum shift is filled. The coloured part is our own rota, the pale part is locums. The black tick is Now.')}</div>
+    <div class="cvh2">${big('moon', 'Fairfield nights and weekends', 'var(--f)', B(r, 'fOOH'), B(n, 'fOOH'), 'Share of Fairfield nights and weekend long days filled by our own rota. Locums fill every other shift, so none are left empty.')}${big('hosp', 'Salford', 'var(--s)', r.coverS.mid, n.coverS.mid, 'Share of Salford minimum shifts filled by our own rota. Locums fill every other shift, so none are left empty.')}</div>
+    ${row('Fairfield weekday nights', B(r, 'fN_wd'), B(n, 'fN_wd'), 'var(--f)', 'var(--f-lt)', 1)}${row('Fairfield weekend nights', B(r, 'fN_we'), B(n, 'fN_we'), 'var(--f)', 'var(--f-lt)', 1)}${row('Fairfield weekend days', B(r, 'fL_we'), B(n, 'fL_we'), 'var(--f)', 'var(--f-lt)', 1)}
+    <div class="cvfoot"><span><i style="background:var(--f)"></i>Our staff</span><span><i style="background:var(--f-lt)"></i>Locums</span><span><i style="background:var(--text);width:2px"></i>Now</span><b class="num">${num(r.locShifts.mid)} locum shifts a year</b></div>`;
+}
+// what one more SCF or specialty doctor post buys: rerun the plan with one more post and compare
+let postTimer = null, lastOne = null;
+function renderPost() {
+  const el = document.getElementById('postCard'); el.innerHTML = `<div class="hd"><span class="lab">What one more post buys</span></div><span class="lab" style="text-transform:none;letter-spacing:0">Working it out…</span>`;
+  clearTimeout(postTimer); postTimer = setTimeout(() => {
+    const O = oneMore(S); lastOne = O; renderBuy(); const k = O.k, onc = ONC.reduce((a, t) => a + O.by[t].sup, 0), days = O.sup - onc, oncSpare = Math.max(0, onc - O.closed);
+    const seg = (v, c, l) => v > 0.5 ? `<span style="width:${v / O.sup * 100}%;background:${c}" title="${l}: ${num(v)}"></span>` : '';
+    el.innerHTML = `<div class="hd"><span class="lab">What one more ${k === 'sd' ? 'specialty doctor' : 'SCF'} in post buys</span>${iI('The same average year worked again with one more person in post. Between people a post costs nothing and saves nothing. A post is paid for every shift it works, plus leave, study and on-costs. A locum is paid only for a shift that would otherwise be short. So a post saves money only on its shifts that land on a short shift. Show the workings has every step.')}</div>
+      <div class="pb3"><div><span class="lab">Costs</span><b class="num">${gbp(O.cost)}</b></div><div><span class="lab">Saves in locums</span><b class="num">${gbp(O.save)}</b></div><div><span class="lab">Net a year</span><b class="num" style="color:${O.net > 0 ? 'var(--err)' : 'var(--ok)'}">${O.net > 0 ? '+' : '−'}${gbp(Math.abs(O.net))}</b></div></div>
+      <span class="lab" style="text-transform:none;letter-spacing:0">About ${num(O.sup)} rota shifts a year. Where they go:</span>
+      <div class="hb" style="height:14px">${seg(O.closed, 'var(--ok)', 'Fills a short shift')}${seg(oncSpare, '#9aa3b2', 'Night or weekend already covered')}${seg(days, '#9fb9e3', 'Day shift: none are short')}</div>
+      <div class="kl2"><i style="background:var(--ok)"></i><span>Nights and weekends that were short</span><b class="num">${num(O.closed)}</b><span class="dd">a locum saved each</span>
+        ${oncSpare >= 0.5 ? `<i style="background:#9aa3b2"></i><span>Nights and weekends already covered</span><b class="num">${num(oncSpare)}</b><span class="dd">no saving</span>` : ''}
+        <i style="background:#9fb9e3"></i><span>Day shifts</span><b class="num">${num(days)}</b><span class="dd">none are short: teaching and training</span></div>`;
+  }, 50);
+}
+const TYPESW = ['Nwd', 'Nwe', 'Lwd', 'Lwe', 'Swd', 'Swe'];
+function perPersonYear(s, k, t) { let x = 0; for (let mo = 0; mo < 12; mo++) x += M2.perPersonPub(s, k, mo)[t]; return x * 52 / 12; }
+function renderDays() {
+  const r = lastRes, n = nowRes; if (!r.dayRes || !n.dayRes) return;
+  const minD = S.demand.air.Lwd + S.demand.na.Lwd + S.demand.air.Swd + S.demand.na.Swd, v = r.dayRes.mid, nv = n.dayRes.mid, spare = Math.max(0, v - minD), WD = 252;
+  const mx = Math.max(v, nv, minD) * 1.1, pc = x => x / mx * 100;
+  const d = spare - Math.max(0, nv - minD);
+  document.getElementById('dayCard').innerHTML = `<div class="hd"><span class="lab">Spare people on Salford weekday days</span>${iI('Everyone on days at Salford above the minimum. They go to teaching, training and other learning, so more spare people means more educational time. Average across weekdays, after leave.')}</div>
+    <div class="dyr"><div><b class="num bign">${num(spare, 1)}</b><span class="lab" style="text-transform:none;letter-spacing:0"> spare a day, on top of the minimum ${minD}</span></div>${Math.abs(d) < 0.05 ? '' : `<span class="dl num ${d > 0 ? 'up' : ''}">${d > 0 ? '+' : '−'}${num(Math.abs(d), 1)} a day on Now</span>`}</div>
+    <div class="cvb"><div class="hb"><span style="width:${pc(Math.min(v, minD))}%;background:var(--s)"></span><span style="width:${pc(spare)}%;background:#9fb9e3"></span></div><span class="nowm" title="Now" style="left:calc(${pc(nv)}% - 1px)"></span></div>
+    <div class="cvfoot"><span><i style="background:var(--s)"></i>Minimum ${minD}</span><span><i style="background:#9fb9e3"></i>Spare</span><span><i style="background:var(--text);width:2px"></i>Now</span><b class="num">${num(spare * WD)} spare day shifts a year · ${num(r.surplus.mid)} days with more than ${S.demand.surplusAt}</b></div>`;
+}
+document.getElementById('app').addEventListener('click', e => {
+  const b = e.target.closest('[data-cv],[data-cs],[data-vv]'); if (!b) return;
+  if (b.dataset.cv) { costView = b.dataset.cv; store.set('rm.costView', costView); renderCost(); }
+  if (b.dataset.cs) { costSplit = b.dataset.cs; store.set('rm.costSplit', costSplit); renderCost(); }
+  if (b.dataset.vv) { coverView = b.dataset.vv; store.set('rm.coverView', coverView); renderCover(); }
+});
+
+/* ---------- presets map ---------- */
+/* ---------- plans: order and names, shared through the store, kept per viewer when it is not available ---------- */
+let planMeta = { order: [], names: {} }, planEdit = false, draft = null;
+try { const m = JSON.parse(store.get('rm.planMeta') || 'null'); if (m && Array.isArray(m.order)) planMeta = m; } catch (e) { }
+const defName = key => key.startsWith('saved:') ? ((saved.find(x => 'saved:' + x.id === key) || {}).name || 'Saved plan') : ((PRESETS.find(x => x.id === key) || {}).n || 'Plan');
+const planName = key => (planMeta.names && planMeta.names[key]) || defName(key);
+function planKeys() {
+  const keys = PRESETS.map(p => p.id).concat(saved.map(r => 'saved:' + r.id));
+  const ord = planMeta.order || [];
+  return keys.slice().sort((a, b) => { const ia = ord.indexOf(a), ib = ord.indexOf(b); return (ia < 0 ? 1e6 + keys.indexOf(a) : ia) - (ib < 0 ? 1e6 + keys.indexOf(b) : ib); });
+}
+const resOf = key => key.startsWith('saved:') ? (savedRes[key.slice(6)] && savedRes[key.slice(6)].r) : (presetRes[key] && presetRes[key].r);
+const icOf = key => key.startsWith('saved:') ? 'bmark' : (PRESETS.find(x => x.id === key) || {}).ic || 'grid';
+const ringOf = r => { const v = r ? Math.max(0, Math.min(1, r.bt_fOOH.mid)) : 0, C = 2 * Math.PI * 9; return `<svg viewBox="0 0 24 24" width="26" height="26" aria-label="Fairfield cover ${Math.round(v * 100)}%"><circle cx="12" cy="12" r="9" fill="none" stroke="rgba(111,208,189,.22)" stroke-width="3.5"/><circle cx="12" cy="12" r="9" fill="none" stroke="#6fd0bd" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${(v * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 12 12)"/></svg>`; };
+const airOf = s => { if (!s) return null; const x = clone(s); M2.syncAccp(x); return Object.keys(x.groups).reduce((a, k) => a + ((x.groups[k].can || {}).air ? M2.wteOf(x, k) : 0), 0); };
+const tagsOf = key => { const p = PRESETS.find(x => x.id === key), a = airOf(presetRes[key] && presetRes[key].s), tg = (p && p.tg ? p.tg.slice() : []).concat(a != null ? [num(a, 1) + ' airway WTE'] : []); return tg.length ? `<span class="ptags">${tg.map(x => `<i>${esc(x)}</i>`).join('')}</span>` : ''; };
+function baseName() { return planName(active.replace('*', '')); }
+function renderHeads() {
+  const ed = active.endsWith('*');
+  document.getElementById('inHead').innerHTML = `<span class="lab stepl"><i class="stepn">2</i>Inputs</span>${ed ? `<span class="editing"><i></i>Changing ${esc(baseName())}</span>` : `<span class="lab" style="margin-left:auto;text-transform:none;letter-spacing:0">${esc(baseName())}</span>`}`;
+  document.getElementById('outName').innerHTML = `${esc(baseName())}${ed ? ' <span class="editing"><i></i>edited</span>' : ''}`;
+}
+function renderMap() {
+  const el = document.getElementById('map'), ed = active.endsWith('*'), base = active.replace('*', '');
+  const nums = (r, key) => { if (!r) return '<span class="lab">Working</span>'; const n0 = presetRes.now && presetRes.now.r, d = n0 ? r.total.mid - n0.total.mid : 0;
+    return `<span class="mt f"><em>FGH</em>${Math.round(r.bt_fOOH.mid * 100)}%</span><span class="mt s"><em>SRH</em>${Math.round(r.coverS.mid * 100)}%</span><span class="num c">${key === 'now' || !n0 ? gbp(r.total.mid) : (Math.abs(d) < 500 ? 'same cost' : (d > 0 ? '+' : '−') + gbp(Math.abs(d)))}</span>`; };
+  const descOf = key => key.startsWith('saved:') ? 'Saved plan' : ((PRESETS.find(x => x.id === key) || {}).d || '');
+  const head = `<div class="gh" style="display:flex;align-items:center;gap:6px">${planEdit ? 'Drag to reorder, tap a name to rename' : ''}${planEdit ? '' : iI('A plan sets every input. Change anything after and the plan is marked as changing; tap it again to reset, or save it as a new plan.')}<button class="pedit" data-planedit="1">${planEdit ? 'Done' : 'Edit'}</button></div>`;
+  let h;
+  if (planEdit) {
+    const keys = draft.order;
+    h = keys.map((key, i) => `<div class="r6 drag" draggable="true" data-key="${esc(key)}"><span class="ib grab" title="Drag">${ico('drag', 'sm')}</span><input class="pname" data-rename="${esc(key)}" value="${esc(draft.names[key] || defName(key))}" aria-label="Plan name" maxlength="60"><span class="mv"><button data-mv="${esc(key)}" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">${ico('chevron-up', 'sm')}</button><button data-mv="${esc(key)}" data-dir="1" ${i === keys.length - 1 ? 'disabled' : ''} aria-label="Move down">${ico('cdown', 'sm')}</button></span></div>`).join('');
+  } else {
+    const card = key => { const on = base === key, editing = on && ed, r = resOf(key), attr = key.startsWith('saved:') ? `data-saved="${esc(key.slice(6))}"` : `data-preset="${key}"`;
+      return `<div class="pcw"><button class="r6 ${on ? 'on' : ''} ${editing ? 'edit' : ''}" ${attr} aria-pressed="${on}"><span class="ib ring">${ringOf(editing && lastRes ? lastRes : r)}</span><span class="l" style="font-weight:${on ? 700 : 500}">${esc(planName(key))}${editing ? ' <span class="editing"><i></i>Changing</span>' : ''}${tagsOf(key)}</span><span class="v">${nums(editing && lastRes ? lastRes : r, key)}</span></button><button class="pcost" data-costof="${esc(key)}" aria-label="What makes up the cost of ${esc(planName(key))}" title="Cost breakdown">${ico('pound', 'sm')}</button></div>${editing ? chgBlock(r) : ''}`; };
+    const TODAY = ['now', 'month', 'fulldean', 'allsd', 'nights2'], keys = planKeys();
+    const kids = keys.filter(k => TODAY.includes(k) && k !== 'now'), opts = keys.filter(k => !TODAY.includes(k));
+    h = `<div class="pgh">Today</div>${card('now')}<div class="kids">${kids.map(k => card(k).replace(esc(planName(k)), esc(planName(k).replace(/^Now \((.*)\)$/, (m, x) => x.charAt(0).toUpperCase() + x.slice(1))))).join('')}</div><div class="pgh">Options</div>${opts.map(card).join('')}`;
+  }
+  ensureRanges();
+  el.innerHTML = `<div class="plans">${head}<div class="grp6" id="planlist">${h}</div>
+    ${planEdit ? `<div class="key">${db && canSave ? 'Changes are shared with everyone' : 'Changes are kept in this browser'}</div>` : `<div class="key" style="flex-wrap:wrap"><span>Ring and FGH: Fairfield nights and weekends we cover · SRH: Salford we cover</span></div>`}</div>`;
+  renderHeads();
+}
+const MODE_TIP = 'Theoretical: everyone works the 9-week template (or the part-time 80, 70, 60 or 50% templates) exactly as written. Leave comes only out of standard days. In practice: the same hours, spread across nights, weekends and days the way each group actually worked them in Allocate, Sep 2025 to Aug 2026, leaving out bank shifts.';
+function renderMode() {
+  document.getElementById('modebar').innerHTML = `<div class="modebar"><div class="seg4 mode">${[['practice', 'In practice'], ['theory', 'Theoretical']].map(([k, n]) => `<button class="${MODE === k ? 'on' : ''}" data-mode="${k}" aria-pressed="${MODE === k}">${n}</button>`).join('')}</div>${iI(MODE_TIP)}</div>`;
+}
+function setMode(m) {
+  if (m === MODE) return; MODE = m; try { localStorage.setItem('rm.mode', m); } catch (e) { }
+  NOW.core.practice = practice(); S.core.practice = practice();
+  Object.keys(presetRes).forEach(k => delete presetRes[k]); Object.keys(savedRes).forEach(k => delete savedRes[k]);
+  const base = active.replace('*', '');
+  if (!active.endsWith('*') && PRESETS.find(x => x.id === base)) S = make(base);
+  nowRes = M2.simulate(clone(NOW), 40, 5); presetRes.now = { r: nowRes, s: make('now') };
+  renderMode(); renderPanel(); recompute(); statPresets(); statSaved();
+}
+document.getElementById('modebar').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) setMode(b.dataset.mode); });
+let chgOpen = true;
+function chgBlock(r) {
+  const ch = changes(baseState());
+  return `<div class="pchg"><button class="pct" data-chgt="1" aria-expanded="${chgOpen}">${ch.length} ${ch.length === 1 ? 'change' : 'changes'}<svg class="i ch ${chgOpen ? 'open' : ''}"><use href="#chev"/></svg><span class="was num">Was ${r ? gbp(r.total.mid) : ''}</span></button>
+    ${chgOpen ? ch.map(c => `<div class="pcr"><span class="l">${esc(c.label)}</span><span class="old num">${esc(c.old)}</span><span class="new num">${esc(c.nw)}</span><button class="rv" data-pundo="${c.p}" aria-label="Undo">${ico('undo', 'sm')}</button></div>`).join('') : ''}
+    <div class="pfoot"><button class="lnk" data-pundoall="1">Undo all</button></div></div>`;
+}
+async function savePlanMeta() {
+  const names = {}; Object.entries(draft.names).forEach(([k, v]) => { const t = String(v || '').trim(); if (t && t !== defName(k)) names[k] = t.slice(0, 60); });
+  planMeta = { order: draft.order.slice(), names };
+  store.set('rm.planMeta', JSON.stringify(planMeta));
+  if (db && canSave) {
+    try { await db.doc('meta/plans').set({ order: planMeta.order, names: planMeta.names, updatedAt: new Date().toISOString() }); } catch (e) { }
+  }
+}
+const mapEl = document.getElementById('map');
+mapEl.addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.planedit) {
+    if (!planEdit) { draft = { order: planKeys(), names: Object.fromEntries(planKeys().map(k => [k, planName(k)])) }; planEdit = true; renderMap(); return; }
+    planEdit = false; await savePlanMeta(); renderMap(); renderCmp(); return;
+  }
+  if (t.dataset.mv) { const o = draft.order, i = o.indexOf(t.dataset.mv), j = i + +t.dataset.dir; if (j >= 0 && j < o.length) { [o[i], o[j]] = [o[j], o[i]]; renderMap(); } return; }
+  if (t.dataset.chgt) { chgOpen = !chgOpen; renderMap(); return; }
+  if (t.dataset.pundo) { const ref = baseState(), p = t.dataset.pundo; set(S, p, clone(get(ref, p))); if (!changes(ref).length) { active = active.replace('*', ''); renderPanel(); recompute(); } else edited(); return; }
+  if (t.dataset.pundoall) { const b = active.replace('*', ''); choose(b.startsWith('saved:') ? { dataset: { saved: b.slice(6) } } : { dataset: { preset: b } }); return; }
+  if (!planEdit && (t.dataset.preset || t.dataset.saved)) choose(t);
+});
+mapEl.addEventListener('input', e => { const t = e.target; if (t.dataset.rename && draft) draft.names[t.dataset.rename] = t.value; });
+let dragKey = null;
+mapEl.addEventListener('dragstart', e => { const r = e.target.closest('.drag'); if (!r) return; dragKey = r.dataset.key; r.classList.add('dragging'); try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragKey); } catch (x) { } });
+mapEl.addEventListener('dragend', e => { const r = e.target.closest('.drag'); if (r) r.classList.remove('dragging'); dragKey = null; });
+mapEl.addEventListener('dragover', e => { const r = e.target.closest('.drag'); if (!r || !dragKey || r.dataset.key === dragKey) return; e.preventDefault(); const o = draft.order, from = o.indexOf(dragKey), to = o.indexOf(r.dataset.key); o.splice(from, 1); o.splice(to, 0, dragKey); const list = document.getElementById('planlist'), moving = list.querySelector(`.drag[data-key="${CSS.escape(dragKey)}"]`); if (moving) { if (from < to) r.after(moving); else r.before(moving); } });
+mapEl.addEventListener('drop', e => { if (dragKey) { e.preventDefault(); renderMap(); } });
+function choose(t) {
+  if (t.dataset.preset) { S = make(t.dataset.preset); active = t.dataset.preset; }
+  else { const r = saved.find(x => x.id === t.dataset.saved); if (!r) return; try { S = Object.assign(M2.now(), JSON.parse(r.state)); S.core.practice = practice(); M2.syncAccp(S); syncT(S); active = 'saved:' + r.id; } catch (err) { return; } }
+  renderPanel(); recompute();
+}
+
+/* ---------- the workings: one average year, step by step ---------- */
+const WT = ['Nwd', 'Nwe', 'Lwd', 'Lwe', 'Swd', 'Swe'], ONC = ['Nwd', 'Nwe', 'Lwe'];
+const WTN = { Nwd: 'Weekday nights', Nwe: 'Weekend nights', Lwd: 'Weekday long days', Lwe: 'Weekend long days', Swd: 'Weekday short days', Swe: 'Weekend short days' };
+const WTS = { Nwd: 'Nights<br>Mon to Thu', Nwe: 'Nights<br>Fri to Sun', Lwd: 'Long days<br>weekday', Lwe: 'Long days<br>weekend', Swd: 'Short days<br>weekday', Swe: 'Short days<br>weekend' };
+const PERW = { Nwd: 4, Nwe: 3, Lwd: 5, Lwe: 2, Swd: 5, Swe: 2 };
+let wkGroup = 'scf';
+const wsum = (o, ts) => (ts || WT).reduce((a, t) => a + (o[t] || 0), 0);
+const wn = (v, d) => { const x = d ? Number(v).toFixed(d) : Math.round(v); return Math.abs(v) < (d ? 0.005 : 0.5) ? '<span class="z">0</span>' : (d ? x : Number(x).toLocaleString('en-GB')); };
+function postKey(s) { return s.groups.sd.posts + (s.groups.sd.newPosts || 0) > 0 ? 'sd' : 'scf'; }
+function plusOne(s, k) { const s2 = clone(s); s2.groups[k].posts += 1; return s2; }
+// what one more person in post does, by shift type, in an average year.
+// A post is paid only while someone is in it, so the extra post's figures are divided by the share of time it is filled.
+const ord = n => n + ((n % 100 >= 11 && n % 100 <= 13) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th'));
+const fillShare = g => g.stay && g.recruit ? g.stay / (g.stay + g.recruit) : 1;
+function oneMore(s) {
+  const k = postKey(s), A = M2.workings(clone(s)), B = M2.workings(plusOne(s, k)), by = {}, f = fillShare(s.groups[k]);
+  WT.forEach(t => {
+    const sup = ((B.groups[k] ? B.groups[k].supply[t] : 0) - (A.groups[k] ? A.groups[k].supply[t] : 0)) / f;
+    const closed = Math.max(0, (A.gap.fgh[t] + A.gap.srh[t]) - (B.gap.fgh[t] + B.gap.srh[t])) / f;
+    by[t] = { sup, closed, spare: Math.max(0, sup - closed), saved: closed * A.loc[t].hours * A.loc[t].rate };
+  });
+  const cost = (B.staff - A.staff) / f, save = (A.locum - B.locum) / f;
+  return { k, A, B, f, by, cost, save, net: cost - save, sup: wsum(Object.fromEntries(WT.map(t => [t, by[t].sup]))), closed: wsum(Object.fromEntries(WT.map(t => [t, by[t].closed]))) };
+}
+// a shift's locum cost, split into bank and agency, with the hours that make it up
+const LSPLIT = { Nwd: [['wdAnti', 11], ['wdSoc', 1.5]], Nwe: [['weAnti', 11], ['weSoc', 1.5]], Lwd: [['wdSoc', 11], ['wdAnti', 1.5]], Lwe: [['weSoc', 11], ['weAnti', 1.5]], Swd: [['wdSoc', 8]], Swe: [['weSoc', 8]] };
+function shiftCost(s, t) {
+  const c = s.cost, sp = LSPLIT[t], sum = lr => sp.reduce((a, [k, h]) => a + (lr[k] || 0) * h, 0);
+  const bank = sum(c.lr) * (1 + (c.bankOn || 0)), ag = c.lrA ? sum(c.lrA) : bank, sh = c.agencyShare || 0;
+  const how = lr => sp.map(([k, h]) => `${num(h, h % 1 ? 1 : 0)} h × ${gbp(lr[k])}`).join(' + ');
+  return { bank, ag, avg: bank * (1 - sh) + ag * sh, sh, howB: how(c.lr) + (c.bankOn ? ` + ${num(c.bankOn * 100)}%` : ''), howA: c.lrA ? how(c.lrA) : '' };
+}
+// groups in a fixed order, ACCPs as one group, with the section each belongs to
+const GSECT = [['SCFs and specialty doctors', ['scf', 'sd']], ['Deanery, airway', ['icm3', 'icm2', 'icm1', 'anaes']], ['ACCPs', ['accp']], ['Other residents', ['jcf', 'accs', 'imt', 'fy2', 'other']], ['Fairfield', ['anaesX']]];
+function orderedGroups(W) {
+  const G = Object.assign({}, W.groups), acc = ['accpA', 'accpF', 'accpT', 'accpO'].map(k => G[k]).filter(Boolean);
+  if (acc.length) {
+    const sumT = f => Object.fromEntries(WT.map(t => [t, acc.reduce((a, g) => a + ((g[f] || {})[t] || 0), 0)]));
+    const pw = acc.reduce((a, g) => a + (g.paidWte || 0), 0), first = acc.find(g => g.paidWte > 0.005) || acc[0];
+    G.accp = Object.assign({}, first, { k: 'accp', label: 'ACCPs', posts: acc.reduce((a, g) => a + (g.posts || 0), 0), paidWte: pw, rota: acc.reduce((a, g) => a + g.rota, 0), cost: acc.reduce((a, g) => a + (g.cost || 0), 0),
+      gross: pw ? acc.reduce((a, g) => a + (g.gross || 0) * (g.paidWte || 0), 0) / pw : first.gross, on: pw ? acc.reduce((a, g) => a + (g.on || 0) * (g.paidWte || 0), 0) / pw : first.on,
+      supply: sumT('supply'), fgh: sumT('fgh'), srh: sumT('srh'), spare: sumT('spare') });
+  }
+  const out = []; GSECT.forEach(([sec, ks]) => ks.forEach(k => { if (G[k]) out.push(Object.assign({ sec }, G[k])); }));
+  return out;
+}
+function renderWork() {
+  const box = document.getElementById('wk'); if (!box || document.getElementById('wsheet').hidden) return;
+  const W = M2.workings(clone(S)), G = S.groups, D = S.demand;
+  const OG = orderedGroups(W), gl = OG.filter(g => g.k !== 'anaesX' && ((g.paidWte || 0) > 0.005 || g.rota > 0.005));
+  const ga = OG.filter(g => g.rota > 0.005);
+  if (!gl.find(g => g.k === wkGroup)) wkGroup = gl[0] ? gl[0].k : 'scf';
+  const th = (first, cols) => `<thead><tr><th>${first}</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>`;
+  const tbl = h => `<div class="wkt"><table>${h}</table></div>`;
+  const step = (n, title, intro, body) => `<section class="wkstep"><h3><span class="wkn">${n}</span>${title}</h3>${intro ? `<p>${intro}</p>` : ''}${body}</section>`;
+  const keepOf = g => g.stay && g.recruit ? g.stay / (g.stay + g.recruit) : 1;
+  // 1 people
+  const pk = postKey(S), pg = G[pk], pw = W.groups[pk];
+  const s1 = step(1, 'Who is on the rota', 'Posts become paid WTE after vacancies, deanery fill and part-time. Paid WTE becomes WTE on the rota after anyone away on placement. Supernumerary SCFs and specialty doctors are on the rota at Salford as non-airway only. Deanery numbers are already WTE.',
+    tbl(th('Group', ['Posts', 'Paid WTE', 'WTE on the rota', 'Pay a WTE', 'On-costs a WTE', 'Cost a year']) + '<tbody>' +
+      gl.map(g => `<tr><td>${esc(g.label)}</td><td>${wn(g.posts, 1)}</td><td>${wn(g.paidWte, 2)}</td><td>${wn(g.rota, 2)}</td><td>${gbp(g.gross)}</td><td>${gbp(g.on)}</td><td>${gbp(g.cost)}</td></tr>`).join('') +
+      `<tr class="tot"><td>All staff</td><td></td><td>${wn(gl.reduce((a, g) => a + (g.paidWte || 0), 0), 1)}</td><td>${wn(gl.reduce((a, g) => a + g.rota, 0), 1)}</td><td></td><td></td><td>${gbp(W.staff)}</td></tr></tbody>`) +
+    (pw ? `<div class="wkcalc">${pk === 'sd' ? 'Specialty doctors' : 'SCFs'}: ${pw.posts} posts × ${num(keepOf(pg) * 100, 1)}% of the time filled (${pg.stay} months in post, ${pg.recruit} to refill)${wfOf(pg) < 1 ? ` × ${num(wfOf(pg), 2)} average WTE` : ''} = ${num(pw.paidWte, 2)} paid WTE. ${num(pw.paidWte - pw.rota, 2)} of that is not on the rota: ${S.core.extPlacement || 0} away on placement. New starters are on the rota, but for their first ${pg.supernum} months only as non-airway at Salford.</div>
+     <div class="wkcalc">On-costs: employer pension ${num(S.cost.pension * 100, 2)}% of pay, plus NI ${num(S.cost.ni * 100, 0)}% of pay above ${gbp(S.cost.niThreshold)}. For ${pk === 'sd' ? 'a specialty doctor' : 'an SCF'}: ${gbp(pw.gross)} × ${num(S.cost.pension * 100, 2)}% + (${gbp(pw.gross)} − ${gbp(S.cost.niThreshold)}) × ${num(S.cost.ni * 100, 0)}% = ${gbp(pw.on)}.</div>` : ''));
+  // 2 shifts per WTE
+  const sg = W.groups[wkGroup], sgg = G[wkGroup];
+  const row = (lab, o, cls) => `<tr class="${cls || ''}"><td>${lab}</td>${WT.map(t => `<td>${wn(o[t])}</td>`).join('')}<td>${wn(wsum(o))}</td></tr>`;
+  const lv = sg ? sg.leave : 0;
+  const s2 = step(2, 'Shifts each WTE works a year', 'Each group works its work schedule: the 9-week template unless changed. Leave, study leave, bank holidays and SPA or development days come off weekday short days only. Sickness and other absence come off every shift.',
+    `<label class="wksel">Show the working for <select id="wkg">${gl.map(g => `<option value="${g.k}" ${g.k === wkGroup ? 'selected' : ''}>${esc(g.label)}</option>`).join('')}</select></label>` +
+    (sg ? tbl(th(esc(sg.label), WT.map(t => WTS[t]).concat(['Total'])) + '<tbody>' +
+      row('From the work schedule, 52 weeks', sg.tmpl) +
+      row(`Less ${num(lv)} days of leave, study and ${wkGroup === 'sd' ? 'SPA' : 'development'} days${sgg && sgg.actingUp ? ', and acting-up nights' : ''}`, sg.afterLeave) +
+      row(`Less ${num(sg.absence * 100, 0)}% sickness and other absence`, sg.final, 'tot') + '</tbody>') : '') +
+    (sgg && ['scf', 'sd'].includes(wkGroup) && sgg.n2d ? `<p>${num(sgg.n2d * 100)}% of their weekday nights are changed to day shifts at short notice. This is from Allocate: last year SCFs worked 249 weekday nights against 291 on the template.</p>` : '') +
+    (sgg && !['scf', 'sd'].includes(wkGroup) && !wkGroup.startsWith('accp') ? `<p>The template has 6 weekday nights to 3 weekend nights every 9 weeks, but Salford needs the same number every night. So trainees' spare weekday nights are worked as weekday short days. SCFs and specialty doctors keep theirs for Fairfield.</p>` : '') +
+    tbl(th('Every group, per WTE', WT.map(t => WTS[t]).concat(['Total'])) + '<tbody>' + gl.map(g => row(esc(g.label), g.final)).join('') + '</tbody>'));
+  // 3 supply
+  const tot = o => Object.fromEntries(WT.map(t => [t, ga.reduce((a, g) => a + g[o][t], 0)]));
+  const sup = tot('supply');
+  const s3 = step(3, 'Shifts our rota supplies', 'WTE on the rota × shifts per WTE, month by month, for each group.',
+    tbl(th('Group', WT.map(t => WTS[t]).concat(['Total'])) + '<tbody>' + ga.map(g => row(esc(g.label), g.supply)).join('') + row('All groups', sup, 'tot') + '</tbody>') +
+    (sg && sg.rota > 0 ? `<div class="wkcalc">${esc(sg.label)} weekday nights: ${num(sg.rota, 2)} WTE on the rota × ${num(sg.final.Nwd, 1)} a WTE ≈ ${num(sg.supply.Nwd)} a year.</div>` : ''));
+  // 4 need
+  const perShift = { srh: { Nwd: D.air.N + D.na.N, Nwe: D.air.N + D.na.N, Lwd: D.air.Lwd + D.na.Lwd, Lwe: D.air.Lwe + D.na.Lwe, Swd: D.air.Swd + D.na.Swd, Swe: D.air.Swe + D.na.Swe }, fgh: { Nwd: D.fgh.N, Nwe: D.fgh.N, Lwd: D.fgh.L, Lwe: D.fgh.L, Swd: 0, Swe: 0 } };
+  const s4 = step(4, 'Shifts that must be filled', 'The minimum on each shift × how many of that shift there are in a year. Weekday nights are Monday to Thursday; weekend nights are Friday to Sunday.',
+    tbl(th('Shift', ['Salford minimum', 'Salford a year', 'Fairfield minimum', 'Fairfield a year', 'Both a year']) + '<tbody>' +
+      WT.map(t => `<tr><td>${WTN[t]}</td><td>${wn(perShift.srh[t])}</td><td>${wn(W.need.srh[t])}</td><td>${wn(perShift.fgh[t])}</td><td>${wn(W.need.fgh[t])}</td><td>${wn(W.need.srh[t] + W.need.fgh[t])}</td></tr>`).join('') +
+      `<tr class="tot"><td>All shifts</td><td></td><td>${wn(wsum(W.need.srh))}</td><td></td><td>${wn(wsum(W.need.fgh))}</td><td>${wn(wsum(W.need.srh) + wsum(W.need.fgh))}</td></tr></tbody>`) +
+    `<div class="wkcalc">Salford weekday nights: ${perShift.srh.Nwd} a night (${D.air.N} airway) × ${PERW.Nwd} nights a week × 52 weeks = ${num(W.need.srh.Nwd)}.</div>`);
+  // 5 fill
+  const fsum = o => wsum(o);
+  const s5 = step(5, 'Filling the shifts, in order', '',
+    `<ol class="wkol"><li>Fairfield weekday long days from JCFs and ACCS after their first 3 months, and FGH-trained ACCPs.</li><li>Salford airway minimum: trainees first, then SCFs and specialty doctors. Trainee numbers vary from day to day, so trainees only count up to the minimum on each shift.</li><li>Salford everyone else, the same way. Supernumerary SCFs and specialty doctors count here, before signed-off ones.</li><li>Fairfield nights and weekend long days from signed-off SCFs and specialty doctors who aren't needed at Salford, up to ${num(S.core.fghCap * 100)}% of the group's on-calls between them, so some can do more if others do less. A Fairfield team fills Fairfield before step 2.</li><li>Any shift still short is a locum. Anything left over is spare.</li></ol>` +
+    tbl(th('Shift', ['Supplied', 'Filled Salford', 'Filled Fairfield', 'Spare', 'Short: locum']) + '<tbody>' +
+      WT.map(t => { const sp = ga.reduce((a, g) => a + g.spare[t], 0), gp = W.gap.srh[t] + W.gap.fgh[t]; return `<tr><td>${WTN[t]}</td><td>${wn(sup[t])}</td><td>${wn(W.filled.srh[t])}</td><td>${wn(W.filled.fgh[t])}</td><td>${wn(sp)}</td><td class="${gp >= 0.5 ? 'gap' : ''}">${wn(gp)}</td></tr>`; }).join('') +
+      `<tr class="tot"><td>All shifts</td><td>${wn(fsum(sup))}</td><td>${wn(fsum(W.filled.srh))}</td><td>${wn(fsum(W.filled.fgh))}</td><td>${wn(ga.reduce((a, g) => a + fsum(g.spare), 0))}</td><td>${wn(fsum(W.gap.srh) + fsum(W.gap.fgh))}</td></tr></tbody>`) +
+    tbl(th('Who fills what', ['Salford', 'Fairfield', 'Spare nights and weekend long days', 'Spare days', 'Total']) + '<tbody>' + ga.map(g => `<tr><td>${esc(g.label)}</td><td>${wn(fsum(g.srh))}</td><td>${wn(fsum(g.fgh))}</td><td>${wn(wsum(g.spare, ONC))}</td><td>${wn(fsum(g.spare) - wsum(g.spare, ONC))}</td><td>${wn(fsum(g.supply))}</td></tr>`).join('') + '</tbody>') +
+    `<p>Spare days are people at Salford above the minimum: teaching and training time. Spare nights and weekend long days belong to trainees and ACCPs, who can't work Fairfield on-calls, or are extras on busy nights. That is also why a few Salford shifts are short while others have spare people: trainee numbers vary from night to night, and extras on a busy night can't cover a quiet one.</p>`);
+  // 6 locums
+  const s6 = step(6, 'Locums for every shift still short', `Every short shift is filled by a locum, paid by the hour. Social hours are 07:00 to 19:00. A night is 11 unsocial hours and 1.5 social; a long day the reverse.`,
+    tbl(th('Shift', ['Short at Salford', 'Short at Fairfield', 'Bank shift' + iI('NHSP rate × the hours in the shift: a night is 11 unsocial hours and 1.5 social.'), 'Agency shift' + iI('Agency rate (a best guess) × the hours in the shift.'), 'Average shift' + iI('What the model uses: bank and agency weighted by the share of locum shifts that go to agency, set on the Locum rates page.'), 'Cost a year']) + '<tbody>' +
+      WT.map(t => { const L = W.loc[t], q = shiftCost(S, t); return `<tr><td>${WTN[t]}</td><td>${wn(L.srh)}</td><td>${wn(L.fgh)}</td><td>${gbp(q.bank)}</td><td>${gbp(q.ag)}</td><td>${gbp(q.avg)}</td><td>${gbp(L.cost)}</td></tr>`; }).join('') +
+      `<tr class="tot"><td>All locums</td><td>${wn(WT.reduce((a, t) => a + W.loc[t].srh, 0))}</td><td>${wn(WT.reduce((a, t) => a + W.loc[t].fgh, 0))}</td><td></td><td></td><td></td><td>${gbp(W.locum)}</td></tr></tbody>`) +
+    (q => `<div class="wkcalc">A weekday night: bank ${q.howB} = ${gbp(q.bank)}. Agency ${q.howA} = ${gbp(q.ag)}. ${num(q.sh * 100)}% agency, so on average ${gbp(q.avg)}.</div><div class="wkcalc">Fairfield weekday nights: ${num(W.loc.Nwd.fgh)} × ${gbp(q.avg)} = ${gbp(W.loc.Nwd.fgh * q.avg)}.</div>`)(shiftCost(S, 'Nwd')));
+  // 7 total
+  const s7 = step(7, 'Cost of the year', '',
+    `<div class="wkcalc wkbig">Staff ${gbp(W.staff)} + locums ${gbp(W.locum)} = <b>${gbp(W.total)}</b></div><p>This is one average year. The headline (${lastRes ? gbp(lastRes.total.mid) : '…'}) is the middle of 40 random years, where deanery fill, sickness and vacancies vary month to month, so it differs slightly.</p>`);
+  // 8 one more post
+  const O = oneMore(S), pn = O.k === 'sd' ? 'specialty doctor' : 'SCF';
+  const cur = G[O.k].posts, lo = Math.max(0, cur - 6), hi = cur + 12, bars = [];
+  let prev = null; for (let n = lo; n <= hi; n++) { const s3x = clone(S); s3x.groups[O.k].posts = n; const w = M2.workings(s3x); if (prev) bars.push({ n, net: ((w.staff - prev.staff) - (prev.locum - w.locum)) / O.f, save: (prev.locum - w.locum) / O.f, cost: (w.staff - prev.staff) / O.f }); prev = w; }
+  const mx = Math.max(...bars.map(b => b.cost)) * 1.05, bw = 100 / bars.length;
+  const chart = `<div class="wkch"><svg viewBox="0 0 960 200" role="img" aria-label="Net cost of each extra post">${bars.map((b, i) => { const x = i * 960 / bars.length + 3, w = 960 / bars.length - 6, hC = b.cost / mx * 150, hS = b.save / mx * 150; return `<g><rect x="${x}" y="${160 - hC}" width="${w}" height="${hC - hS}" rx="3" fill="${b.n === cur + 1 ? 'var(--err)' : 'var(--gap)'}"/><rect x="${x}" y="${160 - hS}" width="${w}" height="${hS}" rx="3" fill="var(--ok)" opacity=".8"/><text x="${x + w / 2}" y="180" text-anchor="middle" font-size="11" fill="currentColor">${b.n}</text><text x="${x + w / 2}" y="${155 - hC}" text-anchor="middle" font-size="11" fill="currentColor">${gbp(b.net)}</text></g>`; }).join('')}</svg></div>
+    <div class="kl"><div><i style="background:var(--ok)"></i>Locums it saves</div><div><i style="background:var(--gap)"></i>Net extra cost of that post</div><div><i style="background:var(--err)"></i>The next post from here</div></div>`;
+  const s8 = step(8, `One more ${pn} in post`, `The same year worked again with one more ${pn}. A post is paid only while someone is in it: between people it costs nothing and saves nothing. So these figures are for one ${pn} in post. Only the shifts that land on a shift that was short save a locum.`,
+    tbl(th('Shift', ['Extra shifts worked', 'Were short: locum saved', 'Already covered: spare', 'Locum saving']) + '<tbody>' +
+      WT.map(t => `<tr><td>${WTN[t]}</td><td>${wn(O.by[t].sup)}</td><td>${wn(O.by[t].closed)}</td><td>${wn(O.by[t].spare)}</td><td>${gbp(O.by[t].saved)}</td></tr>`).join('') +
+      `<tr class="tot"><td>All shifts</td><td>${wn(O.sup)}</td><td>${wn(O.closed)}</td><td>${wn(Math.max(0, O.sup - O.closed))}</td><td>${gbp(O.save)}</td></tr></tbody>`) +
+    `<div class="wkcalc wkbig">Costs ${gbp(O.cost)} − saves ${gbp(O.save)} = <b>${O.net >= 0 ? '+' : '−'}${gbp(Math.abs(O.net))} a year</b></div>
+    <p>A full-time ${pn} works ${num(wsum(W.groups[O.k].final))} shifts a year after leave and sickness. On the rota that averages ${num(O.sup)} across their time in post, because for the first ${G[O.k].supernum} months they count only as non-airway at Salford and, until signed off for Fairfield at ${G[O.k].signoff} months, ${num(S.core.fghTrain * 100)}% of their weekdays are training at Fairfield. Day shifts never save a locum: weekday days already run above the minimum at Salford, and Fairfield weekday days are covered. A post saves money only through its nights and weekend long days.</p>
+    <h4 class="wkh4">Each extra ${pn} in post, from the ${ord(lo + 1)} to the ${ord(hi)}</h4>${chart}
+    <p>Each bar is the full cost of adding that post, split into what it saves in locums and what is left over. While there are short nights and weekends it can reach, every post saves about the same. Once Fairfield weekday nights are full, extra weekday nights go spare and each post saves less.</p>`);
+  box.innerHTML = s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8;
+}
+const wfOf = g => g.wteBased ? 1 : (g.lt != null ? 1 - g.lt + g.lt * g.ltw : 1);
+document.getElementById('wkbtn').addEventListener('click', () => { document.getElementById('wsheet').hidden = false; renderWork(); });
+document.getElementById('wsheetclose').addEventListener('click', () => { document.getElementById('wsheet').hidden = true; });
+document.getElementById('wk').addEventListener('change', e => { if (e.target.id === 'wkg') { wkGroup = e.target.value; renderWork(); } });
+
+
+/* ---------- what makes up a plan's cost ---------- */
+function stateOf(key) { if (key === '*') return S; if (key.startsWith('saved:')) { const x = savedRes[key.slice(6)]; return x && x.s; } return presetRes[key] && presetRes[key].s; }
+function renderCostSheet(key) {
+  const live = active.endsWith('*') && active.replace('*', '') === key, s = live ? S : stateOf(key); if (!s) return;
+  const W = M2.workings(clone(s)), r = live ? lastRes : resOf(key);
+  const gl = orderedGroups(W).filter(g => g.k !== 'anaesX' && (g.paidWte || 0) > 0.005);
+  const locN = WT.reduce((a, t) => a + W.loc[t].shifts, 0);
+  const pct = v => num(v / W.total * 100, 1) + '%';
+  const bar = `<div class="cbar">${gl.map((g, i) => `<i style="width:${g.cost / W.total * 100}%;background:hsl(220 18% ${30 + i * 4}%)" title="${esc(g.label)}: ${gbp(g.cost)}"></i>`).join('')}<i style="width:${W.locum / W.total * 100}%;background:#e0a24a" title="Locums: ${gbp(W.locum)}"></i></div>`;
+  document.getElementById('ctitle').textContent = planName(key) + (live ? ' (changed)' : '');
+  document.getElementById('cbody').innerHTML = `
+  <section class="wkstep"><div class="cbig"><div><span class="lab">Staff</span><b class="num">${gbp(W.staff)}</b></div><span class="op">+</span><div><span class="lab">Locums</span><b class="num">${gbp(W.locum)}</b></div><span class="op">=</span><div><span class="lab">Cost a year</span><b class="num">${gbp(W.total)}</b></div></div>${bar}
+    <p>One average year. The headline${r ? ` (${gbp(r.total.mid)})` : ''} is the middle of 40 random years, where deanery fill, sickness and vacancies vary, so it differs slightly.</p></section>
+  <section class="wkstep"><h3>Staff</h3><div class="wkt"><table><thead><tr><th>Group</th><th>Paid WTE</th><th>Pay a WTE</th><th>On-costs a WTE</th><th>Cost a year</th><th>Share</th></tr></thead><tbody>
+    ${GSECT.map(([sec]) => { const gs = gl.filter(g => g.sec === sec); if (!gs.length) return ''; const c = gs.reduce((a, g) => a + g.cost, 0), w = gs.reduce((a, g) => a + g.paidWte, 0);
+      return `<tr class="sec"><td colspan="4">${sec}</td><td>${gbp(c)}</td><td>${pct(c)}</td></tr>` + gs.map(g => `<tr><td class="ind">${esc(g.label)}</td><td>${num(g.paidWte, 1)}</td><td>${gbp(g.gross)}</td><td>${gbp(g.on)}</td><td>${gbp(g.cost)}</td><td>${pct(g.cost)}</td></tr>`).join(''); }).join('')}
+    <tr class="tot"><td>All staff</td><td>${num(gl.reduce((a, g) => a + g.paidWte, 0), 1)}</td><td></td><td></td><td>${gbp(W.staff)}</td><td>${pct(W.staff)}</td></tr></tbody></table></div>
+    <p>Paid WTE × (pay + on-costs). Pay includes extra hours, nights and weekends from the work schedule; on-costs are employer pension and NI.</p></section>
+  <section class="wkstep"><h3>Locums</h3><div class="wkt"><table><thead><tr><th>Shift</th><th>Salford</th><th>Fairfield</th><th>Bank shift${iI('NHSP rate × the hours in the shift: a night is 11 unsocial hours and 1.5 social.')}</th><th>Agency shift${iI('Agency rate (a best guess) × the hours in the shift.')}</th><th>Average shift${iI('What the model uses: bank and agency weighted by the share of locum shifts that go to agency, set on the Locum rates page.')}</th><th>Cost a year</th></tr></thead><tbody>
+    ${WT.map(t => { const L = W.loc[t], q = shiftCost(s, t); return L.shifts < 0.5 ? '' : `<tr><td>${WTN[t]}</td><td>${wn(L.srh)}</td><td>${wn(L.fgh)}</td><td>${gbp(q.bank)}</td><td>${gbp(q.ag)}</td><td>${gbp(q.avg)}</td><td>${gbp(L.cost)}</td></tr>`; }).join('')}
+    <tr class="tot"><td>All locums</td><td>${wn(WT.reduce((a, t) => a + W.loc[t].srh, 0))}</td><td>${wn(WT.reduce((a, t) => a + W.loc[t].fgh, 0))}</td><td></td><td></td><td></td><td>${gbp(W.locum)}</td></tr></tbody></table></div>
+    <p>${num(locN)} short shifts a year. ${num((s.cost.agencyShare || 0) * 100)}% go to agency, so each costs the average of a bank and an agency shift.</p>${(q => `<div class="wkcalc">A weekday night: bank ${q.howB} = ${gbp(q.bank)}. Agency ${q.howA} = ${gbp(q.ag)}.</div>`)(shiftCost(s, 'Nwd'))}</section>`;
+  document.getElementById('csheet').hidden = false;
+}
+document.getElementById('map').addEventListener('click', e => { const b = e.target.closest('[data-costof]'); if (!b) return; e.stopPropagation(); renderCostSheet(b.dataset.costof); }, true);
+document.getElementById('csheetclose').addEventListener('click', () => { document.getElementById('csheet').hidden = true; });
+document.addEventListener('click', e => {
+  const o = e.target.closest('[data-opensheet]'); if (o && !e.target.closest('.ii')) { document.getElementById(o.dataset.opensheet).hidden = false; if (o.dataset.opensheet === 'rsheet') renderRanges(); return; }
+  const c = e.target.closest('[data-closesheet]'); if (c) { document.getElementById(c.dataset.closesheet).hidden = true; return; }
+  if (e.target.closest('[data-costbreak]')) renderCostSheet(active.replace('*', ''));
+});
+
+/* ---------- comparison table ---------- */
+function renderCmp() {
+  if (!presetRes.now || !lastRes || document.getElementById('sheet').hidden) return;
+  const cols = [{ k: 'now', n: planName('now'), ic: 'clock', d: presetRes.now }, { k: 'live', n: 'This plan', ic: 'pencil', live: 1, d: { r: lastRes, s: S } },
+    ...planKeys().filter(k => !k.startsWith('saved:') && k !== 'now' && presetRes[k]).map(k => ({ k, n: planName(k), ic: icOf(k), d: presetRes[k] })),
+    ...extraCols.map(id => { const r = saved.find(x => x.id === id); return r && savedRes[id] ? { k: 's:' + id, n: planName('saved:' + id), ic: 'bmark', d: savedRes[id], rm: id } : null; }).filter(Boolean)];
+  const B = (r, k) => r['bt_' + k] ? r['bt_' + k].mid : 0;
+  const ind = n => `<span style="padding-left:14px;color:var(--text-2)">${n}</span>`;
+  const R = [
+    ['g', 'Cover by our staff'],
+    ['moon', 'Fairfield out of hours', d => B(d.r, 'fOOH'), pc1, 'max', 'var(--f)', 'Nights and weekend long days filled from our own rota'],
+    ['hosp', 'Fairfield, all shifts', d => d.r.coverF.mid, pc1, 'max', 'var(--f)'],
+    ...[['moon', 'fN_wd', 'Weekday nights'], ['moon', 'fN_we', 'Weekend nights'], ['sun2', 'fL_wd', 'Weekday long days'], ['sun2', 'fL_we', 'Weekend long days']].map(([i, k, n]) => [i, ind(n), d => B(d.r, k), pc1, 'max', 'var(--f)']),
+    ['hosp', 'Salford, all shifts', d => d.r.coverS.mid, pc1, 'max', 'var(--s)'],
+    ...[['moon', 'sN_wd', 'Weekday nights'], ['moon', 'sN_we', 'Weekend nights'], ['day', 'sD_wd', 'Weekday days'], ['day', 'sD_we', 'Weekend days'], ['air', 'aN', '2 airway at night']].map(([i, k, n]) => [i, ind(n), d => B(d.r, k), pc1, 'max', 'var(--s)']),
+    ['shield', 'Months fully covered', d => d.r.pFullMonth, v => Math.round(v * 10) + ' in 10', 'max', null, 'Both sites at 99% or more of shifts in the month'],
+    ['g', 'Money'],
+    ['pound', 'Cost a year', d => d.r.total.mid, gbp, 'min'],
+    ['pound', 'Change from Now', d => d.r.total.mid - presetRes.now.r.total.mid, v => Math.abs(v) < 1 ? '£0' : (v > 0 ? '+' : '−') + gbp(Math.abs(v)), 'min'],
+    ['v-range', 'Likely range, our assumptions', d => 0, (v, d) => urText(keyOfD(d), d.r) || '…', null, null, UR_TIP],
+    ['v-range', 'Range, year to year', d => d.r.total.hi - d.r.total.lo, (v, d) => gbp(Math.round(d.r.total.lo / 1000) * 1000) + ' to ' + gbp(Math.round(d.r.total.hi / 1000) * 1000), null, null, 'Covers 8 years in 10'],
+    ['userplus', 'Locum shifts a year', d => d.r.locShifts.mid, v => num(v), 'min'],
+    ['g', 'What the money buys'],
+    ...BUYS.filter(b => b.id !== 'l').map(b => [b.ic, b.n, d => b.f(d.s, d.r), b.fmt, b.best, null, b.tip]),
+    ['g', 'Staff, WTE by grade'],
+    ['users', 'All grades', d => wteAll(d.s), v => num(v, 1), null],
+    ...ALLW.map(([k, n, ic]) => [ic, ind(n), d => wteK(d.s, k), v => v > 0.04 ? num(v, 1) : '·', null]),
+    ['grid', 'SCF and specialty doctor line', d => 0, (v, d) => esc(lineName((d.s.groups.sd.posts + d.s.groups.sd.newPosts) > 0 ? d.s.groups.sd.line : d.s.groups.scf.line)), null],
+    ['g', 'Days'],
+    ['users', 'Surplus standard days', d => d.r.surplus.mid, v => num(v), 'min', null, 'Salford weekdays with more residents on days than the surplus line']
+  ];
+  const fixed = cols.filter(c => !c.live);
+  const best = r => { if (!r[4]) return null; const vs = fixed.map(c => r[2](c.d)); return r[4] === 'max' ? Math.max(...vs) : Math.min(...vs); };
+  const avail = saved.filter(x => !extraCols.includes(x.id));
+  document.getElementById('cmp').innerHTML = `<div class="hd" style="display:flex;align-items:center;gap:8px"><span class="lab">Outputs for each model</span>${iI('This plan updates live as you change any input. Green dots mark the best fixed model in each row.')}</div>
+  <div class="cmp"><table><thead><tr><th style="text-align:left"><span class="lab">Model</span></th>${cols.map(c => `<th class="${c.live ? 'on' : ''}"><div class="mh"><span class="i2">${ico(c.ic, 'sm')}</span><span style="font-weight:700">${esc(c.n)}</span>${c.live ? `<span class="lab" style="color:var(--ok);display:inline-flex;gap:4px;align-items:center"><i style="width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block"></i>Live</span>` : ''}${c.rm ? `<button data-rmcol="${esc(c.rm)}" aria-label="Remove column">${ico('x', 'sm')}</button>` : ''}</div></th>`).join('')}
+    <th><div class="addmenu"><button class="addc" data-addcol="1" title="Add a saved plan" aria-label="Add a saved plan" style="background:none;cursor:pointer">${ico('plus', 'sm')}</button><div class="menu" id="addmenu" hidden>${avail.length ? avail.map(x => `<button data-pickcol="${esc(x.id)}">${ico('bmark', 'sm')} ${esc(x.name)}</button>`).join('') : '<span class="empty6">No saved plans yet</span>'}</div></div></th></tr></thead><tbody>
+  ${R.map(r => r[0] === 'g' ? `<tr class="gp"><td colspan="${cols.length + 2}">${r[1]}</td></tr>` : `<tr><td><span style="display:inline-flex;gap:6px;align-items:center">${ico(r[0], 'sm')}${r[1]}${r[6] ? iI(r[6]) : ''}</span></td>${cols.map(c => { const v = r[2](c.d), b = best(r); const bar = r[5] ? `<span class="mb"><span style="width:${Math.min(1, v) * 100}%;background:${r[5]}"></span></span>` : ''; const nv = r[2](presetRes.now); const chg = c.live && Math.abs(v - nv) > 1e-6; return `<td class="num ${c.live ? 'on' : ''} ${!c.live && b != null && Math.abs(v - b) < 1e-9 ? 'best' : ''} ${chg && !r[5] ? 'chg' : ''}">${bar}${r[3](v, c.d)}</td>`; }).join('')}<td></td></tr>`).join('')}
+  </tbody></table></div><div class="kl"><div><i style="background:var(--ok);border-radius:50%"></i>Best fixed model in the row</div><div><i style="background:var(--acc-wash)"></i>This plan, live</div></div>`;
+}
+document.getElementById('deepbtn').addEventListener('click', () => { document.getElementById('sheet').hidden = false; renderCmp(); });
+document.getElementById('sheetclose').addEventListener('click', () => { document.getElementById('sheet').hidden = true; });
+document.getElementById('cmp').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.addcol) { const m = document.getElementById('addmenu'); m.hidden = !m.hidden; return; }
+  if (t.dataset.pickcol) { extraCols.push(t.dataset.pickcol); statSaved(); renderCmp(); return; }
+  if (t.dataset.rmcol) { extraCols = extraCols.filter(x => x !== t.dataset.rmcol); renderCmp(); }
+});
+
+
+/* ---------- how sure we are: rerun each plan with the inputs we are least sure of set low and high ---------- */
+const lumpOf = x => x.core.lumpy == null ? 0.175 : x.core.lumpy;
+const scaleLr = (x, f) => { ['lr', 'lrA'].forEach(o => { if (x.cost[o]) Object.keys(x.cost[o]).forEach(k => x.cost[o][k] *= f); }); };
+const n2dBy = (x, d) => ['scf', 'sd'].forEach(k => { const g = x.groups[k]; if (g && g.n2d) g.n2d = Math.max(0, g.n2d + d); });
+const UNC = [
+  { n: 'Locum rates 10% lower to 25% higher', lo: x => scaleLr(x, 0.9), hi: x => scaleLr(x, 1.25) },
+  { n: 'Agency share 9% to 21% of locum shifts', lo: x => { x.cost.agencyShare = (x.cost.agencyShare || 0) * 9 / 14; }, hi: x => { x.cost.agencyShare = Math.min(1, (x.cost.agencyShare || 0) * 21 / 14); } },
+  { n: 'Lumpiness 10% to 25%', lo: x => { if (lumpOf(x)) x.core.lumpy = Math.max(0.001, lumpOf(x) - 0.075); }, hi: x => { if (lumpOf(x)) x.core.lumpy = lumpOf(x) + 0.075; } },
+  { n: 'Sickness 2% to 5%', lo: x => { x.absence.sick *= 2 / 3; }, hi: x => { x.absence.sick *= 5 / 3; } },
+  { n: 'Bank on-costs 0% to 10% on top', hi: x => { x.cost.bankOn = (x.cost.bankOn || 0) + 0.1; } },
+  { n: 'Weekday nights moved to days 10% to 20%', lo: x => n2dBy(x, -0.045), hi: x => n2dBy(x, 0.055) }
+];
+const UR_TIP = 'How sure we are. Each plan is worked out again with the inputs we are least sure of set low and then high: ' + UNC.map(u => u.n.charAt(0).toLowerCase() + u.n.slice(1)).join('; ') + '. The swings are added up on the basis that they will not all go the same way at once (square root of the sum of squares). Both ends are paired with Now worked out the same way.';
+const UR = {}; let urQ = [], urBusy = false;
+const prepS = x => { M2.syncAccp(x); syncT(x); return x; };
+function urNeed(key, s) {
+  const id = MODE + '|' + key;
+  if (key !== 'live' && UR[id]) return;
+  const rec = { base: null, d: UNC.map(() => [0, 0]), done: false, s: clone(s) }; UR[id] = rec;
+  const tasks = [() => { rec.base = M2.workings(prepS(clone(rec.s))).total; }];
+  UNC.forEach((u, i) => ['lo', 'hi'].forEach((side, j) => { if (u[side]) tasks.push(() => { const x = clone(rec.s); u[side](x); rec.d[i][j] = M2.workings(prepS(x)).total - rec.base; }); }));
+  tasks.push(() => { rec.done = true; renderRanges(); renderCmp(); });
+  const jobs = tasks.map(f => ({ f, id, rec }));
+  if (key === 'live') { urQ = urQ.filter(j => j.id !== id); urQ.unshift(...jobs); } else urQ.push(...jobs);
+  if (!urBusy) { urBusy = true; setTimeout(urStep, 0); }
+}
+function urStep() {
+  const j = urQ.shift(); if (!j) { urBusy = false; return; }
+  if (UR[j.id] === j.rec) { try { j.f(); } catch (e) { } }
+  setTimeout(urStep, 0);
+}
+function ensureRanges() {
+  planKeys().forEach(k => { const s = stateOf(k); if (s && !UR[MODE + '|' + k]) urNeed(k, s); });
+}
+const rss = xs => Math.sqrt(xs.reduce((a, x) => a + x * x, 0));
+// swings for a plan's cost, or for its difference from Now when paired
+function urSwing(key, paired) {
+  const a = UR[MODE + '|' + key], n = UR[MODE + '|now']; if (!a || !a.done || (paired && (!n || !n.done))) return null;
+  const ds = a.d.map((p, i) => paired ? [p[0] - n.d[i][0], p[1] - n.d[i][1]] : p);
+  return { lo: -rss(ds.map(p => Math.min(0, p[0], p[1]))), hi: rss(ds.map(p => Math.max(0, p[0], p[1]))) };
+}
+const k1 = x => Math.round(x / 1000) * 1000;
+const sgn = x => (x > 0 ? '+' : x < 0 ? '−' : '') + gbp(Math.abs(x));
+function curKey() { return active.endsWith('*') ? 'live' : active; }
+function keyOfD(d) { if (d.s === S) return curKey(); const p = Object.keys(presetRes).find(k => presetRes[k] === d); if (p) return p; const v = Object.keys(savedRes).find(k => savedRes[k] === d); return v ? 'saved:' + v : null; }
+function urText(key, r) { if (!key || !r) return ''; const w = urSwing(key); return w ? gbp(k1(r.total.mid + w.lo)) + ' to ' + gbp(k1(r.total.mid + w.hi)) : ''; }
+function renderRanges() {
+  const hl = document.getElementById('costRange'); if (hl && lastRes) { const t = urText(curKey(), lastRes); hl.innerHTML = t ? `Likely ${t}${iI(UR_TIP)}` : ''; }
+  const el = document.getElementById('rangeCard'); if (!el || !nowRes) return;
+  const short = n => n.replace(/^Now \((.*)\)$/, (m, x) => x.charAt(0).toUpperCase() + x.slice(1));
+  const rows = planKeys().filter(k => k !== 'now').map(k => ({ k, n: short(planName(k)), r: resOf(k), on: active === k }));
+  if (active.endsWith('*') && lastRes) rows.unshift({ k: 'live', n: short(baseName()) + ', edited', r: lastRes, on: true });
+  const ready = rows.map(x => { const w = x.r && urSwing(x.k, true); if (!w) return null; const c = x.r.total.mid - nowRes.total.mid; return Object.assign(x, { c, lo: c + w.lo, hi: c + w.hi }); }).filter(Boolean);
+  if (!ready.length) { el.innerHTML = `<div class="hd"><span class="lab">Difference from Now, and how sure we are</span>${iI(UR_TIP)}</div><span class="lab" style="text-transform:none;letter-spacing:0">Working it out…</span>`; return; }
+  const mn = Math.min(0, ...ready.map(x => x.lo)), mx = Math.max(0, ...ready.map(x => x.hi)), pad = (mx - mn) * 0.04 || 1000, A = mn - pad, Z = mx + pad, X = v => (v - A) / (Z - A) * 100;
+  const tagOf = x => x.lo < 0 && x.hi > 0 ? ['either', 'Could go either way'] : x.hi <= 0 ? ['save', 'Saves money'] : ['cost', 'Costs more'];
+  el.innerHTML = `<div class="hd"><span class="lab">Difference from Now, and how sure we are</span>${iI(UR_TIP)}</div>
+    <div class="rgl">${ready.map(x => { const [c, t] = tagOf(x); return `<div class="rgr${x.on ? ' on' : ''}"><span class="rgn">${esc(x.n)}</span>
+      <div class="rgw" title="${esc(t)}: ${sgn(k1(x.lo))} to ${sgn(k1(x.hi))}"><span class="z" style="left:${X(0)}%"></span><span class="bd ${c}" style="left:${X(x.lo)}%;width:${Math.max(0.8, X(x.hi) - X(x.lo))}%"></span><span class="md" style="left:calc(${X(x.c)}% - 1.5px)"></span></div>
+      <span class="rgv"><b class="num">${sgn(x.c)}</b><span class="num">${sgn(k1(x.lo))} to ${sgn(k1(x.hi))}</span></span></div>`; }).join('')}</div>
+    <div class="rgk"><span><i class="save"></i>Saves money</span><span><i class="either"></i>Could go either way</span><span><i class="cost"></i>Costs more</span><span class="rga">← cheaper than Now · dearer →</span></div>`;
+}
+
+/* ---------- what the money buys: facts beside the cost ---------- */
+const DEAN = ['icm3', 'icm2', 'icm1', 'anaes', 'accs', 'imt', 'fy2', 'other'];
+const nightsOf = (s, k) => perPersonYear(s, k, 'Nwd') + perPersonYear(s, k, 'Nwe');
+const postsOf = s => ['scf', 'sd', 'jcf'].reduce((a, k) => a + (s.groups[k] ? s.groups[k].posts + (s.groups[k].newPosts || 0) : 0), 0);
+const BUYS = [
+  { id: 'n', ic: 'moon', n: 'Nights a year, each full-time SCF or specialty doctor', short: 'Nights each, SCF or specialty doctor', f: s => nightsOf(s, postKey(s)), fmt: v => num(v), tip: 'Night shifts a year for one full-time SCF (or specialty doctor, if the plan has them), after leave and absence.' },
+  { id: 'w', ic: 'cal', n: 'Weekend shifts a year, each full-time SCF or specialty doctor', short: 'Weekend shifts each, SCF or specialty doctor', f: s => { const k = postKey(s); return ['Nwe', 'Lwe', 'Swe'].reduce((a, t) => a + perPersonYear(s, k, t), 0); }, fmt: v => num(v), tip: 'Weekend nights, long days and days a year for one full-time SCF or specialty doctor.' },
+  { id: 't', ic: 'school', n: 'Nights a year, each full-time ICM trainee', short: 'Nights each, ICM trainee', f: s => nightsOf(s, 'icm2'), fmt: v => num(v), tip: 'Night shifts a year for one full-time ICM trainee on their work schedule.' },
+  { id: 'p', ic: 'userplus', n: 'Posts to fill beyond Now', short: 'Posts to fill beyond Now', f: s => postsOf(s) - postsOf(NOW), fmt: v => Math.abs(v) < 0.5 ? 'None' : (v > 0 ? '+' : '−') + num(Math.abs(v)), best: null, tip: 'SCF, specialty doctor and JCF posts compared with Now. Deanery posts are set by the deanery, so they are not counted.' },
+  { id: 'tr', ic: 'school', n: 'Training posts, WTE', short: 'Training posts, WTE', f: s => DEAN.concat('scf').reduce((a, k) => a + wteK(s, k), 0), fmt: v => num(v, 1), best: 'max', tip: 'Deanery trainees and SCFs on the rota, as whole-time equivalents after gaps and part-time working.' },
+  { id: 'l', ic: 'userplus', n: 'Shifts filled by locums a year', short: 'Locum shifts a year', f: (s, r) => r.locShifts.mid, fmt: v => num(v), best: 'min', tip: 'Every shift our own rota cannot fill goes to a locum. Fewer means more shifts worked by people who know the unit.' }
+];
+function renderBuy() {
+  const el = document.getElementById('buyCard'); if (!el || !lastRes || !nowRes) return;
+  const ns = presetRes.now ? presetRes.now.s : NOW;
+  const minD = S.demand.air.Lwd + S.demand.na.Lwd + S.demand.air.Swd + S.demand.na.Swd, sp = lastRes.dayRes ? Math.max(0, lastRes.dayRes.mid - minD) : 0, spN = nowRes.dayRes ? Math.max(0, nowRes.dayRes.mid - minD) : 0;
+  const O = lastOne, who = O && O.k === 'sd' ? 'specialty doctor' : 'SCF';
+  el.innerHTML = `<div class="hd"><span class="lab">What the money buys</span>${iI('Facts beside the cost, for you to weigh. No scores: what each is worth is a judgement for us.')}</div>
+    <div class="buyt">${BUYS.filter(b => b.id !== 'l').map(b => { const v = b.f(S, lastRes), n0 = b.f(ns, nowRes), same = Math.abs(v - n0) < (b.id === 'tr' ? 0.05 : 0.5); return `<div class="bt"><span class="lab">${esc(b.short)}${iI(b.tip)}</span><b class="num">${b.fmt(v)}</b><span class="dd">${b.id === 'p' ? 'SCF, specialty doctor and JCF' : same ? 'Same as Now' : 'Now ' + b.fmt(n0)}</span></div>`; }).join('')}
+      <button class="bt btl" data-opensheet="dsheet"><span class="lab">Salford spare people on weekday days${iI('Everyone on days at Salford above the minimum of ' + minD + '. They go to teaching, training and other learning. Tap for the chart.')}</span><b class="num">${num(sp, 1)} a day</b><span class="dd">${Math.abs(sp - spN) < 0.05 ? 'Same as Now' : 'Now ' + num(spN, 1) + ' a day'} ›</span></button></div>
+    <div class="ctl" id="oneLine">${O ? `<span class="rng1">One more ${who} in post costs ${gbp(O.cost)} and saves ${gbp(O.save)} in locums</span>` : '<span class="rng1">Working out one more post…</span>'}<button class="lk" data-opensheet="psheet">Why ›</button></div>`;
+}
+
+/* ---------- compute ---------- */
+let timer = null;
+function schedule() { document.querySelector('.pair').classList.add('busy'); clearTimeout(timer); timer = setTimeout(recompute, 160); }
+function recompute() {
+  lastRes = M2.simulate(clone(S), 40, 5);
+  document.querySelector('.pair').classList.remove('busy');
+  if (active.endsWith('*')) urNeed('live', S); else delete UR[MODE + '|live'];
+  renderHeadline(); renderCost(); renderCover(); renderDays(); renderPost(); renderMap(); renderCmp(); renderBuy(); renderRanges();
+  document.getElementById('app').classList.toggle('isedit', active.endsWith('*'));
+}
+function statPresets() {
+  const todo = PRESETS.filter(p => !presetRes[p.id]);
+  if (!todo.length) { renderMap(); renderCmp(); return; }
+  const p = todo[0], s = make(p.id); presetRes[p.id] = { r: M2.simulate(clone(s), 40, 5), s };
+  if (p.id === 'now') nowRes = presetRes.now.r;
+  renderMap(); renderCmp(); setTimeout(statPresets, 20);
+}
+function statSaved() {
+  const r = saved.find(x => !savedRes[x.id]); if (!r) { renderMap(); renderCmp(); return; }
+  try { const s = Object.assign(M2.now(), JSON.parse(r.state)); s.core.practice = practice(); M2.syncAccp(s); syncT(s); savedRes[r.id] = { r: M2.simulate(clone(s), 40, 5), s }; } catch (err) { savedRes[r.id] = null; }
+  setTimeout(statSaved, 30);
+}
+
+/* ---------- save ---------- */
+function renderSavebar(msg) {
+  const el = document.getElementById('savebar');
+  if (!db || !canSave) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="gh">Save this plan${msg ? ` · ${esc(msg)}` : ''}</div><input id="saveName" placeholder="Name it" aria-label="Plan name" maxlength="60"><button class="btnp" id="saveBtn">${ico('bmark', 'sm')} Save for everyone</button>`;
+}
+document.getElementById('savebar').addEventListener('click', async e => {
+  if (!e.target.closest('#saveBtn')) return;
+  const inp = document.getElementById('saveName'), name = (inp.value || '').trim();
+  if (!name) { inp.focus(); inp.placeholder = 'Type a name first'; return; }
+  try { await db.collection('scenarios').add({ name, state: JSON.stringify(S), total: lastRes ? lastRes.total.mid : 0, air: lastRes ? ownShare(lastRes) : null, createdAt: new Date().toISOString() }); renderSavebar('Saved'); }
+  catch (err) { canSave = false; renderSavebar(); }
+});
+
+
+/* ---------- guided tour of the real page ---------- */
+(() => {
+  const go = (pg) => { path = pg === 'home' ? ['home'] : ['home', pg]; renderPanel(); };
+  const pick = id => choose({ dataset: { preset: id } });
+  const STEPS = [
+    { sel: '#app', q: 'What is this?', a: 'A model of the resident rota at Salford and Fairfield. Pick a plan, change anything, and see what it costs and how many shifts our own doctors cover.', do: () => { pick('now'); go('home'); } },
+    { sel: '.plancol', q: 'Where do I start?', a: 'Pick a plan from the list. Today’s staffing is at the top. Other ideas are below.' },
+    { sel: '.plans .pcw', q: 'What does a plan card show?', a: 'The ring fills with how much of Fairfield’s nights and weekends our own doctors cover.', k: 'FGH: Fairfield nights and weekends we cover. SRH: Salford shifts we cover. £: cost a year, or the difference from Now.' },
+    { sel: '.plans .pcost', q: 'What does the £ button do?', a: 'It opens what the plan’s cost is made of: each staff group, then the locums.' },
+    { sel: '#coverCard', q: 'How much do our own doctors cover?', a: 'Fairfield nights and weekends, and Salford, filled by our own rota. Every shift we can’t cover goes to a locum, so none are left empty. Only SCFs can work Fairfield nights and weekends, and Salford needs most of their nights first.', k: 'This matches last year in Allocate.' },
+    { sel: '#costCard', q: 'What does it cost?', a: 'Staff and locums for a year, against Now, with a likely range. How sure shows every plan against Now; the breakdown shows each staff group.' },
+    { sel: '#buyCard', q: 'What does the money buy?', a: 'Facts beside the cost: nights and weekends each, training posts, spare people on Salford days and posts to fill. What they are worth is for us to judge.' },
+    { sel: '#panel', q: 'What can I change?', a: 'Anything under Inputs. Start with Staff: posts for each group, how many are filled, and who works part-time.', do: () => go('staff') },
+    { sel: '#panel', q: 'What can I change for SCFs?', a: 'Posts, pay, work schedule, how long people stay, and how long before they can work at Fairfield.', do: () => go('core') },
+    { sel: '#panel', q: 'What rota do people work?', a: 'The trust’s 9-week template, or its part-time versions. Everyone gets 3 weekend nights every 9 weeks, so weekend nights are always the pinch.', do: () => go('lines') },
+    { sel: '#panel', q: 'How is Fairfield staffed?', a: 'Salford first. SCFs not needed at Salford go to Fairfield, up to 40% of their on-calls.', do: () => go('fgh') },
+    { sel: '#panel', q: 'What do locums cost?', a: 'NHSP bank rates, with a share going to agency. Tap any (i) to see the sum.', do: () => go('loc') },
+    { sel: '#buyCard', q: 'Why don’t more SCFs save money?', a: 'An SCF is paid for every shift. Only their nights and weekend long days fill gaps; their day shifts are spare. Tap Why for the sums.', do: () => go('home') },
+    { sel: '#wkbtn', q: 'How do I check the sums?', a: 'Show the workings sets out every step, with the numbers.' },
+    { sel: '#deepbtn', q: 'How do I compare or keep a plan?', a: 'Compare plans puts every plan side by side. To keep a plan, name it and save it.' }
+  ];
+  const el = id => document.getElementById(id), tour = el('tour'), spot = el('tspot'), card = el('tcard');
+  let i = 0;
+  function place() {
+    const st = STEPS[i]; let target = document.querySelector(st.sel); if (!target && st.alt) target = document.querySelector(st.alt);
+    if (!target) target = document.getElementById('app');
+    const mob = window.mIsMobile && window.mIsMobile();
+    if (mob && st.sel !== '#app') window.mTab(target.closest('.plancol') ? 'plans' : target.closest('.outs') ? 'outs' : 'inputs');
+    if (mob) { target.scrollIntoView({ block: 'start', behavior: 'instant' }); window.scrollBy(0, -12); } else target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    setTimeout(() => {
+      const r0 = target.getBoundingClientRect(), pad = 8, full = st.sel === '#app';
+      const r = mob ? { left: r0.left, right: r0.right, width: r0.width, top: Math.max(r0.top, 8), bottom: Math.min(r0.bottom, window.innerHeight - 80), height: Math.min(r0.bottom, window.innerHeight - 80) - Math.max(r0.top, 8) } : r0;
+      Object.assign(spot.style, full ? { left: '0px', top: '0px', width: '0px', height: '0px' } : { left: (r.left - pad) + 'px', top: (r.top - pad) + 'px', width: (r.width + pad * 2) + 'px', height: (r.height + pad * 2) + 'px' });
+      spot.classList.toggle('full', full);
+      const cw = Math.min(380, window.innerWidth - 32), ch = card.offsetHeight || 220; let x, y;
+      if (full) { x = (window.innerWidth - cw) / 2; y = Math.max(16, (window.innerHeight - ch) / 2); }
+      else if (mob) { x = 16; y = r.top > ch + 40 ? 16 : window.innerHeight - ch - 84; }
+      else if (r.right + cw + 24 < window.innerWidth) { x = r.right + 16; y = Math.min(Math.max(16, r.top), window.innerHeight - ch - 16); }
+      else if (r.left - cw - 24 > 0) { x = r.left - cw - 16; y = Math.min(Math.max(16, r.top), window.innerHeight - ch - 16); }
+      else { x = Math.max(16, Math.min(r.left, window.innerWidth - cw - 16)); y = r.bottom + ch + 24 < window.innerHeight ? r.bottom + 12 : Math.max(16, r.top - ch - 12); }
+      Object.assign(card.style, { left: x + 'px', top: y + 'px', width: cw + 'px' });
+    }, 260);
+  }
+  function show(n) {
+    i = Math.max(0, Math.min(STEPS.length - 1, n)); const st = STEPS[i];
+    if (st.do) st.do();
+    el('tq').textContent = st.q; el('ta').textContent = st.a; el('tk').textContent = st.k || ''; el('tk').hidden = !st.k;
+    el('tcount').textContent = (i + 1) + ' of ' + STEPS.length; el('tback').disabled = i === 0; el('tnext').textContent = i === STEPS.length - 1 ? 'Finish' : 'Next';
+    card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
+    setTimeout(place, st.do ? 350 : 0); bar();
+  }
+  function bar() { el('tprog').style.width = ((i + 1) / STEPS.length * 100) + '%'; }
+  function start() { tour.hidden = false; show(0); }
+  function end() { tour.hidden = true; pick('now'); go('home'); }
+  el('tourbtn').onclick = start; el('tclose').onclick = end;
+  el('tnext').onclick = () => { if (i === STEPS.length - 1) end(); else show(i + 1); };
+  el('tback').onclick = () => show(i - 1);
+  document.addEventListener('keydown', e => { if (tour.hidden) return; if (e.key === 'Escape') end(); if (e.key === 'ArrowRight') el('tnext').click(); if (e.key === 'ArrowLeft') el('tback').click(); });
+  window.addEventListener('resize', () => { if (!tour.hidden) place(); });
+  if (location.hash === '#tour') setTimeout(start, 1500);
+})();
+/* ---------- start ---------- */
+registerAll();
+renderMode(); nowRes = M2.simulate(clone(NOW), 40, 5); presetRes.now = { r: nowRes, s: make('now') };
+renderPanel(); recompute(); setTimeout(statPresets, 30);
+(async () => {
+  try {
+    if (!window.claude || !window.claude.use) return;
+    db = await window.claude.use('db'); if (!db) return;
+    const user = await window.claude.use('user');
+    const can = user && user.can ? await user.can('data.write') : null;
+    canSave = can !== false;
+    renderSavebar();
+    db.doc('meta/plans').onSnapshot(snap => { if (snap.exists) { const d = snap.data() || {}; if (Array.isArray(d.order)) { planMeta = { order: d.order, names: d.names || {} }; store.set('rm.planMeta', JSON.stringify(planMeta)); if (!planEdit) { renderMap(); renderCmp(); } } } }, () => {});
+    db.collection('scenarios').orderBy('createdAt', 'desc').limit(30).onSnapshot(snap => {
+      saved = snap.docs.map(d => Object.assign({ id: d.id }, d.data())); statSaved();
+    }, () => {});
+  } catch (err) { /* the page works without saving */ }
+})();
+})();
+</script>
+<style>
+/* phone layout: one column at a time, switched by a tab bar */
+.mtabs { display: none; }
+@media (max-width: 760px) {
+  body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+  .app[data-tab="plans"] .side:not(.plancol), .app[data-tab="plans"] .outs > :not(.sheet) { display: none; }
+  .app[data-tab="inputs"] .plancol, .app[data-tab="inputs"] .outs > :not(.sheet) { display: none; }
+  .app[data-tab="outs"] .side { display: none; }
+  .app[data-tab="plans"] .outs, .app[data-tab="inputs"] .outs { padding: 0; min-height: 0; }
+  .side { min-height: calc(100vh - 68px); }
+  .mtabs { display: grid; grid-template-columns: repeat(3, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 15;
+    background: rgba(255,255,255,.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid #e3e3e8;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); gap: 6px; }
+  .mtabs button { font: inherit; border: 0; background: transparent; color: #6e6e73; display: grid; justify-items: center; gap: 2px; padding: 6px 4px; border-radius: 12px; font-size: 11px; font-weight: 600; letter-spacing: .02em; }
+  .mtabs button b { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #ececef; color: #3a3a3c; font-size: 12px; }
+  .mtabs button span { font-size: 12px; }
+  .mtabs button.on { color: #1d1d1f; background: #f0f0f3; }
+  .mtabs button.on b { background: #1d1d1f; color: #fff; }
+  .mtabs .mt-sub { font-size: 10px; font-weight: 500; color: #8a8a8f; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sheetin { padding: 16px; width: 100%; }
+  .sheet { z-index: 30; }
+  .sheetin table { display: block; max-width: 100%; overflow-x: auto; }
+  .tour .tcard { max-height: 46vh; overflow: auto; }
+  .kl2 { grid-template-columns: 10px minmax(0,1fr) auto; row-gap: 2px; }
+  .kl2 .dd { grid-column: 2 / -1; margin-bottom: 6px; }
+}
+</style>
+<nav class="mtabs" id="mtabs" aria-label="Sections">
+  <button data-mt="plans"><b>1</b><span>Plans</span><i class="mt-sub" id="mtPlan"></i></button>
+  <button data-mt="inputs"><b>2</b><span>Inputs</span><i class="mt-sub">Change anything</i></button>
+  <button data-mt="outs"><b>3</b><span>Results</span><i class="mt-sub" id="mtRes"></i></button>
+</nav>
+<script>
+(() => {
+  const app = document.getElementById('app'), bar = document.getElementById('mtabs');
+  const mq = window.matchMedia('(max-width: 760px)');
+  window.mIsMobile = () => mq.matches;
+  window.mTab = (t, top) => {
+    app.dataset.tab = t;
+    bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mt === t));
+    if (top !== false && mq.matches) window.scrollTo(0, 0);
+  };
+  bar.addEventListener('click', e => { const b = e.target.closest('[data-mt]'); if (b) window.mTab(b.dataset.mt); });
+  window.mTab('plans', false);
+  // picking a plan on a phone takes you straight to its results
+  document.getElementById('map').addEventListener('click', e => {
+    if (!mq.matches) return;
+    const t = e.target.closest('button'); if (!t || e.target.closest('[data-costof]')) return;
+    if (document.querySelector('#map input[data-rename]')) return;
+    if (t.dataset.preset || t.dataset.saved) setTimeout(() => window.mTab('outs'), 60);
+  });
+  // keep the tab labels in step with the page
+  const sync = () => {
+    const n = document.getElementById('outName'); document.getElementById('mtPlan').textContent = n ? n.textContent : '';
+    const hl = document.getElementById('hl'); const v = hl && hl.querySelector('.big, .v, b');
+    const cost = hl ? (hl.textContent.match(/£[\d,]+/) || [''])[0] : '';
+    document.getElementById('mtRes').textContent = cost;
+  };
+  new MutationObserver(sync).observe(document.getElementById('hl'), { childList: true, subtree: true, characterData: true });
+  new MutationObserver(sync).observe(document.getElementById('outName'), { childList: true, subtree: true, characterData: true });
+  sync();
+})();
+</script>
+
