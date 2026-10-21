@@ -96,7 +96,7 @@ function now() {
       fy2: g({ label: 'FY2', posts: 4, spa: 0, basic: PAY.nd2, changeover: [7, 11, 3] }),
       other: g({ label: 'ED, neuro, renal, RCF', posts: 2, spa: 0, basic: PAY.nd4a, study: 7 })
     },
-    core: { extPlacement: 1, fghCap: 0.4, fghTeamSal: 0.4, fghTrain: 0.5, weekendFghOthers: false, funding: 'salford', fghPosts: 0, pooledFgh: 0.5, fghAnaes: 0, fghAnaesN: 0, fghLine: '', leaveSeason: true, absSeason: true },
+    core: { lumpy: 0.175, extPlacement: 1, fghCap: 0.4, fghTeamSal: 0.4, fghTrain: 0.5, weekendFghOthers: false, funding: 'salford', fghPosts: 0, pooledFgh: 0.5, fghAnaes: 0, fghAnaesN: 0, fghLine: '', leaveSeason: true, absSeason: true },
     absence: { sick: 0.03, other: 0.02 },
     demand: {
       fgh: { L: 1, N: 1 }, fghT: { L: 1, N: 1 },
