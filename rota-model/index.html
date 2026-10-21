@@ -1915,7 +1915,7 @@ const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { ret
 const STABLE = s => { s.core.stable = true; Object.values(s.groups).forEach(g => { if (g.fill != null) g.fill = 1; g.recruit = 0; g.induct = 0; if (g.supernum != null) { g.supernum = 0; g.signoff = 0; } }); s.accp.recruit = 0; s.absence.sick = 0; s.absence.other = 0; s.core.extPlacement = 0; };
 const PRESETS = [
   { id: 'now', tg: ['10 SCFs'], n: 'Now (average over a year)', d: 'Today’s staff, averaged over a year', ic: 'clock', fn: s => s },
-  { id: 'stable', tg: ['15 specialty doctors', 'no sickness or turnover', 'any share at Fairfield'], n: 'Theoretical minimum', d: 'No sickness, gaps or turnover, and doctors can work any share of their shifts at either site: the least that could work in theory', ic: 'min', fn: (s, pr) => { STABLE(s); s.core.fghCap = 1; s.groups.scf.posts = 0; s.groups.sd.posts = 15; s.groups.sd.line = 'sd10'; } },
+  { id: 'stable', tg: ['no sickness or turnover', 'any share at Fairfield'], n: '15 specialty doctors, no locums', d: 'No sickness, gaps or turnover, and doctors can work any share of their shifts at either site: the least that could work in theory', ic: 'min', fn: (s, pr) => { STABLE(s); s.core.fghCap = 1; s.groups.scf.posts = 0; s.groups.sd.posts = 15; s.groups.sd.line = 'sd10'; } },
   { id: 'month', tg: ['11 SCFs', 'October roster'], n: 'Now (October 2026)', d: 'Who is on the Allocate roster this month', ic: 'cal', fn: s => {   // who is on the Allocate roster this month, by group
     const G = s.groups, fix = (k, o) => Object.assign(G[k], o);
     fix('scf', { posts: 11, recruit: 0, lt: 0 });
@@ -2439,7 +2439,7 @@ function renderMap() {
   } else {
     const card = key => { const on = base === key, editing = on && ed, r = resOf(key), attr = key.startsWith('saved:') ? `data-saved="${esc(key.slice(6))}"` : `data-preset="${key}"`;
       return `<div class="pcw"><button class="r6 ${on ? 'on' : ''} ${editing ? 'edit' : ''}" ${attr} aria-pressed="${on}"><span class="ib ring">${ringOf(editing && lastRes ? lastRes : r)}</span><span class="l" style="font-weight:${on ? 700 : 500}">${esc(planName(key))}${editing ? ' <span class="editing"><i></i>Changing</span>' : ''}${tagsOf(key)}</span><span class="v">${nums(editing && lastRes ? lastRes : r, key)}</span></button><button class="pcost" data-costof="${esc(key)}" aria-label="What makes up the cost of ${esc(planName(key))}" title="Cost breakdown">${ico('pound', 'sm')}</button></div>${editing ? chgBlock(r) : ''}`; };
-    const TODAY = ['now', 'month', 'fulldean', 'allsd', 'nights2'], keys = planKeys();
+    const TODAY = ['now', 'month', 'fulldean'], keys = planKeys();
     const kids = keys.filter(k => TODAY.includes(k) && k !== 'now'), opts = keys.filter(k => !TODAY.includes(k));
     h = `<div class="pgh">Today</div>${card('now')}<div class="kids">${kids.map(k => card(k).replace(esc(planName(k)), esc(planName(k).replace(/^Now \((.*)\)$/, (m, x) => x.charAt(0).toUpperCase() + x.slice(1))))).join('')}</div><div class="pgh">Options</div>${opts.map(card).join('')}`;
   }
