@@ -126,3 +126,10 @@ The Fairfield resident rota spreadsheets, April 2025 to 20 October 2026, were fe
 - Every shift was filled: none were left empty.
 - Sep 2025 to Aug 2026: NHSP or agency covered 85% of Fairfield nights; job-planned staff 15%.
 - Agency took 21% of locum shifts over that year, falling to 9% from July 2026. The model now uses 14% (was 12%). The likely range uses 9% to 21%.
+
+## Bank on-costs (21 October 2026)
+
+NHSP bank shifts now cost the NHSP hourly rate plus:
+- holiday pay 12.07% (a switch says if it is already in NHSP's rate; off by default)
+- employer NI 15%, apprenticeship levy 0.5% and an NHSP fee of about 1%: 16.5% on top of pay and holiday pay
+That is 30.6% on top in all. The likely range runs from no NHSP fee to bank work being pensionable (14.38% more). Agency rates are taken as all-in.

@@ -106,7 +106,7 @@ function now() {
     },
     cost: {
       scfPay: 80000, sdPay: 73383, ni: 0.15, niThreshold: 5000, pension: 0.1438,
-      rate: { Nwd: 80, Nwe: 80, Lwd: 80, Lwe: 80, Swd: 80, Swe: 80 }, lr: { wdSoc: 55, wdAnti: 70, weSoc: 70, weAnti: 70 }, lrA: { wdSoc: 85, wdAnti: 105, weSoc: 105, weAnti: 105 }, agencyShare: 0.14, bankOn: 0,
+      rate: { Nwd: 80, Nwe: 80, Lwd: 80, Lwe: 80, Swd: 80, Swe: 80 }, lr: { wdSoc: 55, wdAnti: 70, weSoc: 70, weAnti: 70 }, lrA: { wdSoc: 85, wdAnti: 105, weSoc: 105, weAnti: 105 }, agencyShare: 0.14, bankOn: 0.165, bankHolInc: false,
       recruit: 0, anaesNight: 0
     },
     lines: { custom: M.LINES.scf_current.grid.slice(), trainee: M.LINES.scf_current.grid.slice(), accp: M.LINES.scf_current.grid.slice() }
@@ -343,7 +343,7 @@ function locumRate(s, t) {
   const c = s.cost, sp = LOC_SPLIT[t], h = sp.reduce((a, x) => a + x[1], 0);
   const at = (lr, def) => sp.reduce((a, [k, n]) => a + (lr && lr[k] != null ? lr[k] : def) * n, 0) / h;
   if (!c.lr) { const r = c.rate; return r && typeof r === 'object' && r[t] != null ? r[t] : 80; }
-  const bank = at(c.lr, 80) * (1 + (c.bankOn || 0)), ag = c.lrA ? at(c.lrA, 100) : bank, sh = c.agencyShare || 0;
+  const bank = at(c.lr, 80) * (c.bankHolInc ? 1 : 1.1207) * (1 + (c.bankOn || 0)), ag = c.lrA ? at(c.lrA, 100) : bank, sh = c.agencyShare || 0;
   return bank * (1 - sh) + ag * sh;
 }
 // cover by site and shift type

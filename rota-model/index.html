@@ -1501,7 +1501,7 @@ function now() {
     },
     cost: {
       scfPay: 80000, sdPay: 73383, ni: 0.15, niThreshold: 5000, pension: 0.1438,
-      rate: { Nwd: 80, Nwe: 80, Lwd: 80, Lwe: 80, Swd: 80, Swe: 80 }, lr: { wdSoc: 55, wdAnti: 70, weSoc: 70, weAnti: 70 }, lrA: { wdSoc: 85, wdAnti: 105, weSoc: 105, weAnti: 105 }, agencyShare: 0.14, bankOn: 0,
+      rate: { Nwd: 80, Nwe: 80, Lwd: 80, Lwe: 80, Swd: 80, Swe: 80 }, lr: { wdSoc: 55, wdAnti: 70, weSoc: 70, weAnti: 70 }, lrA: { wdSoc: 85, wdAnti: 105, weSoc: 105, weAnti: 105 }, agencyShare: 0.14, bankOn: 0.165, bankHolInc: false,
       recruit: 0, anaesNight: 0
     },
     lines: { custom: M.LINES.scf_current.grid.slice(), trainee: M.LINES.scf_current.grid.slice(), accp: M.LINES.scf_current.grid.slice() }
@@ -1738,7 +1738,7 @@ function locumRate(s, t) {
   const c = s.cost, sp = LOC_SPLIT[t], h = sp.reduce((a, x) => a + x[1], 0);
   const at = (lr, def) => sp.reduce((a, [k, n]) => a + (lr && lr[k] != null ? lr[k] : def) * n, 0) / h;
   if (!c.lr) { const r = c.rate; return r && typeof r === 'object' && r[t] != null ? r[t] : 80; }
-  const bank = at(c.lr, 80) * (1 + (c.bankOn || 0)), ag = c.lrA ? at(c.lrA, 100) : bank, sh = c.agencyShare || 0;
+  const bank = at(c.lr, 80) * (c.bankHolInc ? 1 : 1.1207) * (1 + (c.bankOn || 0)), ag = c.lrA ? at(c.lrA, 100) : bank, sh = c.agencyShare || 0;
   return bank * (1 - sh) + ag * sh;
 }
 // cover by site and shift type
@@ -2187,7 +2187,7 @@ function pLoc() {
   const SH = [['Nwd', 'Weekday night', 'moon'], ['Nwe', 'Weekend night', 'moon'], ['Lwd', 'Weekday long day', 'sun2'], ['Lwe', 'Weekend long day', 'sun2']];
   const row = ([t, n, ic]) => { const q = shiftCost(S, t); return `<div class="row2"><span class="ri">${ico(ic, 'sm')}</span><span class="rl">${n}${iI(`Bank: ${q.howB} = ${gbp(q.bank)}. Agency: ${q.howA} = ${gbp(q.ag)}. ${num(q.sh * 100)}% go to agency, so on average ${gbp(q.bank)} × ${num((1 - q.sh) * 100)}% + ${gbp(q.ag)} × ${num(q.sh * 100)}% = ${gbp(q.avg)}.`)}</span><b class="num">${gbp(q.avg)}</b></div>`; };
   return head('Locum rates') + `<div class="body6">
-    ${blk('pound', 'Bank (NHSP), an hour', R.map(([k, n, i, w]) => slideC('cost.lr.' + k, n, i, { page: 'loc', min: 30, max: 200, step: 1, fmt: fmtGbp, fmtKey: 'gbp', info: w + '. NHSP Greater Manchester rate for ST3 to ST5, from 1 May 2025.' })).join('') + slideC('cost.bankOn', 'Fee and on-costs on top', 'bank', { page: 'loc', max: 0.4, step: 0.01, info: 'Anything the trust pays on top of the NHSP hourly rate. Thought to be none; check.' }), 'NHSP Greater Manchester rates for ST3 to ST5, from 1 May 2025. Social hours are 07:00 to 19:00; everything else is unsocial. Weekend runs from Friday night to Sunday night.')}
+    ${blk('pound', 'Bank (NHSP), an hour', R.map(([k, n, i, w]) => slideC('cost.lr.' + k, n, i, { page: 'loc', min: 30, max: 200, step: 1, fmt: fmtGbp, fmtKey: 'gbp', info: w + '. NHSP Greater Manchester rate for ST3 to ST5, from 1 May 2025.' })).join('') + '<div class="chips">' + togC('cost.bankHolInc', 'Holiday pay already in the NHSP rate', 'cal', '', 'loc') + '</div>' + slideC('cost.bankOn', 'Employer NI, levy and NHSP fee', 'bank', { page: 'loc', max: 0.5, step: 0.005, info: 'On top of the hourly rate and holiday pay: employer NI 15%, apprenticeship levy 0.5% and an NHSP fee of about 1% (to confirm). Add 14.38% if bank work is pensionable. Holiday pay is 12.07% on top, unless the switch above says it is already in the rate.' }), 'NHSP Greater Manchester rates for ST3 to ST5, from 1 May 2025. Social hours are 07:00 to 19:00; everything else is unsocial. Weekend runs from Friday night to Sunday night.')}
     ${blk('userplus', 'Agency, an hour', R.map(([k, n, i, w]) => slideC('cost.lrA.' + k, n, i, { page: 'loc', min: 40, max: 250, step: 1, fmt: fmtGbp, fmtKey: 'gbp', info: w + '. A best guess, about 1.5 times the bank rate, including the agency fee.' })).join('') + slideC('cost.agencyShare', 'Share of locum shifts by agency', 'userplus', { page: 'loc', max: 1, step: 0.01, info: 'From the Fairfield resident rota, Apr 2025 to Oct 2026: every shift was filled, and NHSP or agency covered 85% of Fairfield nights. Agency took 21% of locum shifts over Sep 2025 to Aug 2026, but only 9% since July 2026 as its use has come down. 14% is set between the two.' }), 'A best guess, about 1.5 times the bank rate, including the agency fee. Check against invoices.')}
     ${blk('moon', 'What a shift costs', SH.map(row).join(''), 'A night, 20:00 to 08:30, is 11 unsocial hours and 1.5 social; a long day, 08:00 to 20:30, the other way round. Tap the (i) on each for the sum.')}
     ${lastRes ? finQ(lastRes.locum.mid) : ''}
@@ -2533,15 +2533,14 @@ function oneMore(s) {
 const LSPLIT = { Nwd: [['wdAnti', 11], ['wdSoc', 1.5]], Nwe: [['weAnti', 11], ['weSoc', 1.5]], Lwd: [['wdSoc', 11], ['wdAnti', 1.5]], Lwe: [['weSoc', 11], ['weAnti', 1.5]], Swd: [['wdSoc', 8]], Swe: [['weSoc', 8]] };
 // an open question for finance, shown wherever locum costs appear while nothing is added to the NHSP rate
 function finQ(locum, s) {
-  s = s || S; if (s.cost.bankOn) return '';
-  const q = shiftCost(s, 'Nwd'), x = q.avg ? 0.3 * locum * q.bank * (1 - q.sh) / q.avg : 0;
-  return `<div class="finq"><b>Question for finance</b> Bank shifts are costed at the NHSP hourly rate, with nothing added for holiday pay, employer on-costs or the NHSP fee. Is that what the trust pays? If it pays 30% more than the rate, locums cost about ${gbp(Math.round(x / 1000) * 1000)} more a year.</div>`;
+  s = s || S; const c = s.cost, add = ((c.bankHolInc ? 1 : 1.1207) * (1 + (c.bankOn || 0)) - 1) * 100;
+  return `<div class="finq"><b>Question for finance</b> Bank shifts are costed at the NHSP rate plus ${c.bankHolInc ? '' : '12.07% holiday pay and '}${num((c.bankOn || 0) * 100, 1).replace(/\.0$/, '')}% for employer NI, levy and the NHSP fee: ${num(add, 1).replace(/\.0$/, '')}% on top in all. Please confirm whether holiday pay is already in NHSP's rate, what NHSP charges, and whether bank work is pensionable (14.38% more).</div>`;
 }
 function shiftCost(s, t) {
   const c = s.cost, sp = LSPLIT[t], sum = lr => sp.reduce((a, [k, h]) => a + (lr[k] || 0) * h, 0);
-  const bank = sum(c.lr) * (1 + (c.bankOn || 0)), ag = c.lrA ? sum(c.lrA) : bank, sh = c.agencyShare || 0;
+  const hol = c.bankHolInc ? 1 : 1.1207, bank = sum(c.lr) * hol * (1 + (c.bankOn || 0)), ag = c.lrA ? sum(c.lrA) : bank, sh = c.agencyShare || 0;
   const how = lr => sp.map(([k, h]) => `${num(h, h % 1 ? 1 : 0)} h × ${gbp(lr[k])}`).join(' + ');
-  return { bank, ag, avg: bank * (1 - sh) + ag * sh, sh, howB: how(c.lr) + (c.bankOn ? ` + ${num(c.bankOn * 100)}%` : ''), howA: c.lrA ? how(c.lrA) : '' };
+  return { bank, ag, avg: bank * (1 - sh) + ag * sh, sh, howB: how(c.lr) + (c.bankHolInc ? '' : ' + 12.07% holiday pay') + (c.bankOn ? ` + ${num(c.bankOn * 100, 1).replace(/\.0$/, '')}% on-costs` : ''), howA: c.lrA ? how(c.lrA) : '' };
 }
 // groups in a fixed order, ACCPs as one group, with the section each belongs to
 const GSECT = [['SCFs and specialty doctors', ['scf', 'sd']], ['Deanery, airway', ['icm3', 'icm2', 'icm1', 'anaes']], ['ACCPs', ['accp']], ['Other residents', ['jcf', 'accs', 'imt', 'fy2', 'other']], ['Fairfield', ['anaesX']]];
@@ -2734,7 +2733,7 @@ const UNC = [
   { n: 'Agency share 9% to 21% of locum shifts', lo: x => { x.cost.agencyShare = (x.cost.agencyShare || 0) * 9 / 14; }, hi: x => { x.cost.agencyShare = Math.min(1, (x.cost.agencyShare || 0) * 21 / 14); } },
   { n: 'Lumpiness 10% to 25%', lo: x => { if (lumpOf(x)) x.core.lumpy = Math.max(0.001, lumpOf(x) - 0.075); }, hi: x => { if (lumpOf(x)) x.core.lumpy = lumpOf(x) + 0.075; } },
   { n: 'Sickness 2% to 5%', lo: x => { x.absence.sick *= 2 / 3; }, hi: x => { x.absence.sick *= 5 / 3; } },
-  { n: 'Bank on-costs 0% to 10% on top', hi: x => { x.cost.bankOn = (x.cost.bankOn || 0) + 0.1; } },
+  { n: 'Bank on-costs from no NHSP fee to bank work being pensionable', lo: x => { x.cost.bankOn = Math.max(0, (x.cost.bankOn || 0) - 0.01); }, hi: x => { x.cost.bankOn = (x.cost.bankOn || 0) + 0.1438; } },
   { n: 'Weekday nights moved to days 10% to 20%', lo: x => n2dBy(x, -0.045), hi: x => n2dBy(x, 0.055) }
 ];
 const UR_TIP = 'How sure we are. Each plan is worked out again with the inputs we are least sure of set low and then high: ' + UNC.map(u => u.n.charAt(0).toLowerCase() + u.n.slice(1)).join('; ') + '. The swings are added up on the basis that they will not all go the same way at once (square root of the sum of squares). Both ends are paired with Now worked out the same way.';
