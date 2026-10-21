@@ -367,13 +367,16 @@ details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer;
 .sheetin.narrow { width: min(680px, 100%); }
 .cvh > .dl, .cth > .dl { justify-self: start; width: auto; }
 .ctl2 { display: flex; gap: 6px 18px; flex-wrap: wrap; }
+.row2.tot { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 2px; }
+.cvh .bys { font-size: 13px; font-weight: 500; letter-spacing: 0; color: var(--text-2); margin-left: 6px; }
+.cva { font-size: 12.5px; color: var(--text-2); display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; } .cva b { color: var(--text); font-size: 13px; }
 </style>
 <!--DEFS-->
 <div class="app" id="app">
   <aside class="side plancol" aria-label="Plans"><div class="sidein"><div class="colhead"><span class="lab stepl"><i class="stepn">1</i>Plans</span><button class="tourbtn" id="tourbtn" aria-label="Start the guided tour">Guide</button></div><div id="modebar" hidden></div><div id="map"></div><div class="save" id="savebar"></div></div></aside>
   <aside class="side" aria-label="Inputs"><div class="sidein"><div class="colhead" id="inHead"><span class="lab stepl"><i class="stepn">2</i>Inputs</span></div><div id="panel"></div></div></aside>
   <main class="outs">
-    <div class="banner" role="note"><b>A planning model, not a budget or a forecast.</b> Estimates for a typical year from stated assumptions, several still to be checked. Updated 21 October 2026. <a href="https://github.com/alistaircranfield/pod-allocations/blob/main/rota-model/source/ASSUMPTIONS.md" target="_blank" rel="noopener">Assumptions</a></div>
+    <div class="banner" role="note"><b>A planning model, not a budget.</b> A typical year from stated assumptions. <a href="https://github.com/alistaircranfield/pod-allocations/blob/main/rota-model/source/ASSUMPTIONS.md" target="_blank" rel="noopener">Assumptions</a></div>
     <div class="apphead">
       <div class="ttl"><span class="lab stepl"><i class="stepn">3</i>Outputs</span><h1 id="outName">Now</h1></div>
     </div>
@@ -684,12 +687,26 @@ function pFgh() {
     ${blk('syringe', 'FGH anaesthetist', stepC('core.fghAnaesN', 'Weekday ICU nights a week they cover', 'moon', { page: 'fgh', max: 4 , info: 'The Fairfield anaesthetist covering ICU weekday nights, at no cost to us. Up to 4 a week (Monday to Thursday).' }), 'Monday to Thursday nights the FGH anaesthetist covers ICU, at no cost to us. We need fewer of our own or locums.')}
   </div>`;
 }
+// what the trust pays on top of the NHSP hourly rate, each part as a share of the rate so they add up to the total
+function bankAddBlk() {
+  const c = S.cost, h = c.bankHol === 0 ? 0 : 0.1207, on = 1 + h, ni = (c.ni != null ? c.ni : 0.15), fee = c.bankFee != null ? c.bankFee : 0.01, pen = c.bankPen ? (c.pension || 0) : 0;
+  const tot = M2.bankAdd(c), r = (c.lr && c.lr.weAnti) || 70, pc = x => (Math.round(x * 10000) / 100).toFixed(2).replace(/0$/, '').replace(/\.0$/, '') + '%';
+  const line = (l, v, tip, ctl) => `<div class="row2"><span class="ri"></span><span class="rl">${l}${tip ? iI(tip) : ''}</span><b class="num">${pc(v)}</b></div>${ctl || ''}`;
+  return blk('bank', 'On top of the NHSP rate',
+    line('Holiday pay', h, 'Bank workers are owed 12.07% holiday pay. Some trusts include it in the published hourly rate; NHSP to confirm.', choiceC('cost.bankHol', 'Holiday pay', [[1, 'Paid on top'], [0, 'Already in the rate']], 'loc')) +
+    line('Employer NI, 15% of pay and holiday pay', on * ni, 'Employer National Insurance, charged on the hourly pay and the holiday pay.') +
+    line('Apprenticeship levy, 0.5%', on * 0.005, 'Charged on the hourly pay and the holiday pay.') +
+    slideC('cost.bankFee', 'NHSP fee', 'bank', { page: 'loc', max: 0.1, step: 0.005, fmt: pc1, fmtKey: 'pc1', info: 'What NHSP charges the trust on top, as a share of the hourly rate. About 1%, to confirm.' }) +
+    line('Employer pension, if pensionable', on * pen, 'Only if bank work is pensionable: 14.38% of pay and holiday pay.', choiceC('cost.bankPen', 'Bank pension', [[0, 'Not pensionable'], [1, 'Pensionable']], 'loc')) +
+    `<div class="row2 tot"><span class="ri"></span><span class="rl"><b>In all, on top</b></span><b class="num">${pc(tot)}</b></div><div class="row2"><span class="ri"></span><span class="rl" style="color:var(--text-2)">So a £${r} hour costs the trust ${gbp(r * (1 + tot))}</span><span></span></div>`);
+}
 function pLoc() {
   const R = [['wdSoc', 'Weekday, social hours', 'sun2', 'Monday to Friday, 07:00 to 19:00'], ['wdAnti', 'Weekday, unsocial hours', 'moon', 'Monday to Thursday nights, 19:00 to 07:00'], ['weSoc', 'Weekend, social hours', 'sun2', 'Saturday and Sunday, 07:00 to 19:00'], ['weAnti', 'Weekend, unsocial hours', 'moon', 'Friday to Sunday nights, 19:00 to 07:00']];
   const SH = [['Nwd', 'Weekday night', 'moon'], ['Nwe', 'Weekend night', 'moon'], ['Lwd', 'Weekday long day', 'sun2'], ['Lwe', 'Weekend long day', 'sun2']];
   const row = ([t, n, ic]) => { const q = shiftCost(S, t); return `<div class="row2"><span class="ri">${ico(ic, 'sm')}</span><span class="rl">${n}${iI(`Bank: ${q.howB} = ${gbp(q.bank)}. Agency: ${q.howA} = ${gbp(q.ag)}. ${num(q.sh * 100)}% go to agency, so on average ${gbp(q.bank)} × ${num((1 - q.sh) * 100)}% + ${gbp(q.ag)} × ${num(q.sh * 100)}% = ${gbp(q.avg)}.`)}</span><b class="num">${gbp(q.avg)}</b></div>`; };
   return head('Locum rates') + `<div class="body6">
-    ${blk('pound', 'Bank (NHSP), an hour', R.map(([k, n, i, w]) => slideC('cost.lr.' + k, n, i, { page: 'loc', min: 30, max: 200, step: 1, fmt: fmtGbp, fmtKey: 'gbp', info: w + '. NHSP Greater Manchester rate for ST3 to ST5, from 1 May 2025.' })).join('') + '<div class="chips">' + togC('cost.bankHolInc', 'Holiday pay already in the NHSP rate', 'cal', '', 'loc') + '</div>' + slideC('cost.bankOn', 'Employer NI, levy and NHSP fee', 'bank', { page: 'loc', max: 0.5, step: 0.005, info: 'On top of the hourly rate and holiday pay: employer NI 15%, apprenticeship levy 0.5% and an NHSP fee of about 1% (to confirm). Add 14.38% if bank work is pensionable. Holiday pay is 12.07% on top, unless the switch above says it is already in the rate.' }), 'NHSP Greater Manchester rates for ST3 to ST5, from 1 May 2025. Social hours are 07:00 to 19:00; everything else is unsocial. Weekend runs from Friday night to Sunday night.')}
+    ${blk('pound', 'Bank (NHSP), an hour', R.map(([k, n, i, w]) => slideC('cost.lr.' + k, n, i, { page: 'loc', min: 30, max: 200, step: 1, fmt: fmtGbp, fmtKey: 'gbp', info: w + '. NHSP Greater Manchester rate for ST3 to ST5, from 1 May 2025.' })).join('') + '', 'NHSP Greater Manchester rates for ST3 to ST5, from 1 May 2025. Social hours are 07:00 to 19:00; everything else is unsocial. Weekend runs from Friday night to Sunday night.')}
+    ${bankAddBlk()}
     ${blk('userplus', 'Agency, an hour', R.map(([k, n, i, w]) => slideC('cost.lrA.' + k, n, i, { page: 'loc', min: 40, max: 250, step: 1, fmt: fmtGbp, fmtKey: 'gbp', info: w + '. A best guess, about 1.5 times the bank rate, including the agency fee.' })).join('') + slideC('cost.agencyShare', 'Share of locum shifts by agency', 'userplus', { page: 'loc', max: 1, step: 0.01, info: 'From the Fairfield resident rota, Apr 2025 to Oct 2026: every shift was filled, and NHSP or agency covered 85% of Fairfield nights. Agency took 21% of locum shifts over Sep 2025 to Aug 2026, but only 9% since July 2026 as its use has come down. 14% is set between the two.' }), 'A best guess, about 1.5 times the bank rate, including the agency fee. Check against invoices.')}
     ${blk('moon', 'What a shift costs', SH.map(row).join(''), 'A night, 20:00 to 08:30, is 11 unsocial hours and 1.5 social; a long day, 08:00 to 20:30, the other way round. Tap the (i) on each for the sum.')}
     ${lastRes ? finQ(lastRes.locum.mid) : ''}
@@ -716,7 +733,7 @@ const ltView = {};
 /* ---------- one work schedule for everyone (parity), with an optional one for SCFs and specialty doctors ---------- */
 const EVERY = ['icm3', 'icm2', 'icm1', 'anaes', 'jcf', 'accs', 'imt', 'fy2', 'other'];
 const EVERY_OPTS = ['scf_current', 'scf_2n'], CORE_OPTS = ['fgh6', 'sd10', 'sd13'];
-const SHORTL = { scf_current: '9-week template', scf_2n: '9-week template, extra nights', custom: 'your own template', fgh6: '6-week Fairfield line', sd10: '10 PA version', sd13: '13 PA version', accp10: 'ACCP 10-week line' };
+const SHORTL = { scf_current: '9-week template', scf_2n: '9-week template, extra nights', custom: 'edited template', fgh6: '6-week Fairfield line', sd10: '10 PA version', sd13: '13 PA version', accp10: 'ACCP 10-week line' };
 const lineLabel = k => SHORTL[k] || lineName(k);
 const fmtX = (p, v) => p.endsWith('.line') && typeof v === 'string' ? lineLabel(v) : fmtV(v);
 const everyLine = () => S.groups.icm2.line;
@@ -731,7 +748,7 @@ const schedNote = k => { const l = S.groups[k].line, core = k === 'scf' || k ===
 function pLines() {
   reg('groups.icm2.line', 'Work schedule, everyone', 'lines'); REG['groups.icm2.line'].whole = true;
   reg('groups.scf.line', 'SCF and specialty doctor work schedule', 'lines'); REG['groups.scf.line'].whole = true;
-  reg('lines.custom', 'Your own template', 'lines');
+  reg('lines.custom', 'Edited template', 'lines');
   const ev = everyLine(), own = coreOwn(), ck = S.groups[coreKey()].line;
   const opt = (k, on, attr) => { const c = M.checkLine(M.gridFor(S, k)); return `<button class="lrow${on ? ' on' : ''}" ${attr}>${thumb(M.gridFor(S, k))}<span class="ln">${esc(lineName(k))}</span><span class="lm num">${num(c.hours, 1)} h · ${num(c.pas, 1)} PA${c.ok ? '' : ' · breaks the 2016 contract'}</span></button>`; };
   const mixed = [...new Set(EVERY.map(k => S.groups[k].line))];
@@ -833,31 +850,27 @@ document.addEventListener('click', e => { const el = e.target.closest('.ii'); if
 
 /* ---------- outputs ---------- */
 const ownShare = r => Math.min(1, r.shiftsOwn.mid / r.shifts.mid);
-const deltaPill = (v, base, fmt, lowerBetter) => { const d = v - base; if (Math.abs(d) < 1e-6 || (fmt === 'pts' && Math.abs(d) < 0.0005)) return `<span class="dl same">Same as Now</span>`; const good = lowerBetter ? d < 0 : d > 0; const txt = fmt === 'pts' ? (d > 0 ? '+' : '−') + (Math.round(Math.abs(d) * 1000) / 10) + ' points' : (d > 0 ? '+' : '−') + gbp(Math.abs(d)); return `<span class="dl num ${good ? 'up' : ''}">${txt}</span>`; };
+const deltaPill = (v, base, fmt, lowerBetter) => { const d = v - base; if (Math.abs(d) < 1e-6 || (fmt === 'pts' && Math.abs(d) < 0.0005)) return ''; const good = lowerBetter ? d < 0 : d > 0; const txt = fmt === 'pts' ? (d > 0 ? '+' : '−') + (Math.round(Math.abs(d) * 1000) / 10) + ' points' : (d > 0 ? '+' : '−') + gbp(Math.abs(d)); return `<span class="dl num ${good ? 'up' : ''}">${txt}</span>`; };
 function renderHeadline() {
   const r = lastRes, n = nowRes, B = (x, k) => x['bt_' + k].mid;
   const col = (ic, lab, color, v, d, tip, suf) => `<div class="sm3"><span class="lab" style="color:${color}">${ico(ic, 'sm')}${lab}${iI(tip)}</span><b class="num">${v}${suf ? `<span class="bys">${suf}</span>` : ''}</b>${d}</div>`;
   document.getElementById('hl').innerHTML = `<div class="hlt sum3">
     ${col('moon', 'Fairfield nights and weekends', 'var(--f)', pc1(B(r, 'fOOH')), deltaPill(B(r, 'fOOH'), B(n, 'fOOH'), 'pts'), 'Share of Fairfield nights and weekend long days filled by our own rota. Locums fill every other shift, so none are left empty.', 'by our staff')}
-    ${col('hosp', 'Salford', 'var(--s)', pc1(r.coverS.mid), deltaPill(r.coverS.mid, n.coverS.mid, 'pts'), 'Share of Salford minimum shifts filled by our own rota. Locums fill every other shift, so none are left empty.', 'by our staff')}
+    ${col('hosp', 'Salford', 'var(--s)', pc1(B(r, 'sOOH')), deltaPill(B(r, 'sOOH'), B(n, 'sOOH'), 'pts'), 'Share of Salford minimum shifts filled by our own rota. Locums fill every other shift, so none are left empty.', 'by our staff')}
     ${col('pound', 'Cost a year', 'var(--text-2)', gbp(r.total.mid), deltaPill(r.total.mid, n.total.mid, 'gbp', true) + '<span class="rng1" id="hlRange"></span>', 'Likely cost: the middle of 40 simulated years, staff and locums together.')}</div>`;
 }
 const COST_SCOPE = 'What it includes: every resident on the rota (SCFs, specialty doctors, deanery trainees, ACCPs, JCFs, ACCS, IMT, FY2 and other residents) at gross pay, with employer pension (the trust-paid share) and NI, plus every locum shift. It is not net of NHSE training funding for trainees, and some of these grades are paid from other departments’ budgets. Not included: consultants, the apprenticeship levy, and recruitment unless set. The middle of 40 simulated years, against Now.';
 const PARTS = {
-  total: r => [['Cost', r.total.mid, 'var(--acc)']],
-  loc: r => [['Our staff', r.substantive.mid, 'var(--acc)'], ['Locums', r.locum.mid, 'var(--loc)']],
-  wage: r => [['Wages', r.wages.mid, 'var(--acc)'], ['Pension and NI', r.oncost.mid, 'var(--on)'], ['Locums', r.locum.mid, 'var(--loc)']],
+  pay: r => [['Staff pay', r.wages.mid, 'var(--acc)'], ['Staff pension and NI', r.oncost.mid, 'var(--on)'], ['Locum pay', r.locPay.mid, 'var(--loc)'], ['Locum holiday pay, NI and fees', r.locAdd.mid, '#e1e4e9']],
   site: r => [['Salford', r.salford.mid, 'var(--s)'], ['Fairfield', r.fairfield.mid, 'var(--f)']]
 };
 const segBtns = (name, cur, opts) => `<div class="seg4" role="group">${opts.map(([v, i, t]) => `<button class="${v === cur ? 'on' : ''}" data-${name}="${v}" title="${t}" aria-label="${t}" aria-pressed="${v === cur}">${ico(i, 'sm')}</button>`).join('')}</div>`;
 function renderCost() {
-  const r = lastRes, n = nowRes, split = costSplit === 'total' ? 'loc' : costSplit, parts = PARTS[split](r), np = PARTS[split](n);
-  document.getElementById('costCard').innerHTML = `<div class="hd"><span class="lab">Cost a year</span>${iI(COST_SCOPE)}${segBtns('cs', split, [['loc', 'userplus', 'Our staff and locums'], ['wage', 'bank', 'Wages, on-costs and locums'], ['site', 'split', 'By budget']])}</div>
+  const r = lastRes, n = nowRes, split = costSplit === 'site' ? 'site' : 'pay', parts = PARTS[split](r), np = PARTS[split](n);
+  document.getElementById('costCard').innerHTML = `<div class="hd"><span class="lab">Cost a year</span>${iI(COST_SCOPE)}${segBtns('cs', split, [['pay', 'bank', 'Pay and add-ons'], ['site', 'split', 'By budget']])}</div>
     <div class="cth"><b class="num">${gbp(r.total.mid)}</b>${deltaPill(r.total.mid, n.total.mid, 'gbp', true)}</div>
     <div class="hb" style="height:12px">${parts.map(p => `<span style="width:${p[1] / r.total.mid * 100}%;background:${p[2]}"></span>`).join('')}</div>
-    <div class="kl2">${parts.map((p, i) => `<i style="background:${p[2]}"></i><span>${p[0]}</span><b class="num">${gbp(p[1])}</b><span class="dd num">${Math.abs(p[1] - np[i][1]) < 1 ? 'same as Now' : ((p[1] - np[i][1]) > 0 ? '+' : '−') + gbp(Math.abs(p[1] - np[i][1])) + ' on Now'}</span>`).join('')}</div>
-    <span class="scope">Whole resident tier, gross: every grade on the rota at full pay with employer pension and NI, plus locums. Not net of NHSE training funding.</span>
-    ${finQ(r.locum.mid)}
+    <div class="kl2">${parts.map((p, i) => `<i style="background:${p[2]}"></i><span>${p[0]}</span><b class="num">${gbp(p[1])}</b><span class="dd num">${Math.abs(p[1] - np[i][1]) < 1 ? '' : ((p[1] - np[i][1]) > 0 ? '+' : '−') + gbp(Math.abs(p[1] - np[i][1])) + ' on Now'}</span>`).join('')}</div>
     <span class="rng1" id="costRange"></span>
     <div class="ctl2"><button class="lk" data-opensheet="rsheet">How sure: every plan against Now ›</button><button class="lk" data-costbreak="1">Cost of each staff group ›</button></div>`;
   if (typeof renderRanges === 'function') renderRanges();
@@ -865,20 +878,20 @@ function renderCost() {
 function renderCover() {
   const r = lastRes, n = nowRes, B = (x, k) => x['bt_' + k] ? x['bt_' + k].mid : 0;
   const row = (lab, v, nv, col, lt, sub) => `<div class="cvr${sub ? ' sub' : ''}"><span class="cvl">${lab}</span><div class="cvb"><div class="hb"><span style="width:${v * 100}%;background:${col}"></span><span style="width:${Math.max(0, 1 - v) * 100}%;background:${lt}"></span></div><span class="nowm" title="Now" style="left:calc(${nv * 100}% - 1px)"></span></div><b class="num">${pc1(v)}</b></div>`;
-  const big = (ic, lab, color, v, nv, tip) => `<div class="cvh"><span class="lab" style="color:${color}">${ico(ic, 'sm')}${lab}${iI(tip)}</span><b class="num">${pc1(v)}</b>${deltaPill(v, nv, 'pts')}</div>`;
+  const big = (ic, lab, color, v, nv, tip, all, nall) => `<div class="cvh"><span class="lab" style="color:${color}">${ico(ic, 'sm')}${lab}${iI(tip)}</span><b class="num">${pc1(v)}<span class="bys">nights and weekends</span></b>${deltaPill(v, nv, 'pts')}<span class="cva">All shifts <b class="num">${pc1(all)}</b> ${deltaPill(all, nall, 'pts')}</span></div>`;
   document.getElementById('coverCard').innerHTML = `<div class="hd"><span class="lab">Covered by our staff</span>${iI('Every minimum shift is filled. The coloured part is our own rota, the pale part is locums. The black tick is Now.')}</div>
-    <div class="cvh2">${big('moon', 'Fairfield nights and weekends', 'var(--f)', B(r, 'fOOH'), B(n, 'fOOH'), 'Share of Fairfield nights and weekend long days filled by our own rota. Locums fill every other shift, so none are left empty.')}${big('hosp', 'Salford', 'var(--s)', r.coverS.mid, n.coverS.mid, 'Share of Salford minimum shifts filled by our own rota. Locums fill every other shift, so none are left empty.')}</div>
+    <div class="cvh2">${big('hosp', 'Fairfield', 'var(--f)', B(r, 'fOOH'), B(n, 'fOOH'), 'Share of Fairfield nights and weekend long days filled by our own rota, and of all Fairfield shifts. Locums fill every other shift, so none are left empty.', r.coverF.mid, n.coverF.mid)}${big('hosp', 'Salford', 'var(--s)', B(r, 'sOOH'), B(n, 'sOOH'), 'Share of Salford nights and weekend shifts filled by our own rota, the same shifts as the Fairfield figure, and of all Salford shifts. Locums fill every other shift, so none are left empty.', r.coverS.mid, n.coverS.mid)}</div>
     ${row('Fairfield weekday nights', B(r, 'fN_wd'), B(n, 'fN_wd'), 'var(--f)', 'var(--f-lt)', 1)}${row('Fairfield weekend nights', B(r, 'fN_we'), B(n, 'fN_we'), 'var(--f)', 'var(--f-lt)', 1)}${row('Fairfield weekend days', B(r, 'fL_we'), B(n, 'fL_we'), 'var(--f)', 'var(--f-lt)', 1)}
     <div class="cvfoot"><span><i style="background:var(--f)"></i>Our staff</span><span><i style="background:var(--f-lt)"></i>Locums</span><span><i style="background:var(--text);width:2px"></i>Now</span><b class="num">${num(r.locShifts.mid)} locum shifts a year</b></div>`;
 }
 // what one more SCF or specialty doctor post buys: rerun the plan with one more post and compare
 let postTimer = null, lastOne = null;
 function renderPost() {
-  const el = document.getElementById('postCard'); el.innerHTML = `<div class="hd"><span class="lab">What one more post buys</span></div><span class="lab" style="text-transform:none;letter-spacing:0">Working it out…</span>`;
+  const el = document.getElementById('postCard'); el.innerHTML = `<div class="hd"><span class="lab">Cost and saving of one more post</span></div><span class="lab" style="text-transform:none;letter-spacing:0">Working it out…</span>`;
   clearTimeout(postTimer); postTimer = setTimeout(() => {
     const O = oneMore(S); lastOne = O; renderBuy(); const k = O.k, onc = ONC.reduce((a, t) => a + O.by[t].sup, 0), days = O.sup - onc, oncSpare = Math.max(0, onc - O.closed);
     const seg = (v, c, l) => v > 0.5 ? `<span style="width:${v / O.sup * 100}%;background:${c}" title="${l}: ${num(v)}"></span>` : '';
-    el.innerHTML = `<div class="hd"><span class="lab">What one more ${k === 'sd' ? 'specialty doctor' : 'SCF'} in post buys</span>${iI('The same average year worked again with one more person in post. Between people a post costs nothing and saves nothing. A post is paid for every shift it works, plus leave, study and on-costs. A locum is paid only for a shift that would otherwise be short. So a post saves money only on its shifts that land on a short shift. Show the workings has every step.')}</div>
+    el.innerHTML = `<div class="hd"><span class="lab">Cost and saving of one more ${k === 'sd' ? 'specialty doctor' : 'SCF'} in post</span>${iI('The same average year worked again with one more person in post. Between people a post costs nothing and saves nothing. A post is paid for every shift it works, plus leave, study and on-costs. A locum is paid only for a shift that would otherwise be short. So a post saves money only on its shifts that land on a short shift. Show the workings has every step.')}</div>
       <div class="pb3"><div><span class="lab">Costs</span><b class="num">${gbp(O.cost)}</b></div><div><span class="lab">Saves in locums</span><b class="num">${gbp(O.save)}</b></div><div><span class="lab">Net a year</span><b class="num" style="color:${O.net > 0 ? 'var(--err)' : 'var(--ok)'}">${O.net > 0 ? '+' : '−'}${gbp(Math.abs(O.net))}</b></div></div>
       <span class="lab" style="text-transform:none;letter-spacing:0">About ${num(O.sup)} rota shifts a year. Where they go:</span>
       <div class="hb" style="height:14px">${seg(O.closed, 'var(--ok)', 'Fills a short shift')}${seg(oncSpare, '#9aa3b2', 'Night or weekend already covered')}${seg(days, '#9fb9e3', 'Day shift: none are short')}</div>
@@ -931,7 +944,7 @@ function renderHeads() {
 function renderMap() {
   const el = document.getElementById('map'), ed = active.endsWith('*'), base = active.replace('*', '');
   const nums = (r, key) => { if (!r) return '<span class="lab">Working</span>'; const n0 = presetRes.now && presetRes.now.r, d = n0 ? r.total.mid - n0.total.mid : 0;
-    return `<span class="mt f"><em>FGH</em>${Math.round(r.bt_fOOH.mid * 100)}%</span><span class="mt s"><em>SRH</em>${Math.round(r.coverS.mid * 100)}%</span><span class="num c">${key === 'now' || !n0 ? gbp(r.total.mid) : (Math.abs(d) < 500 ? 'same cost' : (d > 0 ? '+' : '−') + gbp(Math.abs(d)))}</span>`; };
+    return `<span class="mt f"><em>FGH</em>${Math.round(r.bt_fOOH.mid * 100)}%</span><span class="mt s"><em>SRH</em>${Math.round((r.bt_sOOH ? r.bt_sOOH.mid : r.coverS.mid) * 100)}%</span><span class="num c">${key === 'now' || !n0 ? gbp(r.total.mid) : (Math.abs(d) < 500 ? 'same cost' : (d > 0 ? '+' : '−') + gbp(Math.abs(d)))}</span>`; };
   const descOf = key => key.startsWith('saved:') ? 'Saved plan' : ((PRESETS.find(x => x.id === key) || {}).d || '');
   const head = `<div class="gh" style="display:flex;align-items:center;gap:6px">${planEdit ? 'Drag to reorder, tap a name to rename' : ''}${planEdit ? '' : iI('A plan sets every input. Change anything after and the plan is marked as changing; tap it again to reset, or save it as a new plan.')}<button class="pedit" data-planedit="1">${planEdit ? 'Done' : 'Edit'}</button></div>`;
   let h;
@@ -947,7 +960,7 @@ function renderMap() {
   }
   ensureRanges();
   el.innerHTML = `<div class="plans">${head}<div class="grp6" id="planlist">${h}</div>
-    ${planEdit ? `<div class="key">${db && canSave ? 'Changes are shared with everyone' : 'Changes are kept in this browser'}</div>` : `<div class="key" style="flex-wrap:wrap"><span>Ring and FGH: Fairfield nights and weekends we cover · SRH: Salford we cover</span></div>`}</div>`;
+    ${planEdit ? `<div class="key">${db && canSave ? 'Changes are shared with everyone' : 'Changes are kept in this browser'}</div>` : `<div class="key" style="flex-wrap:wrap"><span>Ring and FGH: Fairfield nights and weekends covered by our staff · SRH: the same for Salford</span></div>`}</div>`;
   renderHeads();
 }
 const MODE_TIP = 'Theoretical: everyone works the 9-week template (or the part-time 80, 70, 60 or 50% templates) exactly as written. Leave comes only out of standard days. In practice: the same hours, spread across nights, weekends and days the way each group actually worked them in Allocate, Sep 2025 to Aug 2026, leaving out bank shifts.';
@@ -1035,14 +1048,14 @@ function oneMore(s) {
 const LSPLIT = { Nwd: [['wdAnti', 11], ['wdSoc', 1.5]], Nwe: [['weAnti', 11], ['weSoc', 1.5]], Lwd: [['wdSoc', 11], ['wdAnti', 1.5]], Lwe: [['weSoc', 11], ['weAnti', 1.5]], Swd: [['wdSoc', 8]], Swe: [['weSoc', 8]] };
 // an open question for finance, shown wherever locum costs appear while nothing is added to the NHSP rate
 function finQ(locum, s) {
-  s = s || S; const c = s.cost, add = ((c.bankHolInc ? 1 : 1.1207) * (1 + (c.bankOn || 0)) - 1) * 100;
-  return `<div class="finq"><b>Question for finance</b> Bank shifts are costed at the NHSP rate plus ${c.bankHolInc ? '' : '12.07% holiday pay and '}${num((c.bankOn || 0) * 100, 1).replace(/\.0$/, '')}% for employer NI, levy and the NHSP fee: ${num(add, 1).replace(/\.0$/, '')}% on top in all. Please confirm whether holiday pay is already in NHSP's rate, what NHSP charges, and whether bank work is pensionable (14.38% more).</div>`;
+  s = s || S; const add = M2.bankAdd(s.cost) * 100;
+  return `<div class="finq"><b>Question for finance</b> Bank shifts are costed at the NHSP rate plus ${num(add, 1)}% for holiday pay, employer NI, levy and the NHSP fee. Please confirm whether holiday pay is already in NHSP's rate, what NHSP charges, and whether bank work is pensionable.</div>`;
 }
 function shiftCost(s, t) {
   const c = s.cost, sp = LSPLIT[t], sum = lr => sp.reduce((a, [k, h]) => a + (lr[k] || 0) * h, 0);
-  const hol = c.bankHolInc ? 1 : 1.1207, bank = sum(c.lr) * hol * (1 + (c.bankOn || 0)), ag = c.lrA ? sum(c.lrA) : bank, sh = c.agencyShare || 0;
+  const bank = sum(c.lr) * (1 + M2.bankAdd(c)), ag = c.lrA ? sum(c.lrA) : bank, sh = c.agencyShare || 0;
   const how = lr => sp.map(([k, h]) => `${num(h, h % 1 ? 1 : 0)} h × ${gbp(lr[k])}`).join(' + ');
-  return { bank, ag, avg: bank * (1 - sh) + ag * sh, sh, howB: how(c.lr) + (c.bankHolInc ? '' : ' + 12.07% holiday pay') + (c.bankOn ? ` + ${num(c.bankOn * 100, 1).replace(/\.0$/, '')}% on-costs` : ''), howA: c.lrA ? how(c.lrA) : '' };
+  return { bank, ag, avg: bank * (1 - sh) + ag * sh, sh, howB: how(c.lr) + ` + ${num(M2.bankAdd(c) * 100, 1)}% add-ons`, howA: c.lrA ? how(c.lrA) : '' };
 }
 // groups in a fixed order, ACCPs as one group, with the section each belongs to
 const GSECT = [['SCFs and specialty doctors', ['scf', 'sd']], ['Deanery, airway', ['icm3', 'icm2', 'icm1', 'anaes']], ['ACCPs', ['accp']], ['Other residents', ['jcf', 'accs', 'imt', 'fy2', 'other']], ['Fairfield', ['anaesX']]];
@@ -1189,6 +1202,7 @@ function renderCmp() {
     ['moon', 'Fairfield out of hours', d => B(d.r, 'fOOH'), pc1, 'max', 'var(--f)', 'Nights and weekend long days filled from our own rota'],
     ['hosp', 'Fairfield, all shifts', d => d.r.coverF.mid, pc1, 'max', 'var(--f)'],
     ...[['moon', 'fN_wd', 'Weekday nights'], ['moon', 'fN_we', 'Weekend nights'], ['sun2', 'fL_wd', 'Weekday long days'], ['sun2', 'fL_we', 'Weekend long days']].map(([i, k, n]) => [i, ind(n), d => B(d.r, k), pc1, 'max', 'var(--f)']),
+    ['hosp', 'Salford nights and weekends', d => B(d.r, 'sOOH'), pc1, 'max', 'var(--s)'],
     ['hosp', 'Salford, all shifts', d => d.r.coverS.mid, pc1, 'max', 'var(--s)'],
     ...[['moon', 'sN_wd', 'Weekday nights'], ['moon', 'sN_we', 'Weekend nights'], ['day', 'sD_wd', 'Weekday days'], ['day', 'sD_we', 'Weekend days'], ['air', 'aN', '2 airway at night']].map(([i, k, n]) => [i, ind(n), d => B(d.r, k), pc1, 'max', 'var(--s)']),
     ['shield', 'Months fully covered', d => d.r.pFullMonth, v => Math.round(v * 10) + ' in 10', 'max', null, 'Both sites at 99% or more of shifts in the month'],
@@ -1198,7 +1212,7 @@ function renderCmp() {
     ['v-range', 'Likely range, our assumptions', d => 0, (v, d) => urText(keyOfD(d), d.r) || '…', null, null, UR_TIP],
     ['v-range', 'Range, year to year', d => d.r.total.hi - d.r.total.lo, (v, d) => gbp(Math.round(d.r.total.lo / 1000) * 1000) + ' to ' + gbp(Math.round(d.r.total.hi / 1000) * 1000), null, null, 'Covers 8 years in 10'],
     ['userplus', 'Locum shifts a year', d => d.r.locShifts.mid, v => num(v), 'min'],
-    ['g', 'What the money buys'],
+    ['g', 'Workload and training'],
     ...BUYS.filter(b => b.id !== 'l').map(b => [b.ic, b.n, d => b.f(d.s, d.r), b.fmt, b.best, null, b.tip]),
     ['g', 'Staff, WTE by grade'],
     ['users', 'All grades', d => wteAll(d.s), v => num(v, 1), null],
@@ -1210,7 +1224,7 @@ function renderCmp() {
   const fixed = cols.filter(c => !c.live);
   const best = r => { if (!r[4]) return null; const vs = fixed.map(c => r[2](c.d)); return r[4] === 'max' ? Math.max(...vs) : Math.min(...vs); };
   const avail = saved.filter(x => !extraCols.includes(x.id));
-  document.getElementById('cmp').innerHTML = `<div class="hd" style="display:flex;align-items:center;gap:8px"><span class="lab">Outputs for each model</span>${iI('This plan updates live as you change any input. Green dots mark the best fixed model in each row.')}</div>
+  document.getElementById('cmp').innerHTML = `<div class="hd" style="display:flex;align-items:center;gap:8px"><span class="lab">Outputs for each model</span>${iI('This plan updates live as any input changes. Green dots mark the best fixed model in each row.')}</div>
   <div class="cmp"><table><thead><tr><th style="text-align:left"><span class="lab">Model</span></th>${cols.map(c => `<th class="${c.live ? 'on' : ''}"><div class="mh"><span class="i2">${ico(c.ic, 'sm')}</span><span style="font-weight:700">${esc(c.n)}</span>${c.live ? `<span class="lab" style="color:var(--ok);display:inline-flex;gap:4px;align-items:center"><i style="width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block"></i>Live</span>` : ''}${c.rm ? `<button data-rmcol="${esc(c.rm)}" aria-label="Remove column">${ico('x', 'sm')}</button>` : ''}</div></th>`).join('')}
     <th>${db && canSave ? `<div class="addmenu"><button class="addc" data-addcol="1" title="Add a saved plan" aria-label="Add a saved plan" style="background:none;cursor:pointer">${ico('plus', 'sm')}</button><div class="menu" id="addmenu" hidden>${avail.length ? avail.map(x => `<button data-pickcol="${esc(x.id)}">${ico('bmark', 'sm')} ${esc(x.name)}</button>`).join('') : '<span class="empty6">No saved plans yet</span>'}</div></div>` : ''}</th></tr></thead><tbody>
   ${R.map(r => r[0] === 'g' ? `<tr class="gp"><td colspan="${cols.length + 2}">${r[1]}</td></tr>` : `<tr><td><span style="display:inline-flex;gap:6px;align-items:center">${ico(r[0], 'sm')}${r[1]}${r[6] ? iI(r[6]) : ''}</span></td>${cols.map(c => { const v = r[2](c.d), b = best(r); const bar = r[5] ? `<span class="mb"><span style="width:${Math.min(1, v) * 100}%;background:${r[5]}"></span></span>` : ''; const nv = r[2](presetRes.now); const chg = c.live && Math.abs(v - nv) > 1e-6; return `<td class="num ${c.live ? 'on' : ''} ${!c.live && b != null && Math.abs(v - b) < 1e-9 ? 'best' : ''} ${chg && !r[5] ? 'chg' : ''}">${bar}${r[3](v, c.d)}</td>`; }).join('')}<td></td></tr>`).join('')}
@@ -1235,7 +1249,7 @@ const UNC = [
   { n: 'Agency share 9% to 21% of locum shifts', lo: x => { x.cost.agencyShare = (x.cost.agencyShare || 0) * 9 / 14; }, hi: x => { x.cost.agencyShare = Math.min(1, (x.cost.agencyShare || 0) * 21 / 14); } },
   { n: 'Lumpiness 10% to 25%', lo: x => { if (lumpOf(x)) x.core.lumpy = Math.max(0.001, lumpOf(x) - 0.075); }, hi: x => { if (lumpOf(x)) x.core.lumpy = lumpOf(x) + 0.075; } },
   { n: 'Sickness 2% to 5%', lo: x => { x.absence.sick *= 2 / 3; }, hi: x => { x.absence.sick *= 5 / 3; } },
-  { n: 'Bank on-costs from no NHSP fee to bank work being pensionable', lo: x => { x.cost.bankOn = Math.max(0, (x.cost.bankOn || 0) - 0.01); }, hi: x => { x.cost.bankOn = (x.cost.bankOn || 0) + 0.1438; } },
+  { n: 'Bank add-ons from no NHSP fee to bank work being pensionable', lo: x => { x.cost.bankFee = 0; }, hi: x => { x.cost.bankPen = 1; } },
   { n: 'Weekday nights moved to days 10% to 20%', lo: x => n2dBy(x, -0.045), hi: x => n2dBy(x, 0.055) }
 ];
 const UR_TIP = 'How sure we are. Each plan is worked out again with the inputs we are least sure of set low and then high: ' + UNC.map(u => u.n.charAt(0).toLowerCase() + u.n.slice(1)).join('; ') + '. The swings are added up on the basis that they will not all go the same way at once (square root of the sum of squares). Both ends are paired with Now worked out the same way.';
@@ -1289,7 +1303,7 @@ function renderRanges() {
     <div class="rgk"><span><i class="save"></i>Saves money</span><span><i class="either"></i>Could go either way</span><span><i class="cost"></i>Costs more</span><span class="rga">← cheaper than Now · dearer →</span></div>`;
 }
 
-/* ---------- what the money buys: facts beside the cost ---------- */
+/* ---------- workload and training: facts beside the cost ---------- */
 const DEAN = ['icm3', 'icm2', 'icm1', 'anaes', 'accs', 'imt', 'fy2', 'other'];
 const nightsOf = (s, k) => perPersonYear(s, k, 'Nwd') + perPersonYear(s, k, 'Nwe');
 const postsOf = s => ['scf', 'sd', 'jcf'].reduce((a, k) => a + (s.groups[k] ? s.groups[k].posts + (s.groups[k].newPosts || 0) : 0), 0);
@@ -1306,10 +1320,10 @@ function renderBuy() {
   const ns = presetRes.now ? presetRes.now.s : NOW;
   const minD = S.demand.air.Lwd + S.demand.na.Lwd + S.demand.air.Swd + S.demand.na.Swd, sp = lastRes.dayRes ? Math.max(0, lastRes.dayRes.mid - minD) : 0, spN = nowRes.dayRes ? Math.max(0, nowRes.dayRes.mid - minD) : 0;
   const O = lastOne, who = O && O.k === 'sd' ? 'specialty doctor' : 'SCF';
-  el.innerHTML = `<div class="hd"><span class="lab">What the money buys</span>${iI('Facts beside the cost, for you to weigh. No scores: what each is worth is a judgement for us.')}</div>
-    <div class="buyt">${BUYS.filter(b => b.id !== 'l').map(b => { const v = b.f(S, lastRes), n0 = b.f(ns, nowRes), same = Math.abs(v - n0) < (b.id === 'tr' ? 0.05 : 0.5); return `<div class="bt"><span class="lab">${esc(b.short)}${iI(b.tip)}</span><b class="num">${b.fmt(v)}</b><span class="dd">${b.id === 'p' ? 'SCF, specialty doctor and JCF' : same ? 'Same as Now' : 'Now ' + b.fmt(n0)}</span></div>`; }).join('')}
-      <button class="bt btl" data-opensheet="dsheet"><span class="lab">Salford spare people on weekday days${iI('Everyone on days at Salford above the minimum of ' + minD + '. They go to teaching, training and other learning. Tap for the chart.')}</span><b class="num">${num(sp, 1)} a day</b><span class="dd">${Math.abs(sp - spN) < 0.05 ? 'Same as Now' : 'Now ' + num(spN, 1) + ' a day'} ›</span></button></div>
-    <div class="ctl" id="oneLine">${O ? `<span class="rng1">One more ${who} in post costs ${gbp(O.cost)} and saves ${gbp(O.save)} in locums</span>` : '<span class="rng1">Working out one more post…</span>'}<button class="lk" data-opensheet="psheet">Why ›</button></div>`;
+  el.innerHTML = `<div class="hd"><span class="lab">Workload and training</span>${iI('Facts to weigh beside the cost. No scores: what each is worth is a judgement for the department.')}</div>
+    <div class="buyt">${BUYS.filter(b => b.id !== 'l').map(b => { const v = b.f(S, lastRes), n0 = b.f(ns, nowRes), same = Math.abs(v - n0) < (b.id === 'tr' ? 0.05 : 0.5); return `<div class="bt"><span class="lab">${esc(b.short)}${iI(b.tip)}</span><b class="num">${b.fmt(v)}</b><span class="dd">${b.id === 'p' ? 'SCF, specialty doctor and JCF' : same ? '' : 'Now ' + b.fmt(n0)}</span></div>`; }).join('')}
+      <button class="bt btl" data-opensheet="dsheet"><span class="lab">Salford spare people on weekday days${iI('Everyone on days at Salford above the minimum of ' + minD + '. They go to teaching, training and other learning. Tap for the chart.')}</span><b class="num">${num(sp, 1)} a day</b><span class="dd">${Math.abs(sp - spN) < 0.05 ? 'Chart' : 'Now ' + num(spN, 1) + ' a day'} ›</span></button></div>
+    <div class="ctl" id="oneLine">${O ? `<span class="rng1">One more ${who} in post: cost ${gbp(O.cost)}, locum saving ${gbp(O.save)}</span>` : '<span class="rng1">Working out one more post…</span>'}<button class="lk" data-opensheet="psheet">Why ›</button></div>`;
 }
 
 /* ---------- compute ---------- */
@@ -1388,11 +1402,11 @@ document.getElementById('savebar').addEventListener('click', async e => {
   const STEPS = [
     { sel: '#app', q: 'What is this?', a: 'A model of the resident rota at Salford and Fairfield. Pick a plan, change anything, and see what it costs and how many shifts our own doctors cover.', do: () => { pick('now'); go('home'); } },
     { sel: '.plancol', q: 'Where do I start?', a: 'Pick a plan from the list. Today’s staffing is at the top. Other ideas are below.' },
-    { sel: '.plans .pcw', q: 'What does a plan card show?', a: 'The ring fills with how much of Fairfield’s nights and weekends our own doctors cover.', k: 'FGH: Fairfield nights and weekends we cover. SRH: Salford shifts we cover. £: cost a year, or the difference from Now.' },
+    { sel: '.plans .pcw', q: 'What does a plan card show?', a: 'The ring fills with how much of Fairfield’s nights and weekends our own doctors cover.', k: 'FGH: Fairfield nights and weekends covered by our staff. SRH: the same for Salford. £: cost a year, or the difference from Now.' },
     { sel: '.plans .pcost', q: 'What does the £ button do?', a: 'It opens what the plan’s cost is made of: each staff group, then the locums.' },
     { sel: '#coverCard', q: 'How much do our own doctors cover?', a: 'Fairfield nights and weekends, and Salford, filled by our own rota. Every shift we can’t cover goes to a locum, so none are left empty. Only SCFs can work Fairfield nights and weekends, and Salford needs most of their nights first.', k: 'This matches last year in Allocate.' },
     { sel: '#costCard', q: 'What does it cost?', a: 'Staff and locums for a year, against Now, with a likely range. How sure shows every plan against Now; the breakdown shows each staff group.' },
-    { sel: '#buyCard', q: 'What does the money buy?', a: 'Facts beside the cost: nights and weekends each, training posts, spare people on Salford days and posts to fill. What they are worth is for us to judge.' },
+    { sel: '#buyCard', q: 'What else changes?', a: 'Workload and training beside the cost: nights and weekends each, training posts, spare people on Salford days and posts to fill.' },
     { sel: '#panel', q: 'What can I change?', a: 'Anything under Inputs. Start with Staff: posts for each group, how many are filled, and who works part-time.', do: () => go('staff') },
     { sel: '#panel', q: 'What can I change for SCFs?', a: 'Posts, pay, work schedule, how long people stay, and how long before they can work at Fairfield.', do: () => go('core') },
     { sel: '#panel', q: 'What rota do people work?', a: 'One work schedule for everyone: the trust’s 9-week template, or the version with two extra weekday night sets. SCFs and specialty doctors can be put on a different one. Full-time staff work 3 weekend nights every 9 weeks (one Friday to Sunday set), so weekend nights are always the pinch.', do: () => go('lines') },

@@ -106,7 +106,7 @@ function now() {
     },
     cost: {
       scfPay: 80000, sdPay: 73383, ni: 0.15, niThreshold: 5000, pension: 0.1438,
-      rate: { Nwd: 80, Nwe: 80, Lwd: 80, Lwe: 80, Swd: 80, Swe: 80 }, lr: { wdSoc: 55, wdAnti: 70, weSoc: 70, weAnti: 70 }, lrA: { wdSoc: 85, wdAnti: 105, weSoc: 105, weAnti: 105 }, agencyShare: 0.14, bankOn: 0.165, bankHolInc: false,
+      rate: { Nwd: 80, Nwe: 80, Lwd: 80, Lwe: 80, Swd: 80, Swe: 80 }, lr: { wdSoc: 55, wdAnti: 70, weSoc: 70, weAnti: 70 }, lrA: { wdSoc: 85, wdAnti: 105, weSoc: 105, weAnti: 105 }, agencyShare: 0.14, bankHol: 1, bankFee: 0.01, bankPen: 0,
       recruit: 0, anaesNight: 0
     },
     lines: { custom: M.LINES.scf_current.grid.slice(), trainee: M.LINES.scf_current.grid.slice(), accp: M.LINES.scf_current.grid.slice() }
@@ -338,26 +338,40 @@ const normCdf = z => { const t = 1 / (1 + 0.2316419 * Math.abs(z)), d = 0.398942
 // locums are paid by the hour at four rates: weekday social, weekday unsocial, weekend social, weekend unsocial.
 // Social hours are 07:00 to 19:00. A night (20:00 to 08:30) is 11 unsocial hours and 1.5 social; a long day (08:00 to 20:30) the reverse.
 const LOC_SPLIT = { Nwd: [['wdAnti', 11], ['wdSoc', 1.5]], Nwe: [['weAnti', 11], ['weSoc', 1.5]], Lwd: [['wdSoc', 11], ['wdAnti', 1.5]], Lwe: [['weSoc', 11], ['weAnti', 1.5]], Swd: [['wdSoc', 8]], Swe: [['weSoc', 8]] };
+// what the trust pays on top of the NHSP hourly rate: holiday pay, then employer NI, levy, NHSP fee and (if bank work is pensionable) employer pension on pay plus holiday pay
+const HOL = 0.1207, LEVY = 0.005;
+function bankAdd(c) {
+  if (c.bankHol == null && c.bankOn != null) return c.bankOn;   // older saved plans
+  const h = c.bankHol === 0 ? 0 : HOL;
+  return (1 + h) * (1 + (c.ni != null ? c.ni : 0.15) + LEVY + (c.bankPen ? c.pension || 0 : 0)) - 1 + (c.bankFee != null ? c.bankFee : 0.01);   // the NHSP fee as a share of the hourly rate
+}
+function locumParts(s, t) {
+  const c = s.cost, sp = LOC_SPLIT[t], h = sp.reduce((a, x) => a + x[1], 0);
+  const at = (lr, def) => sp.reduce((a, [k, n]) => a + (lr && lr[k] != null ? lr[k] : def) * n, 0) / h;
+  if (!c.lr) { const r = c.rate, v = r && typeof r === 'object' && r[t] != null ? r[t] : 80; return { rate: v, pay: v }; }
+  const base = at(c.lr, 80), bank = base * (1 + bankAdd(c)), ag = c.lrA ? at(c.lrA, 100) : bank, sh = c.agencyShare || 0;
+  return { rate: bank * (1 - sh) + ag * sh, pay: base * (1 - sh) + ag * sh };
+}
 function locumRate(s, t) {
   // a blend of bank (NHSP, plus any fee or on-costs) and agency, by the share of locum shifts that go to agency
   const c = s.cost, sp = LOC_SPLIT[t], h = sp.reduce((a, x) => a + x[1], 0);
   const at = (lr, def) => sp.reduce((a, [k, n]) => a + (lr && lr[k] != null ? lr[k] : def) * n, 0) / h;
   if (!c.lr) { const r = c.rate; return r && typeof r === 'object' && r[t] != null ? r[t] : 80; }
-  const bank = at(c.lr, 80) * (c.bankHolInc ? 1 : 1.1207) * (1 + (c.bankOn || 0)), ag = c.lrA ? at(c.lrA, 100) : bank, sh = c.agencyShare || 0;
+  const bank = at(c.lr, 80) * (1 + bankAdd(c)), ag = c.lrA ? at(c.lrA, 100) : bank, sh = c.agencyShare || 0;
   return bank * (1 - sh) + ag * sh;
 }
 // cover by site and shift type
-const BT = { fOOH: [['fgh'], ['Nwd', 'Nwe', 'Lwe']], fN_wd: [['fgh'], ['Nwd']], fN_we: [['fgh'], ['Nwe']], fL_wd: [['fgh'], ['Lwd']], fL_we: [['fgh'], ['Lwe']],
+const BT = { fOOH: [['fgh'], ['Nwd', 'Nwe', 'Lwe']], sOOH: [['air', 'na'], ['Nwd', 'Nwe', 'Lwe', 'Swe']], fN_wd: [['fgh'], ['Nwd']], fN_we: [['fgh'], ['Nwe']], fL_wd: [['fgh'], ['Lwd']], fL_we: [['fgh'], ['Lwe']],
   sN_wd: [['air', 'na'], ['Nwd']], sN_we: [['air', 'na'], ['Nwe']], sD_wd: [['air', 'na'], ['Lwd', 'Swd']], sD_we: [['air', 'na'], ['Lwe', 'Swe']], aN: [['air'], ['Nwd', 'Nwe']] };
 function month(s, cs, mo, fills, payCache) {
   const a = allocate(s, cs, mo, fills), c = s.cost, w = 52 / 12;
   // no gaps: every shift our rota cannot fill is filled by a paid locum, charged to the site with the gap
-  let locShifts = 0, locCost = 0, locFgh = 0, locSrh = 0, locCovF = 0, locCovS = 0;
+  let locShifts = 0, locCost = 0, locPay = 0, locFgh = 0, locSrh = 0, locCovF = 0, locCovS = 0;
   SITES.forEach(cat => {
     TYPES.forEach(t => {
       const g = a.gap[cat][t] * w; if (g <= 0) return;
       if (cat === 'fgh') locCovF += g; else locCovS += g;
-      const r = locumRate(s, t);
+      const lp = locumParts(s, t), r = lp.rate; locPay += g * TH[t] * lp.pay;
       locShifts += g; const cost = g * TH[t] * r; locCost += cost; if (cat === 'fgh') locFgh += cost; else locSrh += cost;
     });
   });
@@ -389,7 +403,7 @@ function month(s, cs, mo, fills, payCache) {
   const mu = a.dayRes, sd = Math.sqrt(Math.max(1, mu * 0.75));
   const pOver = 1 - normCdf((s.demand.surplusAt + 0.5 - mu) / sd);
   return {
-    a, locShifts, locCost, wages, on, recruit, anaes, salford, fairfield, bt,
+    a, locShifts, locCost, locPay, locAdd: locCost - locPay, wages, on, recruit, anaes, salford, fairfield, bt,
     total: locCost + wages + on + recruit + anaes, substantive: wages + on + recruit + anaes,
     coverF: Math.min(1, fillF / needF), coverS: fillS / needS, airCover, full: airCover >= 0.99 && fillS / needS >= 0.99, srhAirMin, srhAirTarget,
     coverFL: Math.min(1, (fillF * w + locCovF) / (needF * w)), coverSL: Math.min(1, (fillS * w + locCovS) / (needS * w)),
@@ -410,7 +424,7 @@ function year(s) {
 }
 function summarise(ms) {
   const sum = k => ms.reduce((a, m) => a + m[k], 0), avg = k => sum(k) / ms.length;
-  const out = { total: sum('total'), locum: sum('locCost'), substantive: sum('substantive'), wages: sum('wages'), oncost: sum('on'),
+  const out = { total: sum('total'), locum: sum('locCost'), locPay: sum('locPay'), locAdd: sum('locAdd'), substantive: sum('substantive'), wages: sum('wages'), oncost: sum('on'),
     recruit: sum('recruit'), salford: sum('salford'), fairfield: sum('fairfield'), locShifts: sum('locShifts'),
     coverF: avg('coverF'), coverS: avg('coverS'), coverFL: avg('coverFL'), coverSL: avg('coverSL'), airCover: avg('airCover'), srhAirMin: avg('srhAirMin'), srhAirTarget: avg('srhAirTarget'), fullMonths: ms.filter(m => m.full).length,
     surplus: sum('surplus'), dayRes: avg('dayRes'), shifts: sum('shifts'), shiftsOwn: sum('shiftsOwn'), shiftsF: sum('shiftsF'), shiftsS: sum('shiftsS'), trainFgh: sum('trainFgh'),
@@ -488,7 +502,7 @@ function simulate(s, years, seed) {
   }
   const q = (k, p) => { const v = Y.map(o => o[k]).sort((a, b) => a - b); return v[Math.min(v.length - 1, Math.floor(p * v.length))]; };
   const band = k => ({ lo: q(k, 0.1), mid: q(k, 0.5), hi: q(k, 0.9) });
-  const keys = ['total', 'locum', 'substantive', 'wages', 'oncost', 'salford', 'fairfield', 'locShifts', 'coverF', 'coverS', 'coverFL', 'coverSL', 'airCover', 'srhAirMin', 'srhAirTarget', 'surplus', 'dayRes', 'shifts', 'shiftsOwn', 'shiftsF', 'shiftsS', 'fullMonths', 'recruit', ...Object.keys(BT).map(k => 'bt_' + k)];
+  const keys = ['total', 'locum', 'locPay', 'locAdd', 'substantive', 'wages', 'oncost', 'salford', 'fairfield', 'locShifts', 'coverF', 'coverS', 'coverFL', 'coverSL', 'airCover', 'srhAirMin', 'srhAirTarget', 'surplus', 'dayRes', 'shifts', 'shiftsOwn', 'shiftsF', 'shiftsS', 'fullMonths', 'recruit', ...Object.keys(BT).map(k => 'bt_' + k)];
   const out = {}; keys.forEach(k => out[k] = band(k));
   out.pFullMonth = Y.reduce((a, o) => a + o.fullMonths, 0) / (Y.length * 12);
   // average month shape, for the by-month views
@@ -496,5 +510,5 @@ function simulate(s, years, seed) {
   return out;
 }
 
-root.Model2 = { TYPES, MONTHS, LEAVE_F, ABS_F, PAY, CORE, OTHERS, now, grossPay, payTable, corePeople, allocate, month, year, simulate, locumRate, syncAccp, wteOf, wf, wfPeople, PRACTICE, perPersonPub: perPerson, workings, payParts, onCost, PAY };
+root.Model2 = { TYPES, MONTHS, LEAVE_F, ABS_F, PAY, CORE, OTHERS, now, grossPay, payTable, corePeople, allocate, month, year, simulate, locumRate, syncAccp, wteOf, wf, wfPeople, PRACTICE, perPersonPub: perPerson, bankAdd, locumParts, workings, payParts, onCost, PAY };
 })(typeof window !== 'undefined' ? window : globalThis);
