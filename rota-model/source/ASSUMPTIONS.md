@@ -85,7 +85,7 @@ Items marked **Check** are not yet confirmed.
     - acting up: ICM stage 3 do 2 acting-up nights per 9 weeks
     - sickness 3%, other absence 2%
     - the monthly patterns from Allocate are on, and each can be switched off
-27. **Locums:** 88% bank, 12% agency (Allocate: agency covered 8% of all Fairfield nights, about 12% of those covered by locums).
+27. **Locums:** 86% NHSP bank, 14% agency (from the Fairfield rota: agency took 21% of locum shifts from Sep 2025 to Aug 2026 and 9% since July 2026).
     - Bank: NHSP Greater Manchester ST3 to ST5 rates (from 1 May 2025), £55 an hour on weekdays 07:00 to 19:00 and £70 at other times. Nothing on top (slider, default 0%). **Check**
     - Agency: best guess £85 and £105 an hour, including the agency fee. **Check**
 28. **Pay:**
@@ -108,7 +108,7 @@ Items marked **Check** are not yet confirmed.
 Each plan is worked out again with the inputs we are least sure of set low and then high, one at a time:
 
 - Locum rates: 10% lower to 25% higher (bank and agency)
-- Agency share: 5% to 20% of locum shifts (now 12%)
+- Agency share: 9% to 21% of locum shifts (now 14%)
 - Lumpiness: 10% to 25% (now 17.5%)
 - Sickness: 2% to 5% (now 3%)
 - Bank on-costs: 0% to 10% on top of NHSP rates (now 0%)
