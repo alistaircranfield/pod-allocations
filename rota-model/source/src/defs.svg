@@ -57,5 +57,6 @@
     <symbol id="v-range" viewBox="0 0 24 24"><path d="M4 12h16"/><circle cx="12" cy="12" r="3"/><path d="M4 9v6M20 9v6"/></symbol>
     <symbol id="v-month" viewBox="0 0 24 24"><path d="M5 20v-8M9 20v-11M13 20v-6M17 20v-9M21 20v-5"/></symbol>
     <symbol id="drag" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" stroke-width="3.2"/></symbol>
+    <symbol id="link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
   </defs>
 </svg>

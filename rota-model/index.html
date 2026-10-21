@@ -471,6 +471,11 @@ input.rg:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--acc-w
 .cvr b { text-align: right; } .cvb { position: relative; } .nowm { position: absolute; top: -4px; width: 2px; height: calc(100% + 8px); background: var(--text); border-radius: 1px; }
 .deep { display: flex; gap: 10px; align-items: center; width: 100%; font: inherit; font-weight: 600; text-align: left; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; box-shadow: var(--shadow); color: var(--text); }
 .deep .lab { margin-left: auto; text-transform: none; letter-spacing: 0; }
+.banner { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; font-size: 12.5px; line-height: 1.45; color: var(--text-2); }
+.banner b { color: var(--text); font-weight: 650; } .banner a { color: var(--text); }
+.scope { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+.finq { font-size: 12px; line-height: 1.45; color: #7a4a00; background: #fff3df; border-radius: 10px; padding: 8px 10px; }
+.finq b { display: block; font-weight: 650; }
 .sheet { position: fixed; inset: 0; background: rgba(20,22,28,.35); z-index: 20; display: flex; justify-content: flex-end; }
 .sheetin { background: var(--bg, #f5f5f7); width: min(1100px, 100%); height: 100%; overflow: auto; padding: 20px; display: grid; gap: 12px; align-content: start; }
 .sheethd { display: flex; gap: 10px; align-items: center; } .sheethd .pt { font-size: 20px; font-weight: 700; }
@@ -613,6 +618,8 @@ details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer;
 .plancol .save { display: grid; gap: 8px; }
 .plancol .save input { font: inherit; border: 1px solid var(--border); border-radius: 10px; padding: 9px 10px; background: rgba(255,255,255,.06); color: var(--text); width: 100%; }
 .plancol .save .btnp { width: 100%; display: flex; gap: 6px; justify-content: center; align-items: center; }
+.plancol .save .savekey { font-size: 11.5px; color: var(--text-3); line-height: 1.4; }
+.plancol .save .linkbox { font: inherit; font-size: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; background: rgba(255,255,255,.06); color: var(--text); width: 100%; }
 .sidehead { display: flex; justify-content: space-between; align-items: center; }
 .side .lt { padding: 4px 4px 6px; }
 .side .nav { padding: 0 4px 2px; color: var(--text-2); }
@@ -794,12 +801,14 @@ details.ptx { display: grid; gap: 10px; } details.ptx summary { cursor: pointer;
     <symbol id="v-range" viewBox="0 0 24 24"><path d="M4 12h16"/><circle cx="12" cy="12" r="3"/><path d="M4 9v6M20 9v6"/></symbol>
     <symbol id="v-month" viewBox="0 0 24 24"><path d="M5 20v-8M9 20v-11M13 20v-6M17 20v-9M21 20v-5"/></symbol>
     <symbol id="drag" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" stroke-width="3.2"/></symbol>
+    <symbol id="link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
   </defs>
 </svg>
 <div class="app" id="app">
   <aside class="side plancol" aria-label="Plans"><div class="sidein"><div class="colhead"><span class="lab stepl"><i class="stepn">1</i>Plans</span><button class="tourbtn" id="tourbtn" aria-label="Start the guided tour">Guide</button></div><div id="modebar" hidden></div><div id="map"></div><div class="save" id="savebar"></div></div></aside>
   <aside class="side" aria-label="Inputs"><div class="sidein"><div class="colhead" id="inHead"><span class="lab stepl"><i class="stepn">2</i>Inputs</span></div><div id="panel"></div></div></aside>
   <main class="outs">
+    <div class="banner" role="note"><b>A planning model, not a budget or a forecast.</b> Estimates for a typical year from stated assumptions, several still to be checked. Version 38, 21 October 2026. <a href="https://github.com/alistaircranfield/pod-allocations/blob/main/rota-model/source/ASSUMPTIONS.md" target="_blank" rel="noopener">Assumptions</a></div>
     <div class="apphead">
       <div class="ttl"><span class="lab stepl"><i class="stepn">3</i>Outputs</span><h1 id="outName">Now</h1></div>
     </div>
@@ -1920,7 +1929,11 @@ const PRESETS = [
   { id: 'fghline', tg: ['6 of the 10 SCFs', '6-week Fairfield line', 'funded by Fairfield'], n: 'Fairfield line for 6 SCFs', d: 'Six of the ten SCFs form a Fairfield team on a 6-week line with every worked weekend on call', ic: 'hosp', fn: s => { s.core.fghPosts = 6; s.core.funding = 'split'; s.core.fghLine = 'fgh6'; } },
   { id: 'nogaps', tg: ['24 specialty doctors', 'up to half their on-calls at Fairfield'], n: '95% Fairfield cover', d: 'The fewest specialty doctors that cover at least 95% of Fairfield nights and weekends, with up to half their on-calls at Fairfield', ic: 'shield', rec: 1, fn: (s, pr) => { s.core.fghCap = 0.5; s.groups.scf.posts = 0; s.groups.sd.posts = 24; s.groups.sd.line = 'sd10'; } }
 ];
-let MODE = 'theory';
+/* ---------- a plan in the web address: the link holds every change from its starting plan, nothing is stored ---------- */
+const b64 = t => { let bin = ''; new TextEncoder().encode(t).forEach(c => bin += String.fromCharCode(c)); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const unb64 = t => { t = t.replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '='; return new TextDecoder().decode(Uint8Array.from(atob(t), c => c.charCodeAt(0))); };
+const LINK = (() => { try { const m = location.hash.match(/^#plan=([\w-]+)$/); if (!m) return null; const o = JSON.parse(unb64(m[1])); return o && o.v === 1 && PRESETS.find(x => x.id === o.b) ? o : null; } catch (e) { return null; } })();
+let MODE = LINK && LINK.m === 'practice' ? 'practice' : 'theory';
 const practice = () => MODE === 'practice';
 const NOW = M2.now(); NOW.core.practice = practice();
 const syncT = s => { const D = s.demand; D.airT = Object.assign({}, D.air); D.naT = Object.assign({}, D.na); D.fghT = Object.assign({}, D.fgh); return s; };
@@ -1962,7 +1975,7 @@ const choiceC = (p, label, opts, page) => { reg(p, label, page); const v = get(S
 const BLKINFO = {
   'Time': 'How long people stay, how long a post is empty between people, and the months before someone counts fully. A post empty between people costs nothing and covers nothing.',
   'Off the rota': 'Leave, study leave, bank holidays and non-clinical days come off weekday days only, never nights or weekends. Sickness comes off every shift (Absence and seasons page).',
-  'Work schedule': 'Each person works this schedule. Part-time people work the trust’s 80, 70, 60 or 50% versions, which keep the weekend nights and drop weekday shifts.',
+  'Work schedule': 'Everyone works one schedule, set under Work schedule on the Inputs page; SCFs and specialty doctors can be given a different one there. Part-time people work the trust’s 80, 70, 60 or 50% versions. ACCPs have their own Agenda for Change line, set on the ACCP page.',
   'Can cover': 'Which shifts this group can fill. Trainees never work Fairfield nights or weekends; only signed-off SCFs and specialty doctors do.',
   'People': 'Posts, how many are filled on average, and part-time working. Deanery numbers are WTE, so part-time changes the head count, not the cover.',
   'Library': 'The trust’s 9-week template and versions of it. Every one keeps the same nights and weekends; part-time versions are built from the trust’s own 80, 70, 60 and 50% templates.',
@@ -1975,7 +1988,7 @@ const BLKINFO = {
 };
 const blk = (ic, t, body, info) => { info = info || BLKINFO[t]; return `<div class="blk"><div class="bh">${ico(ic, 'sm')}<span class="lab">${t}</span>${info ? iI(info) : ''}</div>${body}</div>`; };
 const head = (title, sub) => path.length > 1 ? `<div class="ph2"><button class="bk" data-back="1" aria-label="Back to ${esc(backName())}">${ico('back', 'sm')}</button><span class="pt">${title}</span>${sub ? `<span class="ps num">${sub}</span>` : ''}</div>` : '';
-const NAMES = { home: 'Inputs', staff: 'Staff', core: 'SCF and specialty doctor', accp: 'ACCPs', need: 'Shifts needed', fgh: 'Fairfield', loc: 'Locum rates', pay: 'Pay and on-costs', abs: 'Absence and seasons', lines: 'Work schedules' };
+const NAMES = { home: 'Inputs', staff: 'Staff', core: 'SCF and specialty doctor', accp: 'ACCPs', need: 'Shifts needed', fgh: 'Fairfield', loc: 'Locum rates', pay: 'Pay and on-costs', abs: 'Absence and seasons', lines: 'Work schedule' };
 const backName = () => { const prev = path[path.length - 2]; return NAMES[prev] || (GRADES.find(g => g.k === prev) || {}).n || 'Back'; };
 const fmtMo = v => num(v) + ' mo', fmtD = v => num(v) + ' d', fmtGbp = v => gbp(v);
 const dotsHTML = (posts, fill, lt, color) => { const out = []; const filled = Math.round(posts * fill); for (let i = 0; i < posts; i++) { const vac = i >= filled, half = !vac && i < Math.round(posts * lt); out.push(`<i class="${vac ? 'vac' : half ? 'lt' : ''}" ${color && !vac && !half ? `style="background:${color}"` : ''}></i>`); } return out.join('') || '<span class="lab">None</span>'; };
@@ -1995,7 +2008,7 @@ function pHome() {
   return head('Inputs') + `<div class="body6">
     <label class="srch">${ico('search', 'sm')}<input id="q" placeholder="Find a setting" value="${esc(query)}" autocomplete="off" aria-label="Find a setting"></label>
     ${query ? searchResults() : `
-    <div class="grp6">${row('users', 'Staff', `<span class="num">${num(wteAll(S), 1)} WTE</span>`, 'staff')}${row('grid', 'Work schedules', 'Library', 'lines')}${row('target', 'Shifts needed', 'Both sites', 'need')}</div>
+    <div class="grp6">${row('users', 'Staff', `<span class="num">${num(wteAll(S), 1)} WTE</span>`, 'staff')}${row('grid', 'Work schedule', esc(schedSummary()), 'lines')}${row('target', 'Shifts needed', 'Both sites', 'need')}</div>
     <div class="grp6">${row('hosp', 'Fairfield', (S.core.fghPosts ? S.core.fghPosts + ' in Fairfield team' : 'Salford first'), 'fgh')}${row('userplus', 'Locum rates', 'Bank ' + gbp(S.cost.lr.wdSoc) + ' to ' + gbp(Math.max(S.cost.lr.wdAnti, S.cost.lr.weSoc, S.cost.lr.weAnti)) + ' · ' + Math.round((S.cost.agencyShare || 0) * 100) + '% agency', 'loc')}${row('pound', 'Pay and on-costs', (S.cost.pension ? pct(S.cost.pension) + ' pension' : 'No pension'), 'pay')}${row('thermo', 'Absence and seasons', pc1(S.absence.sick) + ' sick', 'abs')}</div>`}
   </div>`;
 }
@@ -2003,13 +2016,13 @@ const pageOf = p => (REG[p] || {}).page || 'home';
 const isChanged = page => active.endsWith('*') && changes(baseState()).some(c => pageOf(c.p) === page || (page === 'staff' && ['core', 'accp', ...GRADES.map(g => g.k)].includes(pageOf(c.p))));
 const row = (i, l, v, go, info) => `<button class="r6" data-go="${go}"><span class="ib">${ico(i, 'sm')}</span><span class="l">${l}${info ? iI(info) : ''}</span><span class="v">${isChanged(go) ? '<span class="dotc" title="Changed from Now"></span>' : ''}${v}<svg class="i ch"><use href="#chev"/></svg></span></button>`;
 const ownerOf = p => { const m = p.match(/^groups\.(\w+)\./); if (m) { const k = m[1]; return k === 'scf' ? 'SCF' : k === 'sd' ? 'Specialty doctor' : (GRADES.find(g => g.k === k) || {}).n || ''; } if (p.startsWith('accp.')) return 'ACCP'; return ''; };
-const fullLabel = p => { const o = ownerOf(p), l = REG[p].label; return o ? o + ', ' + l.charAt(0).toLowerCase() + l.slice(1) : l; };
+const fullLabel = p => { const o = REG[p].whole ? '' : ownerOf(p), l = REG[p].label; return o ? o + ', ' + l.charAt(0).toLowerCase() + l.slice(1) : l; };
 function baseState() { const b = active.replace('*', ''); if (b.startsWith('saved:')) { const r = savedRes[b.slice(6)]; return r ? r.s : NOW; } return presetRes[b] ? presetRes[b].s : make(b); }
 function changes(ref) {
   ref = ref || NOW; const NOWX = ref; const out = [];
   // the Salford total is stored as airway + non-airway, so show it as the total
   const tv = (s, p) => p.startsWith('demand.na.') ? s.demand.na[p.split('.')[2]] + s.demand.air[p.split('.')[2]] : get(s, p);
-  Object.keys(REG).forEach(p => { const a = tv(S, p), b = tv(NOWX, p); if (JSON.stringify(a) !== JSON.stringify(b)) out.push({ p, label: fullLabel(p), old: fmtV(b), nw: fmtV(a) }); });
+  Object.keys(REG).forEach(p => { const a = tv(S, p), b = tv(NOWX, p); if (JSON.stringify(a) !== JSON.stringify(b)) out.push({ p, label: fullLabel(p), old: fmtX(p, b), nw: fmtX(p, a) }); });
   return out;
 }
 function searchResults() {
@@ -2050,7 +2063,7 @@ function fghWho(t) {
 }
 const whoTip = t => { const l = fghWho(t); return l.length ? l.map(x => x.n).join(', ') : 'Nobody: every shift goes to a locum'; };
 const OPEN_WHO = new Set();
-const canBlock = (base, page, coreSide) => blk('shield', 'Can cover', `<div class="chips">${togC(base + '.can.air', 'Airway', 'air', '', page)}${coreSide ? '' : togC(base + '.can.airS', 'Airway short days only', 'day', '', page)}${togC(base + '.can.fghD', 'FGH weekday days', 'hosp', 'f', page)}${togC(base + '.can.fghWE', 'FGH weekends', 'hosp', 'f', page)}${togC(base + '.can.fghN', 'FGH nights', 'moon', 'f', page)}</div>` + slideC(base + '.counts', 'Counts towards minimum', 'step', { page, info: 'Less than 100% for people who are supernumerary or still training up' }));
+const canBlock = (base, page, coreSide) => blk('shield', 'Can cover', `<div class="chips">${togC(base + '.can.air', 'Airway', 'air', '', page)}${coreSide ? '' : togC(base + '.can.airS', 'Airway short days only', 'day', '', page)}${togC(base + '.can.fghD', 'FGH weekday days', 'hosp', 'f', page)}${coreSide ? togC(base + '.can.fghWE', 'FGH weekends', 'hosp', 'f', page) + togC(base + '.can.fghN', 'FGH nights', 'moon', 'f', page) : ''}</div>` + (coreSide ? '' : `<span class="lab" style="text-transform:none;letter-spacing:0">Fairfield nights and weekends are for signed-off SCFs and specialty doctors only.</span>`) + slideC(base + '.counts', 'Counts towards minimum', 'step', { page, info: 'Less than 100% for people who are supernumerary or still training up' }));
 const PTMIX = [[0, 0.7, 'All full-time'], [1 / 3, 0.7, 'A third at 0.7'], [0.5, 0.6, 'Half at 0.6'], [0.5, 0.8, 'Half at 0.8']];
 const peopleBlock = (base, page, o = {}) => {
   const g = get(S, base), wp = 1 - g.lt + g.lt * g.ltw, fill = o.fill ? g.fill : 1, dean = !!g.wteBased;
@@ -2075,7 +2088,7 @@ function pGrade(k) {
   return head(G.n, num(wteK(S, k), 1) + ' WTE') + `<div class="body6">
     ${peopleBlock(base, k, { fill: true })}
     ${payBlock(k)}
-    ${blk('grid', 'Work schedule', lineBlock(g, 'dean', k) + (k === 'icm3' ? stepC(base + '.actingUp', 'Acting-up nights per 9 weeks', 'moon', { page: k, max: 6, info: 'ST7+ acting-up nights replace their own nights' }) : ''))}
+    ${blk('grid', 'Work schedule', schedNote(k) + (k === 'icm3' ? stepC(base + '.actingUp', 'Acting-up nights per 9 weeks', 'moon', { page: k, max: 6, info: 'ST7+ acting-up nights replace their own nights' }) : ''))}
     ${blk('cal', 'Time', time)}
     ${blk('plane', 'Off the rota', stepC(base + '.al', 'Annual leave', 'plane', { page: k, fmt: fmtD, max: 40, info: '27 days, or 32 after 6 years (ST3 and above), plus 8 bank holidays' }) + stepC(base + '.study', 'Study leave', 'book', { page: k, fmt: fmtD, max: 40, info: 'Deanery trainees are entitled to 28 days but take less: this starts at the average taken in Allocate, Sep 2025 to Aug 2026. JCFs: 10 days.' }) + stepC(base + '.spa', 'Teaching and non-clinical', 'school', { page: k, fmt: fmtD, max: 80, info: 'Days a year off the rota for teaching and similar. Induction is set separately, by changeover month' }))}
     ${canBlock(base, k)}
@@ -2117,7 +2130,7 @@ function pCore() {
     <div class="ctiles">${side('SCF', 'scf', c)}${side('Specialty doctor', 'sd', d)}</div>
     <div class="blk">${own}</div>
     ${payBlock(k)}
-    <div class="gh3">Work schedule</div>${lineBlock(g, 'core', 'core.' + k)}
+    ${blk('grid', 'Work schedule', schedNote(k))}
     ${blk('cal', 'Time', stepC(base + '.recruit', 'Time to recruit', 'hour', { page: 'core', fmt: fmtMo, max: 12, info: 'Months a post is empty between people' }) + stepC(base + '.stay', 'Average stay', 'door', { page: 'core', fmt: fmtMo, min: 6, max: 72 , info: 'How long people stay in post before leaving. With time to recruit, this sets how often a post is empty.' }) + stepC(base + '.supernum', 'Supernumerary at Salford', 'step', { page: 'core', fmt: fmtMo, max: 9, info: 'First months in post. They work the rota at Salford but count only as non-airway.' }) + stepC(base + '.signoff', 'Signed off for FGH nights', 'moon', { page: 'core', fmt: fmtMo, min: 1, max: 12 , info: 'Months in post before they can work Fairfield nights and weekends alone. Until then they work Salford only, with half their weekdays training at Fairfield.' }) + slideC('core.fghTrain', 'Weekdays at FGH while signing off', 'school', { page: 'core', info: 'Share of weekday days spent at FGH training before sign-off' }) + slideC(base + '.fghShare', 'Ever signed off for FGH', 'hosp', { page: 'core', info: 'Share who ever become competent to work at FGH alone. The rest stay Salford-only.' }) + (k === 'scf' ? stepC('core.extPlacement', 'Away on external placement', 'door', { page: 'core', max: 4 , info: 'SCFs on an external placement at any one time. Their place is filled by someone who works Salford only, as they won’t reach Fairfield standard in the time.' }) : ''))}
     ${peopleBlock(base, 'core', { noPosts: true })}
     ${blk('plane', 'Off the rota', stepC(base + '.al', 'Annual leave', 'plane', { page: 'core', fmt: fmtD, max: 40 }) + stepC(base + '.study', 'Study leave', 'book', { page: 'core', fmt: fmtD, max: 40, info: '10 days a year' }))}
@@ -2177,6 +2190,7 @@ function pLoc() {
     ${blk('pound', 'Bank (NHSP), an hour', R.map(([k, n, i, w]) => slideC('cost.lr.' + k, n, i, { page: 'loc', min: 30, max: 200, step: 1, fmt: fmtGbp, fmtKey: 'gbp', info: w + '. NHSP Greater Manchester rate for ST3 to ST5, from 1 May 2025.' })).join('') + slideC('cost.bankOn', 'Fee and on-costs on top', 'bank', { page: 'loc', max: 0.4, step: 0.01, info: 'Anything the trust pays on top of the NHSP hourly rate. Thought to be none; check.' }), 'NHSP Greater Manchester rates for ST3 to ST5, from 1 May 2025. Social hours are 07:00 to 19:00; everything else is unsocial. Weekend runs from Friday night to Sunday night.')}
     ${blk('userplus', 'Agency, an hour', R.map(([k, n, i, w]) => slideC('cost.lrA.' + k, n, i, { page: 'loc', min: 40, max: 250, step: 1, fmt: fmtGbp, fmtKey: 'gbp', info: w + '. A best guess, about 1.5 times the bank rate, including the agency fee.' })).join('') + slideC('cost.agencyShare', 'Share of locum shifts by agency', 'userplus', { page: 'loc', max: 1, step: 0.01, info: 'From the Fairfield resident rota, Apr 2025 to Oct 2026: every shift was filled, and NHSP or agency covered 85% of Fairfield nights. Agency took 21% of locum shifts over Sep 2025 to Aug 2026, but only 9% since July 2026 as its use has come down. 14% is set between the two.' }), 'A best guess, about 1.5 times the bank rate, including the agency fee. Check against invoices.')}
     ${blk('moon', 'What a shift costs', SH.map(row).join(''), 'A night, 20:00 to 08:30, is 11 unsocial hours and 1.5 social; a long day, 08:00 to 20:30, the other way round. Tap the (i) on each for the sum.')}
+    ${lastRes ? finQ(lastRes.locum.mid) : ''}
     ${blk('shield', 'No gaps', `<div class="row2"><span class="ri">${ico('tick', 'sm')}</span><span class="rl">Every shift our rota cannot fill is filled by a paid locum, at either site.</span><span></span></div>`)}
   </div>`;
 }
@@ -2197,13 +2211,40 @@ function pAbs() {
   </div>`;
 }
 const ltView = {};
+/* ---------- one work schedule for everyone (parity), with an optional one for SCFs and specialty doctors ---------- */
+const EVERY = ['icm3', 'icm2', 'icm1', 'anaes', 'jcf', 'accs', 'imt', 'fy2', 'other'];
+const EVERY_OPTS = ['scf_current', 'scf_2n'], CORE_OPTS = ['fgh6', 'sd10', 'sd13'];
+const SHORTL = { scf_current: '9-week template', scf_2n: '9-week template, extra nights', custom: 'your own template', fgh6: '6-week Fairfield line', sd10: '10 PA version', sd13: '13 PA version', accp10: 'ACCP 10-week line' };
+const lineLabel = k => SHORTL[k] || lineName(k);
+const fmtX = (p, v) => p.endsWith('.line') && typeof v === 'string' ? lineLabel(v) : fmtV(v);
+const everyLine = () => S.groups.icm2.line;
+const coreKey = () => (S.groups.sd.posts + S.groups.sd.newPosts) > 0 && (S.groups.scf.posts + S.groups.scf.newPosts) === 0 ? 'sd' : 'scf';
+const coreOwn = () => S.groups[coreKey()].line !== everyLine();
+function setEveryone(key) { const own = coreOwn(); EVERY.forEach(k => S.groups[k].line = key); if (!own) ['scf', 'sd'].forEach(k => S.groups[k].line = key); }
+const setCore = key => ['scf', 'sd'].forEach(k => S.groups[k].line = key);
+const schedSummary = () => { const e = lineLabel(everyLine()); return coreOwn() ? e.charAt(0).toUpperCase() + e.slice(1) + '; SCFs ' + lineLabel(S.groups[coreKey()].line) : e.charAt(0).toUpperCase() + e.slice(1) + ', everyone'; };
+// what a grade page shows in place of its own picker
+const schedNote = k => { const l = S.groups[k].line, core = k === 'scf' || k === 'sd', same = l === everyLine();
+  return `<button class="r6" data-go="lines"><span class="ib">${ico('grid', 'sm')}</span><span class="l">Works the ${esc(lineLabel(l))}${same ? ', like everyone' : core ? ', not the same as everyone' : ''}</span><span class="v">Change<svg class="i ch"><use href="#chev"/></svg></span></button>`; };
 function pLines() {
-  const keys = ['scf_current', 'scf_2n', 'sd13', 'sd10'];
-  const card = k => { const pc = ltView[k] || 100, g = pc === 100 ? M.gridFor(S, k) : M.ptGrid(k, pc), c = M.checkLine(g);
+  reg('groups.icm2.line', 'Work schedule, everyone', 'lines'); REG['groups.icm2.line'].whole = true;
+  reg('groups.scf.line', 'SCF and specialty doctor work schedule', 'lines'); REG['groups.scf.line'].whole = true;
+  reg('lines.custom', 'Your own template', 'lines');
+  const ev = everyLine(), own = coreOwn(), ck = S.groups[coreKey()].line;
+  const opt = (k, on, attr) => { const c = M.checkLine(M.gridFor(S, k)); return `<button class="lrow${on ? ' on' : ''}" ${attr}>${thumb(M.gridFor(S, k))}<span class="ln">${esc(lineName(k))}</span><span class="lm num">${num(c.hours, 1)} h · ${num(c.pas, 1)} PA${c.ok ? '' : ' · breaks the 2016 contract'}</span></button>`; };
+  const mixed = [...new Set(EVERY.map(k => S.groups[k].line))];
+  const pt = k => { const pc = ltView[k] || 100, g = pc === 100 ? M.gridFor(S, k) : M.ptGrid(k, pc), c = M.checkLine(g);
     return `<div class="lcard"><div class="lc1">${thumb(g)}<div class="lc2"><span class="ln">${esc(lineName(k))}${pc < 100 ? ` <span class="lab" style="text-transform:none;letter-spacing:0">part-time ${pc}%</span>` : ''}</span><span class="lab num" style="text-transform:none;letter-spacing:0">${num(c.hours, 1)} h · ${num(c.pas, 1)} PA</span>
       <div class="ptc">${[100, ...M.PT_PCTS].map(p => `<button class="${p === pc ? 'on' : ''}" data-ltv="${k}:${p}" aria-pressed="${p === pc}">${p}%</button>`).join('')}</div></div></div></div>`; };
-  return head('Work schedules') + `<div class="body6">${blk('grid', 'Library', `<div class="lcards">${keys.map(card).join('')}</div>`, 'The 9-week template and its specialty doctor versions. Each has part-time versions: the trust’s 80, 70, 60 and 50% templates, which keep the Friday to Sunday night set and drop weekday shifts. Part-time people work these automatically.')}
-    ${blk('pencil', 'Your own versions', ['custom', 'trainee', 'accp'].map(k => `<button class="r6" data-go="edit:${k}:lines"><span class="ib lt2">${ico('pencil', 'sm')}</span><span class="l">${esc(lineName(k))}</span><span class="v">${M.checkLine(S.lines[k]).ok ? '<span class="ok2">' + ico('tick', 'sm') + '</span>' : ''}<svg class="i ch"><use href="#chev"/></svg></span></button>`).join(''))}</div>`;
+  return head('Work schedule') + `<div class="body6">
+    ${blk('grid', 'Everyone works', `<div class="lrows">${EVERY_OPTS.map(k => opt(k, ev === k, `data-every="${k}"`)).join('')}${opt('custom', ev === 'custom', `data-go="edit:custom:everyone"`).replace(esc(lineName('custom')), ico('pencil', 'sm') + 'Edit the template')}</div>
+      ${mixed.length > 1 ? `<span class="ok2" style="color:var(--err)">${ico('x', 'sm')}Not everyone is on the same schedule. Pick one above to put everyone on it.</span>` : ''}
+      <span class="lab" style="text-transform:none;letter-spacing:0">Part-time staff work the trust’s 80, 70, 60 and 50% versions of the same template. ACCPs stay on their own Agenda for Change line, set on the ACCP page.${S.core.fghPosts ? ' The Fairfield team’s line is set on the Fairfield page.' : ''}</span>`,
+      'Parity: every grade works the same schedule. The extra night sets are worked as nights by everyone, trainees included.')}
+    ${blk('badge', 'SCFs and specialty doctors', `<div class="chips"><button class="chip ${own ? 'y' : ''}" data-coreown="1" aria-pressed="${own}">${ico('swap', 'sm')}Put them on a different schedule</button></div>
+      ${own ? `<div class="lrows">${CORE_OPTS.map(k => opt(k, ck === k, `data-core="${k}"`)).join('')}</div><span class="ok2" style="color:#b26a00">Not parity: SCFs and specialty doctors differ from everyone else.</span>` : `<span class="lab" style="text-transform:none;letter-spacing:0">Off: they work the same schedule as everyone.</span>`}`)}
+    <details class="ptx"><summary>See the part-time versions</summary><div class="lcards">${[...new Set([ev, own ? ck : ev])].filter(k => ['scf_current', 'scf_2n', 'sd10', 'sd13'].includes(k)).map(pt).join('')}</div></details>
+  </div>`;
 }
 function pEdit(slot) {
   reg('lines.' + slot, lineName(slot), 'lines');
@@ -2222,7 +2263,7 @@ function renderPanel() {
   el.innerHTML = h; el.dataset.page = top; el.scrollTop = keepScroll;
 }
 // register every control once, so search and changes work before a page is opened
-function registerAll() { const p0 = path; ['staff', 'core', 'accp', 'need', 'fgh', 'loc', 'pay', 'abs', ...GRADES.map(g => g.k)].forEach(pg => { path = ['home', pg]; ({ staff: pStaff, core: pCore, accp: pAccp, need: pNeed, fgh: pFgh, loc: pLoc, pay: pPay, abs: pAbs })[pg] ? ({ staff: pStaff, core: pCore, accp: pAccp, need: pNeed, fgh: pFgh, loc: pLoc, pay: pPay, abs: pAbs })[pg]() : pGrade(pg); }); path = p0; }
+function registerAll() { const p0 = path; ['staff', 'core', 'accp', 'need', 'fgh', 'loc', 'pay', 'abs', 'lines', ...GRADES.map(g => g.k)].forEach(pg => { path = ['home', pg]; ({ staff: pStaff, core: pCore, accp: pAccp, need: pNeed, fgh: pFgh, loc: pLoc, pay: pPay, abs: pAbs, lines: pLines })[pg] ? ({ staff: pStaff, core: pCore, accp: pAccp, need: pNeed, fgh: pFgh, loc: pLoc, pay: pPay, abs: pAbs, lines: pLines })[pg]() : pGrade(pg); }); path = p0; }
 
 /* ---------- panel events ---------- */
 const panel = document.getElementById('panel');
@@ -2249,15 +2290,19 @@ panel.addEventListener('click', e => {
   if (t.dataset.ptmix) { const [b, lt, ltw] = t.dataset.ptmix.split('|'); set(S, b + '.lt', +lt); if (+lt > 0) set(S, b + '.ltw', +ltw); edited(); return; }
   if (t.dataset.pay) { const g = S.groups[t.dataset.pk || 'scf']; if (t.dataset.pay === 'flat') g.payKind = 'flat'; else { g.payKind = 'tcs'; g.basic = +t.dataset.pay; } edited(); return; }
   if (t.dataset.line) { setLine(t.dataset.owner, t.dataset.line); edited(); return; }
+  if (t.dataset.every) { setEveryone(t.dataset.every); edited(); return; }
+  if (t.dataset.core) { setCore(t.dataset.core); edited(); return; }
+  if (t.dataset.coreown) { setCore(coreOwn() ? everyLine() : CORE_OPTS[0]); edited(); return; }
   if (t.dataset.move) { const from = t.dataset.move === 'sd' ? 'scf' : 'sd', to = t.dataset.move; if (S.groups[from].posts > 0) { S.groups[from].posts--; S.groups[to].posts++; edited(); } return; }
   if (t.dataset.undo) { set(S, t.dataset.undo, clone(get(NOW, t.dataset.undo))); edited(); return; }
   if (t.dataset.cell) { const [slot, wi, di] = t.dataset.cell.split(':'), g = S.lines[slot], row = [...g[wi]], order = ['.', 'S', 'L', 'N']; row[di] = order[(order.indexOf(row[di]) + 1) % 4]; g[wi] = row.join(''); edited(); return; }
   if (t.dataset.addweek) { S.lines[t.dataset.addweek].push('.......'); edited(); return; }
   if (t.dataset.delweek) { const g = S.lines[t.dataset.delweek]; if (g.length > 1) g.pop(); edited(); return; }
 });
-const ownerGroup = owner => owner === 'accp' ? S.accp : owner === 'core.sd' ? S.groups.sd : owner === 'core.scf' ? S.groups.scf : S.groups[owner];
+const ownerGroup = owner => owner === 'everyone' ? S.groups.icm2 : owner === 'accp' ? S.accp : owner === 'core.sd' ? S.groups.sd : owner === 'core.scf' ? S.groups.scf : S.groups[owner];
 function setLine(owner, key) {
-  if (owner === 'accp') S.accp.line = key;
+  if (owner === 'everyone') setEveryone(key);
+  else if (owner === 'accp') S.accp.line = key;
   else if (owner === 'core.sd') S.groups.sd.line = key;
   else if (owner === 'core.scf') S.groups.scf.line = key;
   else if (S.groups[owner]) S.groups[owner].line = key;
@@ -2295,6 +2340,7 @@ function renderHeadline() {
     ${col('hosp', 'Salford', 'var(--s)', pc1(r.coverS.mid), deltaPill(r.coverS.mid, n.coverS.mid, 'pts'), 'Share of Salford minimum shifts filled by our own rota. Locums fill every other shift, so none are left empty.', 'by our staff')}
     ${col('pound', 'Cost a year', 'var(--text-2)', gbp(r.total.mid), deltaPill(r.total.mid, n.total.mid, 'gbp', true) + '<span class="rng1" id="hlRange"></span>', 'Likely cost: the middle of 40 simulated years, staff and locums together.')}</div>`;
 }
+const COST_SCOPE = 'What it includes: every resident on the rota (SCFs, specialty doctors, deanery trainees, ACCPs, JCFs, ACCS, IMT, FY2 and other residents) at gross pay, with employer pension (the trust-paid share) and NI, plus every locum shift. It is not net of NHSE training funding for trainees, and some of these grades are paid from other departments’ budgets. Not included: consultants, the apprenticeship levy, and recruitment unless set. The middle of 40 simulated years, against Now.';
 const PARTS = {
   total: r => [['Cost', r.total.mid, 'var(--acc)']],
   loc: r => [['Our staff', r.substantive.mid, 'var(--acc)'], ['Locums', r.locum.mid, 'var(--loc)']],
@@ -2304,10 +2350,12 @@ const PARTS = {
 const segBtns = (name, cur, opts) => `<div class="seg4" role="group">${opts.map(([v, i, t]) => `<button class="${v === cur ? 'on' : ''}" data-${name}="${v}" title="${t}" aria-label="${t}" aria-pressed="${v === cur}">${ico(i, 'sm')}</button>`).join('')}</div>`;
 function renderCost() {
   const r = lastRes, n = nowRes, split = costSplit === 'total' ? 'loc' : costSplit, parts = PARTS[split](r), np = PARTS[split](n);
-  document.getElementById('costCard').innerHTML = `<div class="hd"><span class="lab">Cost a year</span>${iI('Likely cost: the middle of 40 simulated years, staff and locums together, against Now. Pick how to split it on the right.')}${segBtns('cs', split, [['loc', 'userplus', 'Our staff and locums'], ['wage', 'bank', 'Wages, on-costs and locums'], ['site', 'split', 'By budget']])}</div>
+  document.getElementById('costCard').innerHTML = `<div class="hd"><span class="lab">Cost a year</span>${iI(COST_SCOPE)}${segBtns('cs', split, [['loc', 'userplus', 'Our staff and locums'], ['wage', 'bank', 'Wages, on-costs and locums'], ['site', 'split', 'By budget']])}</div>
     <div class="cth"><b class="num">${gbp(r.total.mid)}</b>${deltaPill(r.total.mid, n.total.mid, 'gbp', true)}</div>
     <div class="hb" style="height:12px">${parts.map(p => `<span style="width:${p[1] / r.total.mid * 100}%;background:${p[2]}"></span>`).join('')}</div>
     <div class="kl2">${parts.map((p, i) => `<i style="background:${p[2]}"></i><span>${p[0]}</span><b class="num">${gbp(p[1])}</b><span class="dd num">${Math.abs(p[1] - np[i][1]) < 1 ? 'same as Now' : ((p[1] - np[i][1]) > 0 ? '+' : '−') + gbp(Math.abs(p[1] - np[i][1])) + ' on Now'}</span>`).join('')}</div>
+    <span class="scope">Whole resident tier, gross: every grade on the rota at full pay with employer pension and NI, plus locums. Not net of NHSE training funding.</span>
+    ${finQ(r.locum.mid)}
     <span class="rng1" id="costRange"></span>
     <div class="ctl2"><button class="lk" data-opensheet="rsheet">How sure: every plan against Now ›</button><button class="lk" data-costbreak="1">Cost of each staff group ›</button></div>`;
   if (typeof renderRanges === 'function') renderRanges();
@@ -2438,7 +2486,10 @@ mapEl.addEventListener('click', async e => {
   }
   if (t.dataset.mv) { const o = draft.order, i = o.indexOf(t.dataset.mv), j = i + +t.dataset.dir; if (j >= 0 && j < o.length) { [o[i], o[j]] = [o[j], o[i]]; renderMap(); } return; }
   if (t.dataset.chgt) { chgOpen = !chgOpen; renderMap(); return; }
-  if (t.dataset.pundo) { const ref = baseState(), p = t.dataset.pundo; set(S, p, clone(get(ref, p))); if (!changes(ref).length) { active = active.replace('*', ''); renderPanel(); recompute(); } else edited(); return; }
+  if (t.dataset.pundo) { const ref = baseState(), p = t.dataset.pundo;
+    // a work schedule is undone for the whole group it was set for, so parity holds
+    const ps = p === 'groups.icm2.line' ? EVERY.map(k => 'groups.' + k + '.line') : p === 'groups.scf.line' ? ['groups.scf.line', 'groups.sd.line'] : [p];
+    ps.forEach(q => set(S, q, clone(get(ref, q)))); if (!changes(ref).length) { active = active.replace('*', ''); renderPanel(); recompute(); } else edited(); return; }
   if (t.dataset.pundoall) { const b = active.replace('*', ''); choose(b.startsWith('saved:') ? { dataset: { saved: b.slice(6) } } : { dataset: { preset: b } }); return; }
   if (!planEdit && (t.dataset.preset || t.dataset.saved)) choose(t);
 });
@@ -2480,6 +2531,12 @@ function oneMore(s) {
 }
 // a shift's locum cost, split into bank and agency, with the hours that make it up
 const LSPLIT = { Nwd: [['wdAnti', 11], ['wdSoc', 1.5]], Nwe: [['weAnti', 11], ['weSoc', 1.5]], Lwd: [['wdSoc', 11], ['wdAnti', 1.5]], Lwe: [['weSoc', 11], ['weAnti', 1.5]], Swd: [['wdSoc', 8]], Swe: [['weSoc', 8]] };
+// an open question for finance, shown wherever locum costs appear while nothing is added to the NHSP rate
+function finQ(locum, s) {
+  s = s || S; if (s.cost.bankOn) return '';
+  const q = shiftCost(s, 'Nwd'), x = q.avg ? 0.3 * locum * q.bank * (1 - q.sh) / q.avg : 0;
+  return `<div class="finq"><b>Question for finance</b> Bank shifts are costed at the NHSP hourly rate, with nothing added for holiday pay, employer on-costs or the NHSP fee. Is that what the trust pays? If it pays 30% more than the rate, locums cost about ${gbp(Math.round(x / 1000) * 1000)} more a year.</div>`;
+}
 function shiftCost(s, t) {
   const c = s.cost, sp = LSPLIT[t], sum = lr => sp.reduce((a, [k, h]) => a + (lr[k] || 0) * h, 0);
   const bank = sum(c.lr) * (1 + (c.bankOn || 0)), ag = c.lrA ? sum(c.lrA) : bank, sh = c.agencyShare || 0;
@@ -2558,7 +2615,7 @@ function renderWork() {
     tbl(th('Shift', ['Short at Salford', 'Short at Fairfield', 'Bank shift' + iI('NHSP rate × the hours in the shift: a night is 11 unsocial hours and 1.5 social.'), 'Agency shift' + iI('Agency rate (a best guess) × the hours in the shift.'), 'Average shift' + iI('What the model uses: bank and agency weighted by the share of locum shifts that go to agency, set on the Locum rates page.'), 'Cost a year']) + '<tbody>' +
       WT.map(t => { const L = W.loc[t], q = shiftCost(S, t); return `<tr><td>${WTN[t]}</td><td>${wn(L.srh)}</td><td>${wn(L.fgh)}</td><td>${gbp(q.bank)}</td><td>${gbp(q.ag)}</td><td>${gbp(q.avg)}</td><td>${gbp(L.cost)}</td></tr>`; }).join('') +
       `<tr class="tot"><td>All locums</td><td>${wn(WT.reduce((a, t) => a + W.loc[t].srh, 0))}</td><td>${wn(WT.reduce((a, t) => a + W.loc[t].fgh, 0))}</td><td></td><td></td><td></td><td>${gbp(W.locum)}</td></tr></tbody>`) +
-    (q => `<div class="wkcalc">A weekday night: bank ${q.howB} = ${gbp(q.bank)}. Agency ${q.howA} = ${gbp(q.ag)}. ${num(q.sh * 100)}% agency, so on average ${gbp(q.avg)}.</div><div class="wkcalc">Fairfield weekday nights: ${num(W.loc.Nwd.fgh)} × ${gbp(q.avg)} = ${gbp(W.loc.Nwd.fgh * q.avg)}.</div>`)(shiftCost(S, 'Nwd')));
+    (q => `<div class="wkcalc">A weekday night: bank ${q.howB} = ${gbp(q.bank)}. Agency ${q.howA} = ${gbp(q.ag)}. ${num(q.sh * 100)}% agency, so on average ${gbp(q.avg)}.</div><div class="wkcalc">Fairfield weekday nights: ${num(W.loc.Nwd.fgh)} × ${gbp(q.avg)} = ${gbp(W.loc.Nwd.fgh * q.avg)}.</div>`)(shiftCost(S, 'Nwd')) + finQ(W.locum));
   // 7 total
   const s7 = step(7, 'Cost of the year', '',
     `<div class="wkcalc wkbig">Staff ${gbp(W.staff)} + locums ${gbp(W.locum)} = <b>${gbp(W.total)}</b></div><p>This is one average year. The headline (${lastRes ? gbp(lastRes.total.mid) : '…'}) is the middle of 40 random years, where deanery fill, sickness and vacancies vary month to month, so it differs slightly.</p>`);
@@ -2606,7 +2663,8 @@ function renderCostSheet(key) {
   <section class="wkstep"><h3>Locums</h3><div class="wkt"><table><thead><tr><th>Shift</th><th>Salford</th><th>Fairfield</th><th>Bank shift${iI('NHSP rate × the hours in the shift: a night is 11 unsocial hours and 1.5 social.')}</th><th>Agency shift${iI('Agency rate (a best guess) × the hours in the shift.')}</th><th>Average shift${iI('What the model uses: bank and agency weighted by the share of locum shifts that go to agency, set on the Locum rates page.')}</th><th>Cost a year</th></tr></thead><tbody>
     ${WT.map(t => { const L = W.loc[t], q = shiftCost(s, t); return L.shifts < 0.5 ? '' : `<tr><td>${WTN[t]}</td><td>${wn(L.srh)}</td><td>${wn(L.fgh)}</td><td>${gbp(q.bank)}</td><td>${gbp(q.ag)}</td><td>${gbp(q.avg)}</td><td>${gbp(L.cost)}</td></tr>`; }).join('')}
     <tr class="tot"><td>All locums</td><td>${wn(WT.reduce((a, t) => a + W.loc[t].srh, 0))}</td><td>${wn(WT.reduce((a, t) => a + W.loc[t].fgh, 0))}</td><td></td><td></td><td></td><td>${gbp(W.locum)}</td></tr></tbody></table></div>
-    <p>${num(locN)} short shifts a year. ${num((s.cost.agencyShare || 0) * 100)}% go to agency, so each costs the average of a bank and an agency shift.</p>${(q => `<div class="wkcalc">A weekday night: bank ${q.howB} = ${gbp(q.bank)}. Agency ${q.howA} = ${gbp(q.ag)}.</div>`)(shiftCost(s, 'Nwd'))}</section>`;
+    <p>${num(locN)} short shifts a year. ${num((s.cost.agencyShare || 0) * 100)}% go to agency, so each costs the average of a bank and an agency shift.</p>${(q => `<div class="wkcalc">A weekday night: bank ${q.howB} = ${gbp(q.bank)}. Agency ${q.howA} = ${gbp(q.ag)}.</div>`)(shiftCost(s, 'Nwd'))}${finQ(W.locum, s)}</section>
+  <section class="wkstep"><h3>What this includes</h3><p>${COST_SCOPE.replace(' The middle of 40 simulated years, against Now.', '')}</p></section>`;
   document.getElementById('csheet').hidden = false;
 }
 document.getElementById('map').addEventListener('click', e => { const b = e.target.closest('[data-costof]'); if (!b) return; e.stopPropagation(); renderCostSheet(b.dataset.costof); }, true);
@@ -2653,7 +2711,7 @@ function renderCmp() {
   const avail = saved.filter(x => !extraCols.includes(x.id));
   document.getElementById('cmp').innerHTML = `<div class="hd" style="display:flex;align-items:center;gap:8px"><span class="lab">Outputs for each model</span>${iI('This plan updates live as you change any input. Green dots mark the best fixed model in each row.')}</div>
   <div class="cmp"><table><thead><tr><th style="text-align:left"><span class="lab">Model</span></th>${cols.map(c => `<th class="${c.live ? 'on' : ''}"><div class="mh"><span class="i2">${ico(c.ic, 'sm')}</span><span style="font-weight:700">${esc(c.n)}</span>${c.live ? `<span class="lab" style="color:var(--ok);display:inline-flex;gap:4px;align-items:center"><i style="width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block"></i>Live</span>` : ''}${c.rm ? `<button data-rmcol="${esc(c.rm)}" aria-label="Remove column">${ico('x', 'sm')}</button>` : ''}</div></th>`).join('')}
-    <th><div class="addmenu"><button class="addc" data-addcol="1" title="Add a saved plan" aria-label="Add a saved plan" style="background:none;cursor:pointer">${ico('plus', 'sm')}</button><div class="menu" id="addmenu" hidden>${avail.length ? avail.map(x => `<button data-pickcol="${esc(x.id)}">${ico('bmark', 'sm')} ${esc(x.name)}</button>`).join('') : '<span class="empty6">No saved plans yet</span>'}</div></div></th></tr></thead><tbody>
+    <th>${db && canSave ? `<div class="addmenu"><button class="addc" data-addcol="1" title="Add a saved plan" aria-label="Add a saved plan" style="background:none;cursor:pointer">${ico('plus', 'sm')}</button><div class="menu" id="addmenu" hidden>${avail.length ? avail.map(x => `<button data-pickcol="${esc(x.id)}">${ico('bmark', 'sm')} ${esc(x.name)}</button>`).join('') : '<span class="empty6">No saved plans yet</span>'}</div></div>` : ''}</th></tr></thead><tbody>
   ${R.map(r => r[0] === 'g' ? `<tr class="gp"><td colspan="${cols.length + 2}">${r[1]}</td></tr>` : `<tr><td><span style="display:inline-flex;gap:6px;align-items:center">${ico(r[0], 'sm')}${r[1]}${r[6] ? iI(r[6]) : ''}</span></td>${cols.map(c => { const v = r[2](c.d), b = best(r); const bar = r[5] ? `<span class="mb"><span style="width:${Math.min(1, v) * 100}%;background:${r[5]}"></span></span>` : ''; const nv = r[2](presetRes.now); const chg = c.live && Math.abs(v - nv) > 1e-6; return `<td class="num ${c.live ? 'on' : ''} ${!c.live && b != null && Math.abs(v - b) < 1e-9 ? 'best' : ''} ${chg && !r[5] ? 'chg' : ''}">${bar}${r[3](v, c.d)}</td>`; }).join('')}<td></td></tr>`).join('')}
   </tbody></table></div><div class="kl"><div><i style="background:var(--ok);border-radius:50%"></i>Best fixed model in the row</div><div><i style="background:var(--acc-wash)"></i>This plan, live</div></div>`;
 }
@@ -2762,6 +2820,7 @@ function recompute() {
   if (active.endsWith('*')) urNeed('live', S); else delete UR[MODE + '|live'];
   renderHeadline(); renderCost(); renderCover(); renderDays(); renderPost(); renderMap(); renderCmp(); renderBuy(); renderRanges();
   document.getElementById('app').classList.toggle('isedit', active.endsWith('*'));
+  syncLink();
 }
 function statPresets() {
   const todo = PRESETS.filter(p => !presetRes[p.id]);
@@ -2777,12 +2836,42 @@ function statSaved() {
 }
 
 /* ---------- save ---------- */
+// every input that differs from the starting plan, as path: value
+const SKIP = ['name', 'core.practice'];
+function diffOf(a, b, p = '', out = {}) {
+  Object.keys(a).forEach(k => {
+    const q = p ? p + '.' + k : k, x = a[k], y = b ? b[k] : undefined;
+    if (SKIP.includes(q)) return;
+    if (x && typeof x === 'object' && !Array.isArray(x) && y && typeof y === 'object' && !Array.isArray(y)) diffOf(x, y, q, out);
+    else if (JSON.stringify(x) !== JSON.stringify(y)) out[q] = x;
+  });
+  return out;
+}
+function linkFor() {
+  const b = active.replace('*', ''), base = PRESETS.find(x => x.id === b) ? b : 'now';
+  return location.href.split('#')[0] + '#plan=' + b64(JSON.stringify({ v: 1, b: base, m: MODE, d: diffOf(S, make(base)) }));
+}
+// keep the address in step with the page, so a reload or a bookmark keeps the plan
+function syncLink() {
+  try {
+    const b = active.replace('*', ''), keep = active.endsWith('*') || (b !== 'now' && !b.startsWith('saved:'));
+    const url = keep ? linkFor() : location.href.split('#')[0];
+    if (url !== location.href && (keep || location.hash.startsWith('#plan='))) history.replaceState(null, '', url);
+  } catch (e) { }
+}
 function renderSavebar(msg) {
   const el = document.getElementById('savebar');
-  if (!db || !canSave) { el.innerHTML = ''; return; }
-  el.innerHTML = `<div class="gh">Save this plan${msg ? ` · ${esc(msg)}` : ''}</div><input id="saveName" placeholder="Name it" aria-label="Plan name" maxlength="60"><button class="btnp" id="saveBtn">${ico('bmark', 'sm')} Save for everyone</button>`;
+  const link = `<div class="gh">Keep or share this plan</div><button class="btnp" id="copyLink">${ico('link', 'sm')} Copy a link to this plan</button><div class="savekey">${msg ? esc(msg) : 'The link holds every input, so anyone who opens it sees this exact plan and its numbers. Nothing is stored anywhere.'}</div>`;
+  if (!db || !canSave) { el.innerHTML = link; return; }
+  el.innerHTML = link + `<div class="gh">Save this plan for everyone</div><input id="saveName" placeholder="Name it" aria-label="Plan name" maxlength="60"><button class="btnp" id="saveBtn">${ico('bmark', 'sm')} Save for everyone</button>`;
 }
 document.getElementById('savebar').addEventListener('click', async e => {
+  if (e.target.closest('#copyLink')) {
+    const url = linkFor();
+    try { await navigator.clipboard.writeText(url); renderSavebar('Link copied. Paste it into an email or a bookmark.'); }
+    catch (err) { renderSavebar('Copy this link:'); const box = document.createElement('input'); box.value = url; box.readOnly = true; box.className = 'linkbox'; box.setAttribute('aria-label', 'Link to this plan'); document.getElementById('savebar').appendChild(box); box.focus(); box.select(); }
+    return;
+  }
   if (!e.target.closest('#saveBtn')) return;
   const inp = document.getElementById('saveName'), name = (inp.value || '').trim();
   if (!name) { inp.focus(); inp.placeholder = 'Type a name first'; return; }
@@ -2805,12 +2894,12 @@ document.getElementById('savebar').addEventListener('click', async e => {
     { sel: '#buyCard', q: 'What does the money buy?', a: 'Facts beside the cost: nights and weekends each, training posts, spare people on Salford days and posts to fill. What they are worth is for us to judge.' },
     { sel: '#panel', q: 'What can I change?', a: 'Anything under Inputs. Start with Staff: posts for each group, how many are filled, and who works part-time.', do: () => go('staff') },
     { sel: '#panel', q: 'What can I change for SCFs?', a: 'Posts, pay, work schedule, how long people stay, and how long before they can work at Fairfield.', do: () => go('core') },
-    { sel: '#panel', q: 'What rota do people work?', a: 'The trust’s 9-week template, or its part-time versions. Everyone gets 3 weekend nights every 9 weeks, so weekend nights are always the pinch.', do: () => go('lines') },
+    { sel: '#panel', q: 'What rota do people work?', a: 'One work schedule for everyone: the trust’s 9-week template, or the version with two extra weekday night sets. SCFs and specialty doctors can be put on a different one. Full-time staff work 3 weekend nights every 9 weeks (one Friday to Sunday set), so weekend nights are always the pinch.', do: () => go('lines') },
     { sel: '#panel', q: 'How is Fairfield staffed?', a: 'Salford first. SCFs not needed at Salford go to Fairfield, up to 40% of their on-calls.', do: () => go('fgh') },
     { sel: '#panel', q: 'What do locums cost?', a: 'NHSP bank rates, with a share going to agency. Tap any (i) to see the sum.', do: () => go('loc') },
     { sel: '#buyCard', q: 'Why don’t more SCFs save money?', a: 'An SCF is paid for every shift. Only their nights and weekend long days fill gaps; their day shifts are spare. Tap Why for the sums.', do: () => go('home') },
     { sel: '#wkbtn', q: 'How do I check the sums?', a: 'Show the workings sets out every step, with the numbers.' },
-    { sel: '#deepbtn', q: 'How do I compare or keep a plan?', a: 'Compare plans puts every plan side by side. To keep a plan, name it and save it.' }
+    { sel: '#deepbtn', q: 'How do I compare or keep a plan?', a: 'Compare plans puts every plan side by side. To keep or share a plan, copy its link under the plans: it opens this exact plan, with nothing stored anywhere.' }
   ];
   const el = id => document.getElementById(id), tour = el('tour'), spot = el('tspot'), card = el('tcard');
   let i = 0;
@@ -2853,7 +2942,11 @@ document.getElementById('savebar').addEventListener('click', async e => {
   if (location.hash === '#tour') setTimeout(start, 1500);
 })();
 /* ---------- start ---------- */
-registerAll();
+if (LINK) {
+  S = make(LINK.b); Object.entries(LINK.d || {}).forEach(([p, v]) => { try { set(S, p, v); } catch (e) { } });
+  M2.syncAccp(S); syncT(S); active = LINK.b + (Object.keys(LINK.d || {}).length ? '*' : '');
+}
+registerAll(); renderSavebar();
 renderMode(); nowRes = M2.simulate(clone(NOW), 40, 5); presetRes.now = { r: nowRes, s: make('now') };
 renderPanel(); recompute(); setTimeout(statPresets, 30);
 (async () => {
@@ -2935,6 +3028,7 @@ renderPanel(); recompute(); setTimeout(statPresets, 30);
   sync();
 })();
 </script>
+
 
 
 </body></html>
